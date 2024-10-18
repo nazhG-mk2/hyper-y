@@ -12,8 +12,12 @@ const StartScreenLayout = () => {
                 </footer>
             </div>
             <div className={
-                `flex-1 grid place-content-center ${layoutStyles.bg1}`
-            }>
+                `flex-1 grid place-content-center ${layoutStyles['bg-1']}`
+            }
+                style={{
+                    backgroundImage: 'url(/bg-1.png)',
+                }}
+            >
                 <img src="./logo_tag_line.png" alt="" />
             </div>
         </div>
