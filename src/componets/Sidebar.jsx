@@ -21,7 +21,9 @@ const Sidebar = ({
                             <p className="px-2 text-secondary text-sm">August 2024</p>
                             <p className="px-2 py-1 rounded-md hover:bg-lightYellow cursor-pointer">Closest to me YMCA locations</p>
                         </div>
-                        <button className={`${sideBarStyle['new-chat']} btn rounded-md bg-yellow hover:bg-darkYellow border-0 text-black`}>Create new Chat</button>
+                        <button className={`${sideBarStyle['new-chat']} btn rounded-md bg-yellow hover:bg-darkYellow border-0 text-black`}
+                            onClick={() => window.location.href = '/chat'}
+                        >Create new Chat</button>
                     </>) : (
                     <>
                         <div className={`${sideBarStyle['chat-list']} overflow-y-auto flex flex-col gap-6 transition-colors`}>
@@ -31,7 +33,9 @@ const Sidebar = ({
                             <p className="w-full cursor-pointer hover:text-darkYellow">Terms and Conditions</p>
                             <p className="w-full cursor-pointer hover:text-darkYellow">Contact us</p>
                         </div>
-                        <button className={`${sideBarStyle['new-chat']} btn rounded-md bg-yellow hover:bg-darkYellow border-0 text-black`}>Back to Chat</button>
+                        <button className={`${sideBarStyle['new-chat']} btn rounded-md bg-yellow hover:bg-darkYellow border-0 text-black`}
+                            onClick={() => window.location.href = '/chat'}
+                        >Back to Chat</button>
                     </>
                 )
             }

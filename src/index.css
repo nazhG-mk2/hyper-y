@@ -45,6 +45,10 @@ body {
   @apply px-4 py-2 flex items-center gap-2 rounded
 }
 
+.btn:hover {
+  @apply bg-lightYellow text-black border-gray-500
+}
+
 .brightness-0 {
   filter: brightness(0);
 }

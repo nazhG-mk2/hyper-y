@@ -14,25 +14,25 @@ const SingUp = () => {
             <h1 className="text-6xl font-bold">Hyper-Y Chatbot</h1>
             <p className="text-xl">Select a service to SignUp</p>
             <div className="w-fit flex flex-col mb-4 mt-8 gap-4 text-lg">
-                <button className="btn bg-blue text-white"
+                <button className="btn bg-blue text-white border-none"
                     onClick={handleSingUp}
                 >
                     <img src={facebookIcon} alt="" />
                     Sign up with Facebook
                 </button>
-                <button className="btn border border-gray-700"
+                <button className="btn border border-gray-700 bg-transparent"
                     onClick={handleSingUp}
                 >
                     <img src={googleIcon} alt="" />
                     Sign up with Google
                 </button>
-                <button className="btn border border-gray-700"
+                <button className="btn border border-gray-700 bg-transparent"
                     onClick={handleSingUp}
                 >
                     <img src={appleIcon} alt="" />
                     Sign up with Apple
                 </button>
-                <button className="btn border border-gray-700"
+                <button className="btn border border-gray-700 bg-transparent"
                     onClick={handleSingUp}
                 >
                     <img src={emailIcon} alt="" />

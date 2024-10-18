@@ -14,25 +14,25 @@ const Login = () => {
             <h1 className="text-6xl font-bold">Hyper-Y Chatbot</h1>
             <p className="text-xl">Select a service to Login</p>
             <div className="w-fit flex flex-col mb-4 mt-8 gap-4 text-lg">
-                <button className="btn bg-blue text-white"
+                <button className="btn bg-blue hover:text-white text-white border-none"
                     onClick={handleLogin}
                 >
                     <img src={facebookIcon} alt="" />
                     Login with Facebook
                 </button>
-                <button className="btn border border-gray-700"
+                <button className="btn border border-gray-700 bg-transparent"
                     onClick={handleLogin}
                 >
                     <img src={googleIcon} alt="" />
                     Login with Google
                 </button>
-                <button className="btn border border-gray-700"
+                <button className="btn border border-gray-700 bg-transparent"
                     onClick={handleLogin}
                 >
                     <img src={appleIcon} alt="" />
                     Login with Apple
                 </button>
-                <button className="btn border border-gray-700"
+                <button className="btn border border-gray-700 bg-transparent"
                     onClick={handleLogin}
                 >
                     <img src={emailIcon} alt="" />
