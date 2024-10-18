@@ -1,0 +1,28 @@
+.bg1 {
+  background-image: url(./bg-1.png);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.main-layout {
+  display: grid;
+  grid-template-areas: 
+    "header header"
+    "sidebar main";
+  grid-template-columns: minmax(100px, 1fr) 3fr;
+  grid-template-rows: 82px auto;
+  height: 100vh;
+}
+
+.main__header {
+  grid-area: header;
+}
+
+.main__sidebar {
+  grid-area: sidebar;
+}
+
+.main__content {
+  grid-area: main;
+}

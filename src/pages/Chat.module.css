@@ -1,0 +1,22 @@
+.chat-grid {
+  display: grid;
+  grid-template-rows: 1fr minmax(0, auto) auto;
+  grid-template-areas:
+    "chat"
+    "suggestions"
+    "new-message";
+  height: calc(100vh - 82px);
+}
+
+.chat {
+  grid-area: chat;
+  overflow-y: auto;
+}
+
+.suggestions {
+  grid-area: suggestions;
+}
+
+.new-message {
+  grid-area: new-message;
+}

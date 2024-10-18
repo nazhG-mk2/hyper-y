@@ -1,0 +1,23 @@
+.sidebar-grid {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  grid-template-areas:
+    "chat-list"
+    "new-chat"
+    "footer";
+    height: calc(100vh - 82px);
+}
+
+.chat-list {
+  grid-area: chat-list;
+  overflow-y: auto;
+
+}
+
+.new-chat {
+  grid-area: new-chat;
+}
+
+.footer {
+  grid-area: footer;
+}
