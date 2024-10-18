@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import StartScreenLayout from './layouts/StartScreenLayout';
 import StartScreen from './pages/StartScreen';
-import Login from './pages/login';
+import Login from './pages/Login';
 import SingUp from './pages/SingUp';
 import Chat from './pages/Chat';
 import MainLayout from './layouts/MainLayout';
