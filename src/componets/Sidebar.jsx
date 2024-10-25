@@ -7,7 +7,7 @@ const Sidebar = ({
 }) => {
     const location = useLocation();
     return (
-        <section className={`${className} ${sideBarStyle['sidebar-grid']} gap-2 font-poppins p-5 bg-[#F8F8F8]`}>
+        <section className={`${className} ${sideBarStyle['sidebar-grid']} gap-2 font-poppins p-5 bg-[#F8F8F8] md:hidden`}>
             {
                 location.pathname === '/chat' ? (
                     <>

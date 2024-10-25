@@ -6,6 +6,7 @@ import SingUp from './pages/SingUp';
 import Chat from './pages/Chat';
 import MainLayout from './layouts/MainLayout';
 import Settings from './pages/Settings';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route path="/chat" element={<Chat />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Route>
 
         {/* <Route path="/login" element={<Login />} />

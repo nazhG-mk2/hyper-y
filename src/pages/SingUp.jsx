@@ -10,9 +10,9 @@ const SingUp = () => {
     }
 
     return (
-        <main className="flex flex-col gap-4 justify-start">
-            <h1 className="text-6xl font-bold">Hyper-Y Chatbot</h1>
-            <p className="text-xl">Select a service to SignUp</p>
+        <main className="flex flex-col gap-4 justify-start sm:items-center sm:text-center">
+            <h1 className="text-6xl font-bold sm:hidden">Hyper-Y Chatbot</h1>
+            <p className="text-xl sm:text-sm sm:font-semibold">Select a service to SignUp</p>
             <div className="w-fit flex flex-col mb-4 mt-8 gap-4 text-lg">
                 <button className="btn bg-blue text-white border-none"
                     onClick={handleSingUp}
@@ -39,7 +39,7 @@ const SingUp = () => {
                     Sign up with Email
                 </button>
             </div>
-            <p className="font-semibold">
+            <p className="font-semibold mt-1">
                 Already have an account? <a href="/login" className="text-yellow">Login</a>
             </p>
         </main>

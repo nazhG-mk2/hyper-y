@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import playIcon from '../assets/play.svg';
 import chatStyles from './Chat.module.css';
 import axios from 'axios';
@@ -6,6 +6,7 @@ import Question from '../componets/chat/Question';
 import Response from '../componets/chat/Response';
 import Suggestion from '../componets/chat/Suggestion';
 import Loading from '../componets/chat/Loading';
+import Responding from '../componets/chat/Responding';
 
 
 const Chat = () => {
@@ -13,9 +14,11 @@ const Chat = () => {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [writing, setWriting] = useState(false);
-  const [written, setWritten] = useState('');
+  const [toWrite, setToWrite] = useState([]);
 
   const [chat, setChat] = useState([]);
+
+  const chatref = useRef(null);
 
   const suggestions = [
     'What is YMCA?',
@@ -65,7 +68,9 @@ const Chat = () => {
       const formatedArr = processData(chunk);
       console.log(formatedArr.data);
 
-      handleAddResponse(formatedArr.data);
+      // handleAddResponse(formatedArr.data);
+      setToWrite(formatedArr.data);
+      setWriting(true);
 
     } catch (error) {
       console.error('Error while fetching data:', error);
@@ -78,25 +83,14 @@ const Chat = () => {
     setChat([...chat, { type: 'question', txt: question }]);
     setQuery('');
     setLoading(true);
+    if (chatref.current) { // scroll to the bottom of the chat
+      chatref.current.scrollTop = chatref.current.scrollHeight;
+    }
+
   }
 
   const handleAddResponse = (response) => {
     const delay = 1000;
-
-    // setWriting(true);
-
-    // for (let i = 0; i < response.length; i++) {
-    //   setTimeout(() => {
-    //     setWritten(response.slice(0, i + 1));
-    //     if (i === response.length - 1) {
-    //       console.log('response:', response[i]);
-
-    //       setResponses([...responses, response[i]]);
-    //       setChat([...chat, { type: 'response', txt: response[i] }]);
-    //       setWriting(false);
-    //     }
-    //   }, delay);
-    // }
 
     console.log(chat, response);
     const newChat = [
@@ -105,6 +99,10 @@ const Chat = () => {
     ]
 
     setChat(newChat);
+    
+    if (chatref.current) { // scroll to the bottom of the chat
+      chatref.current.scroll
+    }
   }
 
   useEffect(() => {
@@ -116,7 +114,9 @@ const Chat = () => {
 
   return (
     <div className={`${chatStyles['chat-grid']} py-6 font-poppins`}>
-      <section className={`${chatStyles.chat} flex flex-col gap-2 px-6`}>
+      <section
+        ref={chatref}
+        className={`${chatStyles.chat} flex flex-col gap-2 px-6`}>
         {
           chat.map((msg, index) => (
             msg.type === 'question' ? (
@@ -131,16 +131,14 @@ const Chat = () => {
           )
         }
         {
-          writing && (
-            <Response response={written + '✍️'} />
-          )
+            <Responding texts={toWrite} />
         }
       </section>
       {
         chat.length == 0 && (
-          <section className={`${chatStyles['suggestions']} gap-2 px-5 pb-1 w-2/3 justify-self-center`}>
-            <p className="w-full text-sm pb-1">Ask your question in chat or select the following options to start from:</p>
-            <div className="flex flex-wrap text-sm gap-2">
+          <section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
+            <p className="w-full text-sm pb-2">Ask your question in chat or select the following options to start from:</p>
+            <div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
               {
                 suggestions.map((suggestion, index) => (
                   <Suggestion key={index} suggestion={suggestion} onClick={() => handleAddQuestion(suggestion)} />
@@ -150,13 +148,13 @@ const Chat = () => {
           </section>
         )
       }
-      <section className={`${chatStyles['new-message']} flex justify-center py-2`}>
+      <section className={`${chatStyles['new-message']} flex justify-center py-2 gap-2 px-6`}>
         <div className="avatar">
           <div className="w-10 h-10 rounded-full">
             <img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
           </div>
         </div>
-        <div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 mx-2 w-2/3 disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
+        <div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -166,7 +164,7 @@ const Chat = () => {
               }
             }}
             disabled={loading}
-            type="text" placeholder="New Message" className="w-full p-2 bg-transparent outline-none" />
+            type="text" placeholder="New Message" className="w-full p-2" />
           <img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={handleSubmit} />
         </div>
       </section>

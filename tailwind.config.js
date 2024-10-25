@@ -6,7 +6,7 @@ export default {
       screens: {
         lg: { max: '930px' },
         md: { max: '645px' },
-        sm: { max: '320px' },
+        sm: { max: '490px' },
       },
       colors: {
         yellow: '#EDA334',
@@ -21,5 +21,15 @@ export default {
     },
   },
   // eslint-disable-next-line no-undef
-  plugins: [require('daisyui')],
+  plugins: [require('daisyui'),
+  ({ addBase, theme }) => {
+    addBase({
+      ':root': {
+        '--screen-lg-max': theme('screens.lg.max'),
+        '--screen-md-max': theme('screens.md.max'),
+        '--screen-sm-max': theme('screens.sm.max'),
+      },
+    });
+  }
+  ],
 };
