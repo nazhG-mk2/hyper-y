@@ -1,7 +1,7 @@
 import projectsIcon from '../assets/projects.svg'
 import paperIcon from '../assets/paper.svg'
 import Line from '../componets/common/Line'
-import CommonFooter from '../componets/common/commonFooter'
+import CommonFooter from '../componets/common/CommonFooter'
 
 const Dashboard = () => {
     return (
