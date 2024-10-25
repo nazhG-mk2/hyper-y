@@ -5,7 +5,7 @@ import CommonFooter from '../componets/common/CommonFooter'
 
 const Dashboard = () => {
     return (
-        <section className="flex flex-col gap-2 my-4 font-poppins">
+        <section className="flex flex-col gap-2 my-4 font-poppins max-w-3xl mx-auto">
             <h3 className="text-xl text-center font-semibold mb-2">
                 Dashboard
             </h3>

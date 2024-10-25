@@ -25,7 +25,7 @@ const Header = ({
     <header className={`${className} content-center p-4 pb-2 border-b-2 md:border-b border-yellow md:border-secondary md:mx-3`}>
       <div className="hidden md:flex justify-between w-full">
         {
-          location.pathname !== '/settings' ? (
+          (location.pathname !== '/settings' && location.pathname !== '/dashboard') ? (
             <div className="drawer-content">
               <label htmlFor="mobile-drawer" className="drawer-button">
                 <img src={menuIcon} alt="" />
@@ -33,7 +33,7 @@ const Header = ({
             </div>) : ''
         }
         {
-          location.pathname === '/settings' ? (
+          (location.pathname === '/settings' || location.pathname === '/dashboard') ? (
             <img src={backArrowIcon} alt="" className="active:bg-gray-100 transition-colors bg-opacity-30 p-1 rounded-full"
               onClick={() => window.location.pathname = '/chat'}
             />
