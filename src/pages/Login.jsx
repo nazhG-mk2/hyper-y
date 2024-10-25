@@ -20,19 +20,19 @@ const Login = () => {
                     <img src={facebookIcon} alt="" />
                     Login with Facebook
                 </button>
-                <button className="btn border border-gray-700 bg-transparent"
+                <button className="btn border border-gray-700 text-gray-950 bg-transparent"
                     onClick={handleLogin}
                 >
                     <img src={googleIcon} alt="" />
                     Login with Google
                 </button>
-                <button className="btn border border-gray-700 bg-transparent"
+                <button className="btn border border-gray-700 text-gray-950 bg-transparent"
                     onClick={handleLogin}
                 >
                     <img src={appleIcon} alt="" />
                     Login with Apple
                 </button>
-                <button className="btn border border-gray-700 bg-transparent"
+                <button className="btn border border-gray-700 text-gray-950 bg-transparent"
                     onClick={handleLogin}
                 >
                     <img src={emailIcon} alt="" />

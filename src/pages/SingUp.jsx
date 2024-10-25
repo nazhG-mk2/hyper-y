@@ -20,19 +20,19 @@ const SingUp = () => {
                     <img src={facebookIcon} alt="" />
                     Sign up with Facebook
                 </button>
-                <button className="btn border border-gray-700 bg-transparent"
+                <button className="btn border border-gray-700 text-gray-950 bg-transparent"
                     onClick={handleSingUp}
                 >
                     <img src={googleIcon} alt="" />
                     Sign up with Google
                 </button>
-                <button className="btn border border-gray-700 bg-transparent"
+                <button className="btn border border-gray-700 text-gray-950 bg-transparent"
                     onClick={handleSingUp}
                 >
                     <img src={appleIcon} alt="" />
                     Sign up with Apple
                 </button>
-                <button className="btn border border-gray-700 bg-transparent"
+                <button className="btn border border-gray-700 text-gray-950 bg-transparent"
                     onClick={handleSingUp}
                 >
                     <img src={emailIcon} alt="" />

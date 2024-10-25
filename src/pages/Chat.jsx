@@ -74,6 +74,7 @@ const Chat = () => {
 
     } catch (error) {
       console.error('Error while fetching data:', error);
+      setChat([...chat, { type: 'response', error: true, txt: 'Error - Service Unavailable' }]);
     } finally {
       setLoading(false);
     }
@@ -122,7 +123,7 @@ const Chat = () => {
             msg.type === 'question' ? (
               <Question key={index} question={msg.txt} />
             ) : (
-              <Response key={index} response={msg.txt} />
+              <Response key={index} response={msg.txt} error={msg?.error} />
             )))
         }
         {
