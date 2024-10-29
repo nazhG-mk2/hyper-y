@@ -32,13 +32,13 @@ const Chat = () => {
     const documents = [];
 
     lines.forEach(line => {
-      if (line.startsWith("data:") && line.indexOf("Document:") === -1) {
-        const content = line.slice(5);
+      if (line.startsWith("data: ") && line.indexOf("Document: ") === -1) {
+        const content = line.slice(6);
         if (content) {
           data.push(content);
         }
-      } else if (line.indexOf("Document:")) {
-        const document = line.slice(9).replace(/rawdata\//g, '').replace(/pdf\//g, '');
+      } else if (line.indexOf("Document: ")) {
+        const document = line.slice(9).replace(/rawdata \//g, '').replace(/pdf\//g, '');
         documents.push(document);
       }
     }, [query]);
@@ -58,18 +58,18 @@ const Chat = () => {
     };
 
     try {
-      const response = await axios.post('http://18.208.232.208:8000/chat', payload, {
+      const response = await axios.post('http://54.166.117.117:8000/chat', payload, {
         headers: {
           'Content-Type': 'application/json',
         },
       }, [query]);
 
       const chunk = response.data;
-      const formatedArr = processData(chunk);
-      console.log(formatedArr.data);
-
-      // handleAddResponse(formatedArr.data);
-      setToWrite(formatedArr.data);
+      
+      console.log({chunk});
+      const formatedArr = processData(chunk).data.join('');
+      console.log({formatedArr});
+      setToWrite(formatedArr);
       setWriting(true);
 
     } catch (error) {
@@ -88,22 +88,6 @@ const Chat = () => {
       chatref.current.scrollTop = chatref.current.scrollHeight;
     }
 
-  }
-
-  const handleAddResponse = (response) => {
-    const delay = 1000;
-
-    console.log(chat, response);
-    const newChat = [
-      ...chat,
-      { type: 'response', txt: response.join('') }
-    ]
-
-    setChat(newChat);
-    
-    if (chatref.current) { // scroll to the bottom of the chat
-      chatref.current.scroll
-    }
   }
 
   useEffect(() => {
@@ -132,7 +116,13 @@ const Chat = () => {
           )
         }
         {
-            <Responding texts={toWrite} />
+            writing && <Responding texts={toWrite} end={
+              () => {
+                setWriting(false);
+                setToWrite([]);
+                setChat([...chat, { type: 'response', txt: toWrite }]);
+              }
+            } />
         }
       </section>
       {

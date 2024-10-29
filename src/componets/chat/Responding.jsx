@@ -1,37 +1,41 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import Response from './Response';
 
-const Responding = ({ texts, speed = 100 }) => {
+const Responding = ({ texts, speed = 50,
+  end = () => { }
+
+}) => {
   const [currentText, setCurrentText] = useState('');
   const [textIndex, setTextIndex] = useState(0);
-  const [letterIndex, setLetterIndex] = useState(0);
 
   useEffect(() => {
     if (textIndex < texts.length) {
-      if (letterIndex < texts[textIndex].length) {
-        const timeout = setTimeout(() => {
-          setCurrentText(currentText + texts[textIndex][letterIndex]);
-          setLetterIndex(letterIndex + 1);
-        }, speed);
-        return () => clearTimeout(timeout);
-      } else {
-        const timeout = setTimeout(() => {
-          setLetterIndex(0);
-          setTextIndex(textIndex + 1);
-          setCurrentText('');
-        }, speed * 10); // Delay before starting next text
-        return () => clearTimeout(timeout);
-      }
+      const updateText = texts.slice(0, textIndex + 1)
+      console.log(updateText);
+
+      setCurrentText(texts.slice(0, textIndex + 1));
+
+      const timeout = setTimeout(() => {
+        console.log('timeout');
+
+        setTextIndex(textIndex + 1);
+      }, speed);
+
+      return () => clearTimeout(timeout);
+    } else {
+      end();
     }
-  }, [currentText, letterIndex, textIndex, texts, speed]);
+  }, [currentText, textIndex, texts, speed, end]);
 
   return (
-    <span>{currentText}</span>
+    <Response response={currentText} />
   );
 };
 Responding.propTypes = {
   texts: PropTypes.arrayOf(PropTypes.string).isRequired,
   speed: PropTypes.number,
+  end: PropTypes.func
 };
 
 export default Responding;
