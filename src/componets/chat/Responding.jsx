@@ -2,39 +2,53 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Response from './Response';
 
-const Responding = ({ texts, speed = 50,
+const MINIMUM_SPEED = 5;
+const SKIP_ANIMATION_SPEED = 1;
+
+const Responding = ({ data, time = 4000,
   end = () => { }
 
 }) => {
+  const { text } = data;
+
   const [currentText, setCurrentText] = useState('');
   const [textIndex, setTextIndex] = useState(0);
+  const [skipAnimation, setSkipAnimation] = useState(false);
 
   useEffect(() => {
-    if (textIndex < texts.length) {
-      const updateText = texts.slice(0, textIndex + 1)
-      console.log(updateText);
+    
+    const speed = skipAnimation ? SKIP_ANIMATION_SPEED : Math.max(text.length / time, MINIMUM_SPEED);
 
-      setCurrentText(texts.slice(0, textIndex + 1));
+    if (textIndex < text.length) {
+      setCurrentText(text.slice(0, textIndex + 1));
 
       const timeout = setTimeout(() => {
-        console.log('timeout');
-
         setTextIndex(textIndex + 1);
       }, speed);
 
       return () => clearTimeout(timeout);
     } else {
+      setSkipAnimation(false);
       end();
     }
-  }, [currentText, textIndex, texts, speed, end]);
+  }, [currentText, textIndex, data, time, end, skipAnimation, text]);
 
   return (
-    <Response response={currentText} />
+    <div
+      onClick={() => {
+        setSkipAnimation(true);
+        setCurrentText(text);
+      }}
+      className='pb-8'
+    >
+      <Response response={currentText}
+      />
+    </div>
   );
 };
 Responding.propTypes = {
-  texts: PropTypes.arrayOf(PropTypes.string).isRequired,
-  speed: PropTypes.number,
+  data: PropTypes.object,
+  time: PropTypes.number,
   end: PropTypes.func
 };
 

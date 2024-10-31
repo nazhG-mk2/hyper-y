@@ -77,3 +77,11 @@ input[type="text"] {
 .brightness-0 {
   filter: brightness(0);
 }
+
+.refs {
+  @apply !h-0  overflow-hidden
+}
+
+.response:last-child .refs {
+  @apply !h-auto;
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import playIcon from '../assets/play.svg';
 import chatStyles from './Chat.module.css';
 import axios from 'axios';
@@ -7,18 +7,58 @@ import Response from '../componets/chat/Response';
 import Suggestion from '../componets/chat/Suggestion';
 import Loading from '../componets/chat/Loading';
 import Responding from '../componets/chat/Responding';
+import { GlobalContext } from '../contexts/Global';
 
+const processData = (inputString) => {
+  const lines = inputString.replace(/\[END\]/g, '').split('\n');
+  const data = [];
+  const documents = [];
+
+  const _DOCUMENT = "Document: ";
+  const _DATA = "data: ";
+
+  lines.forEach(line => {
+    if (line.startsWith(_DATA) && line.indexOf(_DOCUMENT) === -1) {
+      const content = line.slice(_DATA.length);
+      if (content) {
+        data.push(content);
+      }
+    } else if (line.indexOf(_DOCUMENT) !== -1) {
+
+      const document = line.replace(_DOCUMENT, '').replace(_DATA, '').replace("rawdata/", "");
+      console.log({ document });
+      
+      documents.push(document);
+    }
+  });
+
+  console.log(
+    {
+      data,
+      documents
+    }
+  );
+
+
+  return {
+    data: data,
+    documents: documents
+  };
+}
 
 const Chat = () => {
   // const [userId, setUserId] = useState('');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [writing, setWriting] = useState(false);
-  const [toWrite, setToWrite] = useState([]);
+  const [toWrite, setToWrite] = useState({});
 
   const [chat, setChat] = useState([]);
 
   const chatref = useRef(null);
+
+  const { state: { token } } = GlobalContext();
+  console.log({ token });
 
   const suggestions = [
     'What is YMCA?',
@@ -26,34 +66,13 @@ const Chat = () => {
     'YMCA locations in Italy',
   ];
 
-  const processData = (inputString) => {
-    const lines = inputString.replace(/\[END\]/g, '').split('\n');
-    const data = [];
-    const documents = [];
+  const handleSubmit = async (q) => {
+    console.log('Query:', q);
 
-    lines.forEach(line => {
-      if (line.startsWith("data: ") && line.indexOf("Document: ") === -1) {
-        const content = line.slice(6);
-        if (content) {
-          data.push(content);
-        }
-      } else if (line.indexOf("Document: ")) {
-        const document = line.slice(9).replace(/rawdata \//g, '').replace(/pdf\//g, '');
-        documents.push(document);
-      }
-    }, [query]);
-
-    return {
-      data: data,
-      documents: documents
-    };
-  }
-
-  const handleSubmit = useCallback(async () => {
     const timestamp = new Date().toISOString();
     const payload = {
-      "user_id": "12345abcde",
-      "query": query,
+      "user_id": token,
+      "query": q,
       "timestamp": timestamp
     };
 
@@ -65,11 +84,14 @@ const Chat = () => {
       }, [query]);
 
       const chunk = response.data;
-      
-      console.log({chunk});
-      const formatedArr = processData(chunk).data.join('');
-      console.log({formatedArr});
-      setToWrite(formatedArr);
+
+      console.log({ chunk });
+      const { data, documents } = processData(chunk);
+      const formattedData = {
+        text: data.join(''),
+        documents: documents
+      }
+      setToWrite(formattedData);
       setWriting(true);
 
     } catch (error) {
@@ -78,36 +100,39 @@ const Chat = () => {
     } finally {
       setLoading(false);
     }
-  });
+  };
 
   const handleAddQuestion = (question) => {
     setChat([...chat, { type: 'question', txt: question }]);
+    handleSubmit(question);
     setQuery('');
     setLoading(true);
     if (chatref.current) { // scroll to the bottom of the chat
       chatref.current.scrollTop = chatref.current.scrollHeight;
     }
-
   }
-
-  useEffect(() => {
-    if (loading == false) {
-      return;
-    }
-    handleSubmit();
-  }, [loading, handleSubmit]);
 
   return (
     <div className={`${chatStyles['chat-grid']} py-6 font-poppins`}>
       <section
         ref={chatref}
-        className={`${chatStyles.chat} flex flex-col gap-2 px-6`}>
+        className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2`}>
         {
           chat.map((msg, index) => (
             msg.type === 'question' ? (
               <Question key={index} question={msg.txt} />
             ) : (
-              <Response key={index} response={msg.txt} error={msg?.error} />
+              <Response
+                key={index}
+                response={msg.txt}
+                error={msg?.error}
+                documents={msg.documents}
+                end={() => {
+                  if (chatref.current) {
+                    chatref.current.scrollTop = chatref.current.scrollHeight;
+                  }
+                }}
+              />
             )))
         }
         {
@@ -116,13 +141,13 @@ const Chat = () => {
           )
         }
         {
-            writing && <Responding texts={toWrite} end={
-              () => {
-                setWriting(false);
-                setToWrite([]);
-                setChat([...chat, { type: 'response', txt: toWrite }]);
-              }
-            } />
+          writing && <Responding data={toWrite} end={
+            () => {
+              setWriting(false);
+              setToWrite({});
+              setChat([...chat, { type: 'response', txt: toWrite.text, documents: toWrite.documents }]);
+            }
+          } />
         }
       </section>
       {
@@ -155,8 +180,10 @@ const Chat = () => {
               }
             }}
             disabled={loading}
-            type="text" placeholder="New Message" className="w-full p-2" />
-          <img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={handleSubmit} />
+            type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
+          <img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => {
+            handleAddQuestion(query)
+          }} />
         </div>
       </section>
     </div>
