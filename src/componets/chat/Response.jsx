@@ -12,7 +12,7 @@ const Response = ({
   }, [response, end]);
 
   return useMemo(() => (
-    <div className="flex gap-3 md:gap-2 response">
+    <div className="flex gap-3 md:gap-1 response md:mr-5">
       <div className="w-10 md:w-8 h-10 md:h-8 p-[2px] antialiased rounded-full border border-gray-500 flex">
         <img className="brightness-0 h-5 self-center" src="/logo.png" />
       </div>
@@ -36,7 +36,7 @@ const Response = ({
                           const url = _doc.slice(0, _doc.indexOf('/'));
                           const path = _doc.slice(_doc.indexOf('/') + 1);
                           return (
-                            <li key={index} className='text-sm md:text-base'>
+                            <li key={index} className='text-sm'>
                               <a href={`https://${url}`} target="_blank" rel="noreferrer" className="">{url}</a>: {path}
                             </li>)
                         })

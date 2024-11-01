@@ -113,7 +113,7 @@ const Chat = () => {
   }
 
   return (
-    <div className={`${chatStyles['chat-grid']} py-6 font-poppins`}>
+    <div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
       <section
         ref={chatref}
         className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2`}>
