@@ -14,16 +14,8 @@ function App() {
     <GlobalProvider>
       <Router>
         <Routes>
-
-          <Route path="/" element={<StartScreenLayout />}>
-            <Route index element={<StartScreen />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/singup" element={<SingUp />} />
-          </Route>
           <Route path="/" element={<MainLayout />}>
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/" element={<Chat />} />
           </Route>
 
           {/* <Route path="/login" element={<Login />} />
