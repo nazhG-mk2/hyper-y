@@ -9,6 +9,7 @@ import iIcon from '../assets/i.svg';
 import bookIcon from '../assets/book.svg';
 import questionIcon from '../assets/question.svg';
 import policyIcon from '../assets/policy.svg';
+import downArrowIcon from "../assets/downArrow.svg"
 
 const SettingsMobile = () => {
     return (
@@ -47,10 +48,18 @@ const SettingsMobile = () => {
             <p className="text-sm text-secondary">
                 App Settings
             </p>
-            <div className="flex items-center gap-2">
-                <img src={changeThemeIcon} className="w-5 h-5" alt="" />
-                <span className='font-normal'>Color Scheme</span>
-                <span className="text-secondary justify-self-end ml-auto">System</span>
+            <div className="flex items-center justify-between gap-2">
+                <span className='font-normal flex'><img src={changeThemeIcon} className="w-5 h-5 mr-2" alt="" /> Color Scheme</span>
+                <div className="flex relative items-center pl-4">
+                    <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                        <img className='opacity-75 w-4 h-4' src={downArrowIcon} alt="" />
+                    </div>
+                    <select className="bg-transparent appearance-none outline-none pl-1 text-secondary focus:text-secondary placeholder-secondary">
+                        <option>System</option>
+                        <option>Light</option>
+                        <option>Dark</option>
+                    </select>
+                </div>
             </div>
             <div className="flex items-center gap-2">
                 <img src={changeLanguageIcon} className="w-5 h-5" alt="" />

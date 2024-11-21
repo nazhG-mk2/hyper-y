@@ -85,3 +85,19 @@ input[type="text"] {
 .response:last-child .refs {
   @apply !h-auto;
 }
+
+.collapse-custom {
+  @apply transition-all;
+}
+
+.collapse-custom-content {
+  @apply transition-all overflow-hidden;
+}
+
+.collapse-custom.collapse-custom-open > .collapse-custom-content {
+  @apply max-h-[100px];
+}
+
+.collapse-custom:not(.collapse-custom-open) > .collapse-custom-content {
+  @apply max-h-0;
+}

@@ -57,28 +57,6 @@ const SidebarMobile = () => {
                             <span className="text-center text-sm text-secondary">No chats found</span>
                     }
                 </div>
-                <Line />
-                <h3 
-                    className="text-lg font-semibold px-4 select-none cursor-pointer transition-colors active:text-yellow"
-                    onClick={() => { window.location.href = '/dashboard'; }}
-                >
-                    Dashboard
-                </h3>
-                <Line />
-                <div className="collapse">
-                    <input type="checkbox" value={archivedChatsIsOpen} onChange={
-                        () => setArchivedChatsIsOpen(!archivedChatsIsOpen)
-                    } />
-                    <h3 className="collapse-title text-lg flex gap-2 items-center font-semibold px-4 cursor-pointer">
-                        Archived Chats
-                        <img className={`w-4 h-4 transition-all duration-500 ${archivedChatsIsOpen ? 'rotate-180' : ''}`} src={downArrowIcon} alt="" />
-                    </h3>
-                    <div className="collapse-content p-0">
-                        <span className="cursor-pointer transition-colors py-2 px-4 block w-full select-none active:bg-lightYellow">old chats</span>
-                    </div>
-                </div>
-                <button className="btn border border-yellow bg-transparent font-normal w-fit text-black mx-4 my-6">Create new Chat</button>
-                <CommonFooter />
             </div>
         </div>
     )

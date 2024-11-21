@@ -41,7 +41,7 @@ const Responding = ({ data, time = 4000,
       }}
       className='pb-8'
     >
-      <Response response={currentText}
+      <Response response={currentText} open={true}
       />
     </div>
   );

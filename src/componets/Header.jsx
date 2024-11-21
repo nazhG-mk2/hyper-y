@@ -46,7 +46,7 @@ const Header = ({
         <img className='h-14 brightness-0' src="/logo_tag_line.png" alt="" />
         <div className='flex items-center gap-6'>
 
-          <span className="font-semibold">John Smith</span>
+          {/* <span className="font-semibold">John Smith</span>
 
           <div className="avatar">
             <div className="w-12 rounded-full">
@@ -59,7 +59,7 @@ const Header = ({
             <input type="checkbox" />
             <img onClick={handleClick} className={`${location.pathname === '/chat' ? 'swap-off' : 'swap-on'} fill-current w-6 h-6`} src={gearIcon} alt="" />
             <img onClick={handleClick} className={`${location.pathname === '/chat' ? 'swap-on' : 'swap-off'}  fill-current w-6 h-6`} src={xIcon} alt="" />
-          </label>
+          </label> */}
         </div>
       </div>
     </header>

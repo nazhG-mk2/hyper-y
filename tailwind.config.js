@@ -30,6 +30,17 @@ export default {
         '--screen-sm-max': theme('screens.sm.max'),
       },
     });
-  }
-  ],
+  }],
+  daisyui: {
+    themes: [
+      {
+        light: {
+          "base-100": "#F8FBF1", // scrollbar color
+        },
+        dark: {
+          "base-100": "#2B2B2B",
+        },
+      },
+    ],
+  },
 };

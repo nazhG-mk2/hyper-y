@@ -1,10 +1,10 @@
 import { createContext, useContext, useReducer } from 'react';
 import PropTypes from 'prop-types';
+import { useChatState } from '../hooks/useChatState';
 
 const context = createContext();
 
 export const GlobalContext = () => useContext(context);
-
 
 /**
  * Generate a mock token for the user
@@ -25,12 +25,13 @@ if (!localStorage.getItem('token')) {
 }
 
 export const GlobalProvider = ({ children }) => {
+    const { chats, setChats, archivedChats, setArchivedChats } = useChatState(); // Usa el hook personalizado
     const [state, updateState] = useReducer((state, newState) => ({ ...state, ...newState }),
-        initialState
+        { ...initialState, chats, archivedChats }
     );
 
     return (
-        <context.Provider value={{ state, updateState }}>
+        <context.Provider value={{ state, updateState, setChats, setArchivedChats }}>
             {children}
         </context.Provider>
     );

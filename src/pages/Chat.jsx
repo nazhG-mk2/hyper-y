@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import playIcon from '../assets/play.svg';
 import chatStyles from './Chat.module.css';
 import axios from 'axios';
@@ -8,6 +8,7 @@ import Suggestion from '../componets/chat/Suggestion';
 import Loading from '../componets/chat/Loading';
 import Responding from '../componets/chat/Responding';
 import { GlobalContext } from '../contexts/Global';
+import PropTypes from 'prop-types';
 
 const processData = (inputString) => {
   const lines = inputString.replace(/\[END\]/g, '').split('\n');
@@ -26,19 +27,10 @@ const processData = (inputString) => {
     } else if (line.indexOf(_DOCUMENT) !== -1) {
 
       const document = line.replace(_DOCUMENT, '').replace(_DATA, '').replace("rawdata/", "");
-      console.log({ document });
-      
+
       documents.push(document);
     }
   });
-
-  console.log(
-    {
-      data,
-      documents
-    }
-  );
-
 
   return {
     data: data,
@@ -46,7 +38,14 @@ const processData = (inputString) => {
   };
 }
 
-const Chat = () => {
+const Chat = ({ id }) => {
+  const globalContext = GlobalContext();
+  const { state: context, setChats } = globalContext;
+  const { token: user_id } = context;
+
+  const chatID = useRef(id || `id-${Math.random().toString(36).slice(2, 9)}`);
+  console.log({ user_id, chatID });
+
   // const [userId, setUserId] = useState('');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,9 +56,6 @@ const Chat = () => {
 
   const chatref = useRef(null);
 
-  const { state: { token } } = GlobalContext();
-  console.log({ token });
-
   const suggestions = [
     'What is YMCA?',
     'YMCA locations in Europe',
@@ -67,11 +63,9 @@ const Chat = () => {
   ];
 
   const handleSubmit = async (q) => {
-    console.log('Query:', q);
-
     const timestamp = new Date().toISOString();
     const payload = {
-      "user_id": token,
+      "user_id": user_id,
       "query": q,
       "timestamp": timestamp
     };
@@ -85,7 +79,6 @@ const Chat = () => {
 
       const chunk = response.data;
 
-      console.log({ chunk });
       const { data, documents } = processData(chunk);
       const formattedData = {
         text: data.join(''),
@@ -111,6 +104,23 @@ const Chat = () => {
       chatref.current.scrollTop = chatref.current.scrollHeight;
     }
   }
+
+  useEffect(() => {
+    if (chat.length === 0) {
+      return;
+    }
+    const date = new Date().toISOString();
+    // save the chat to the context
+    const oldChats = context.chats || [];
+    console.log({'context': context.chats});
+    console.log('Saving chat to context:', chatID.current, [...oldChats, { id: chatID.current, date, chat: chat }]);
+
+    setChats([...oldChats, {
+      id: chatID.current,
+      date,
+      chat: chat
+    }]);
+  }, [chat, context, setChats]);
 
   return (
     <div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
@@ -165,11 +175,6 @@ const Chat = () => {
         )
       }
       <section className={`${chatStyles['new-message']} flex justify-center py-2 gap-2 px-6`}>
-        <div className="avatar">
-          <div className="w-10 h-10 rounded-full">
-            <img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
-          </div>
-        </div>
         <div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
           <input
             value={query}
@@ -189,5 +194,9 @@ const Chat = () => {
     </div>
   )
 }
+
+Chat.propTypes = {
+  id: PropTypes.string,
+};
 
 export default Chat;
