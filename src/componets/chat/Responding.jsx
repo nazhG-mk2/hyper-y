@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Response from './Response';
 
-const MINIMUM_SPEED = 5;
-const SKIP_ANIMATION_SPEED = 1;
+const MINIMUM_SPEED = 1;
 
 const Responding = ({ data, time = 4000,
   end = () => { }
@@ -17,7 +16,7 @@ const Responding = ({ data, time = 4000,
 
   useEffect(() => {
     
-    const speed = skipAnimation ? SKIP_ANIMATION_SPEED : Math.max(text.length / time, MINIMUM_SPEED);
+    const speed = Math.max(text.length / time, MINIMUM_SPEED);
 
     if (textIndex < text.length) {
       setCurrentText(text.slice(0, textIndex + 1));

@@ -15,7 +15,7 @@
   height: 100vh;
 }
 
-@media (max-width: 645px) {
+@media (max-width: 930px) {
   .main-layout {
     grid-template-areas: 
       "header"

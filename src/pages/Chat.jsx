@@ -63,28 +63,47 @@ const Chat = ({ id }) => {
   ];
 
   const handleSubmit = async (q) => {
-    const timestamp = new Date().toISOString();
-    const payload = {
-      "user_id": user_id,
-      "query": q,
-      "timestamp": timestamp
-    };
-
     try {
-      const response = await axios.post('http://54.166.117.117:8000/chat', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }, [query]);
+      //     fetch('', {
+      //         method: 'POST',
+      //         headers: {
+      //             'Content-Type': 'application/json',
+      //         },
+      //         body: JSON.stringify({
+      //             "messages": [
+      //                 {
+      //                     "role": "system",
+      //                     "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."
+      //                 },
+      //                 {
+      //                     "role": "user",
+      //                     "content": "What is the meaning of life, the universe, and everything?"
+      //                 }
+      //             ],
+      //             "model": "grok-beta",
+      //             "stream": false,
+      //             "temperature": 0
+      //         })
+      //     })
+      // }}
+      const response = await axios.post('http://43.202.113.176/v1/chat/completions', {
+        "messages": [
+          {
+            "role": "user",
+            "content": q,
+          },
+        ],
+        "model": "grok-beta",
+        "stream": false,
+        "temperature": 0
+      });
 
-      const chunk = response.data;
+      const { data: { choices } } = response;
+      const resp = choices[0].message.content;
 
-      const { data, documents } = processData(chunk);
-      const formattedData = {
-        text: data.join(''),
-        documents: documents
-      }
-      setToWrite(formattedData);
+      console.log({ resp });
+
+      setToWrite({ text: resp, documents: [] });
       setWriting(true);
 
     } catch (error) {
@@ -112,7 +131,7 @@ const Chat = ({ id }) => {
     const date = new Date().toISOString();
     // save the chat to the context
     const oldChats = context.chats || [];
-    console.log({'context': context.chats});
+    console.log({ 'context': context.chats });
     console.log('Saving chat to context:', chatID.current, [...oldChats, { id: chatID.current, date, chat: chat }]);
 
     setChats([...oldChats, {
