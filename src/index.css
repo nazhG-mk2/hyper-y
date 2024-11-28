@@ -105,12 +105,12 @@ input[type="text"] {
 .text-shyne {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(45deg, #777777, #dadada, #777777);
+  background: linear-gradient(45deg, #525252, #dadada, #525252);
   background-size: 80%;
   animation: animate 3s linear infinite;
   background-clip: text;
   -webkit-background-clip: text;
-  -webkit-text-fill-color: rgba(167, 167, 167, 0);
+  -webkit-text-fill-color: rgba(0, 0, 0, 0);
 }
 
 @keyframes animate {
