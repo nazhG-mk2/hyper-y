@@ -40,7 +40,7 @@ const SingUp = () => {
                 </button>
             </div>
             <p className="font-semibold mt-1">
-                Already have an account? <a href="/login" className="text-yellow">Login</a>
+                Already have an account? <a href="/login" className="text-primary">Login</a>
             </p>
         </main>
     )

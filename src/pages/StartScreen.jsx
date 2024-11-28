@@ -13,11 +13,11 @@ const StartScreen = () => {
                 <span className="hidden sm:block mb-4 font-semibold">
                     Let’s Get Started!
                 </span>
-                <button className="px-8 md:px-4 py-4  mb-4 btn-primary md:bg-transparent md:border md:border-yellow"
+                <button className="px-8 md:px-4 py-4  mb-4 btn-primary md:bg-primary-soft md:border"
                     onClick={() => window.location.href = '/login'}
                 >
                     <span className="md:hidden">Login to Coninue</span>
-                    <span className="hidden md:block font-poppins">I already have an account</span>
+                    <span className="hidden md:block font-poppins text-white">I already have an account</span>
                 </button>
                 <button className="px-8 md:px-4 py-4 btn-secondary"
                     onClick={() => window.location.href = '/singup'}

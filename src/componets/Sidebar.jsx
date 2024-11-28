@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types';
 import sideBarStyle from './Sidebar.module.css';
-import { GlobalContext } from '../contexts/Global';
-import { useEffect, useState } from 'react';
+import ChatContext, { useChatContext } from '../contexts/Chat';
 
 const formatDate = (dateString) => {
     const inputDate = new Date(dateString);
@@ -23,84 +22,79 @@ const formatDate = (dateString) => {
 
     const month = inputDate.toLocaleString('default', { month: 'long' });
     return `${month} ${inputDate.getFullYear()}`;
-}
+};
 
 const formatChatList = (chats) => {
-    // Agrupar chats por fecha
     const groupedChats = {};
     chats.forEach(chat => {
         const date = formatDate(chat.date);
         if (!groupedChats[date]) groupedChats[date] = [];
         groupedChats[date].push(chat);
     });
-    return groupedChats; // Retornar el valor inicial del estado
-}
+    return groupedChats;
+};
 
+const Sidebar = ({ className = '' }) => {
+    const { chats, deleteChat, currentChat, setCurrentChat } = useChatContext();
+    const chatsList = formatChatList(chats);
 
-const Sidebar = ({
-    className = '',
-}) => {
-    const { state, setChats } = GlobalContext();
-    const { chats } = state;
-    const [chatsList, setChatsList] = useState(formatChatList(chats));
+    const handleDeleteChat = (chatId) => {
+        deleteChat(chatId);
+    };
 
-    console.log({ chatsList });
-
-
-    useEffect(() => {
-        setChatsList(formatChatList(chats));
-    }, [state, chats]);
+    const handleSelectChat = (chatId) => {
+        const selectedChat = chats.find(chat => chat.id === chatId);
+        setCurrentChat(selectedChat); // Actualiza el chat activo
+    };
 
     return (
         <section className={`${className} ${sideBarStyle['sidebar-grid']} gap-2 font-poppins p-5 bg-[#F8F8F8] lg:hidden`}>
-            {
-                <>
-                    <div className={`${sideBarStyle['chat-list']} overflow-y-auto flex flex-col gap-1`}>
-                        {
-                            Object.entries(chatsList).map(([date, chats]) => (
-                                <div key={date}>
-                                    <p className="px-2 text-secondary text-sm">{date}</p>
-                                    {chats.map(chat => (
-                                        <p
-                                            key={chat.id}
-                                            className="px-2 py-1 rounded-md hover:bg-lightYellow cursor-pointer relative"
-                                        >
-                                            {chat.chat[0]?.txt || "Unnamed chat"}
-                                            <span className="after:content-['×'] after:text-red-400 after:absolute after:right-2 cursor-pointer"
-                                                onClick={() => {
-                                                    console.log('Deleting chat:', chat.id);
-                                                    console.log('asda', chats.filter((c) => {
-                                                        console.log(c.id, chat.id, c.id !== chat.id);
-                                                        
-                                                        return c.id !== chat.id}));
-                                                    
-                                                    setChats(chats.filter(c => c.id !== chat.id));
-                                                }}
-                                            ></span>
-                                        </p>
-                                    ))}
-                                </div>
-                            ))
-                        }
-                        {/* <p className="px-2 text-secondary text-sm">Yesterday</p>
-                            <p className="px-2 py-1 rounded-md hover:bg-lightYellow cursor-pointer">YMCA Europe locations</p>
-                            <p className="px-2 text-secondary text-sm">September 2024</p>
-                            <p className="px-2 py-1 rounded-md hover:bg-lightYellow cursor-pointer">YMCA US locations</p>
-                            <p className="px-2 text-secondary text-sm">August 2024</p>
-                            <p className="px-2 py-1 rounded-md hover:bg-lightYellow cursor-pointer">Closest to me YMCA locations</p> */}
+            <div className={`${sideBarStyle['chat-list']} overflow-y-auto`}>
+                {Object.entries(chatsList).map(([date, chats]) => (
+                    <div className="flex flex-col gap-1" key={date}>
+                        <p className="px-2 text-secondary text-sm">{date}</p>
+                        {chats.map(chat => {
+                            return (
+                            <div
+                                key={chat.id}
+                                className={`px-2 group text-black transition-all flex hover:bg-light justify-between items-center rounded-md cursor-pointer ${
+                                    currentChat?.id === chat.id ? 'bg-light' : ''
+                                }`}
+                                onClick={() => handleSelectChat(chat.id)} // Cambia el chat activo
+                            >
+                                <p
+                                    className="py-1 whitespace-nowrap overflow-hidden overflow-ellipsis"
+                                    title={chat.chat[0]?.txt || "Unnamed chat"}
+                                >
+                                    {chat.chat[0]?.txt || "Unnamed chat"}
+                                </p>
+                                <span
+                                    className="text-red-400 invisible group-hover:visible cursor-pointer w-4 h-4 text-center my-auto"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Evita activar el `onClick` del padre
+                                        handleDeleteChat(chat.id);
+                                    }}
+                                >
+                                    ×
+                                </span>
+                            </div>
+                        )})}
                     </div>
-                    <button className={`${sideBarStyle['new-chat']} btn rounded-md bg-yellow hover:bg-darkYellow border-0 text-black`}
-                        onClick={() => window.location.href = '/'}
-                    >Create new Chat</button>
-                </>
-            }
+                ))}
+            </div>
+            <button
+                className={`${sideBarStyle['new-chat']} btn rounded-md bg-primary hover:bg-dark border-0 text-white`}
+                onClick={() => window.location.href = '/chat'}
+            >
+                Create new Chat
+            </button>
             <p className={`${sideBarStyle['footer']} text-sm`}>Powered by HyperCycle Inc.</p>
         </section>
-    )
-}
+    );
+};
 
 Sidebar.propTypes = {
     className: PropTypes.string,
 };
 
-export default Sidebar
+export default Sidebar;

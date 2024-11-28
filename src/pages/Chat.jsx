@@ -5,54 +5,26 @@ import axios from 'axios';
 import Question from '../componets/chat/Question';
 import Response from '../componets/chat/Response';
 import Suggestion from '../componets/chat/Suggestion';
-import Loading from '../componets/chat/Loading';
+// import Loading from '../componets/chat/Loading';
 import Responding from '../componets/chat/Responding';
-import { GlobalContext } from '../contexts/Global';
-import PropTypes from 'prop-types';
+// import { GlobalContext } from '../contexts/Global';
+import { useChatContext } from '../contexts/Chat';
 
-const processData = (inputString) => {
-  const lines = inputString.replace(/\[END\]/g, '').split('\n');
-  const data = [];
-  const documents = [];
-
-  const _DOCUMENT = "Document: ";
-  const _DATA = "data: ";
-
-  lines.forEach(line => {
-    if (line.startsWith(_DATA) && line.indexOf(_DOCUMENT) === -1) {
-      const content = line.slice(_DATA.length);
-      if (content) {
-        data.push(content);
-      }
-    } else if (line.indexOf(_DOCUMENT) !== -1) {
-
-      const document = line.replace(_DOCUMENT, '').replace(_DATA, '').replace("rawdata/", "");
-
-      documents.push(document);
-    }
-  });
-
-  return {
-    data: data,
-    documents: documents
-  };
-}
-
-const Chat = ({ id }) => {
-  const globalContext = GlobalContext();
-  const { state: context, setChats } = globalContext;
-  const { token: user_id } = context;
-
-  const chatID = useRef(id || `id-${Math.random().toString(36).slice(2, 9)}`);
-  console.log({ user_id, chatID });
+const Chat = () => {
+  // const { state: context } = GlobalContext();
+  const { AddToCurrentChat, currentChat } = useChatContext();
+  // const { token: user_id } = context;
+  console.log({ currentChat: currentChat });
 
   // const [userId, setUserId] = useState('');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [writing, setWriting] = useState(false);
   const [toWrite, setToWrite] = useState({});
-
-  const [chat, setChat] = useState([]);
+  const [steps, setSteps] = useState([]);
+  const [currentStep, setCurrentStep] = useState([]);
+  const [writingLong, setWritingLong] = useState(false);
+  const [toWriteLong, setToWriteLong] = useState({});
 
   const chatref = useRef(null);
 
@@ -62,92 +34,125 @@ const Chat = ({ id }) => {
     'YMCA locations in Italy',
   ];
 
+  const formatThinkingSteps = (steps) => {
+    // REFINING_SEARCH → "Making sure we find the right information..."
+    // FORMING_RESPONSE → "Preparing your answer..."
+    if (steps == 'REFINING_SEARCH') {
+      return 'Making sure we find the right information...';
+    }
+    if (steps == 'FORMING_RESPONSE') {
+      return 'Preparing your answer...';
+    }
+    return steps;
+  }
+
   const handleSubmit = async (q) => {
     try {
-      //     fetch('', {
-      //         method: 'POST',
-      //         headers: {
-      //             'Content-Type': 'application/json',
-      //         },
-      //         body: JSON.stringify({
-      //             "messages": [
-      //                 {
-      //                     "role": "system",
-      //                     "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."
-      //                 },
-      //                 {
-      //                     "role": "user",
-      //                     "content": "What is the meaning of life, the universe, and everything?"
-      //                 }
-      //             ],
-      //             "model": "grok-beta",
-      //             "stream": false,
-      //             "temperature": 0
-      //         })
-      //     })
-      // }}
-      const response = await axios.post('http://43.202.113.176/v1/chat/completions', {
+      const gronkRequest = await axios.post('http://43.202.113.176/v1/chat/completions', {
         "messages": [
           {
             "role": "user",
-            "content": q,
-          },
+            "content": `in 3 lines or less (respond in the language of the question/sentence): ${q}`,
+          }
         ],
         "model": "grok-beta",
         "stream": false,
         "temperature": 0
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then((response) => {
+        const { data: { choices } } = response;
+        const resp = choices[0].message.content;
+
+        setToWrite({ text: resp, documents: [] });
+        setWriting(true);
+      });
+      const fullRequest = await axios.post('http://18.219.124.9:9999/stream_chat', {
+        "user_query": q,
+        "searches": 4, "select_searches": [1, 2]
+      }).then(async (response) => {
+        const parts = response.data.split('\n');
+        // get the text between FORMING_RESPONSE and END_RESPONSE in the response
+        const match = response.data.match(/FORMING_RESPONSE([\s\S]*?)END_RESPONSE/);
+        console.log({ match });
+
+        setCurrentStep(() => 0);
+
+        if (match) {
+          console.log(match[1].trim());
+          setToWriteLong(match[1].trim());
+        } else {
+          console.log("No match found");
+        }
+
+        // find the position of FORMING_RESPONSE
+        const formingResponseIndex = parts.indexOf('FORMING_RESPONSE');
+        const _steps = parts.slice(0, formingResponseIndex);
+        // get only the _steps that are uppercase string no whitespaces
+        const _stepsFiltered = _steps.filter(step => step.trim() === step.toUpperCase() && step.indexOf(' ') === -1);
+        console.log({ _stepsFiltered });
+        setSteps(_stepsFiltered);
+        setLoading('Searching for the best answer...');
+
       });
 
-      const { data: { choices } } = response;
-      const resp = choices[0].message.content;
+      await Promise.all([gronkRequest, fullRequest]);
+      console.log({
+        toWriteLong,
+        steps,
+      });
 
-      console.log({ resp });
-
-      setToWrite({ text: resp, documents: [] });
-      setWriting(true);
 
     } catch (error) {
       console.error('Error while fetching data:', error);
-      setChat([...chat, { type: 'response', error: true, txt: 'Error - Service Unavailable' }]);
-    } finally {
-      setLoading(false);
+
+      AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
     }
   };
 
+  useEffect(() => {
+    console.log({ steps, currentStep });
+
+    if (steps.length === 0) return;
+
+    let stepTimeout;
+    if (currentStep < steps.length) {
+      // Mostrar cada paso después de un segundo
+      stepTimeout = setTimeout(() => {
+        console.log('Step:', steps[currentStep]);
+        setCurrentStep((prev) => prev + 1);
+        setLoading(formatThinkingSteps(steps[currentStep]));
+      }, 1000); // 1000 ms = 1 segundo
+    } else {
+      // Cuando todos los pasos se han mostrado, muestra el mensaje final
+      setTimeout(() => {
+        setLoading(false);
+        setWritingLong(true);
+        console.log('END');
+
+      }, 1000); // Espera 1 segundo después de mostrar el último paso
+    }
+
+    // Limpiar el timeout cuando el componente se desmonte o cambie el estado
+    return () => clearTimeout(stepTimeout);
+  }, [currentStep, steps]);
+
   const handleAddQuestion = (question) => {
-    setChat([...chat, { type: 'question', txt: question }]);
+    AddToCurrentChat({ type: 'question', txt: question });
     handleSubmit(question);
     setQuery('');
-    setLoading(true);
-    if (chatref.current) { // scroll to the bottom of the chat
-      chatref.current.scrollTop = chatref.current.scrollHeight;
-    }
+    setLoading('Generating a quick response for you...');
   }
-
-  useEffect(() => {
-    if (chat.length === 0) {
-      return;
-    }
-    const date = new Date().toISOString();
-    // save the chat to the context
-    const oldChats = context.chats || [];
-    console.log({ 'context': context.chats });
-    console.log('Saving chat to context:', chatID.current, [...oldChats, { id: chatID.current, date, chat: chat }]);
-
-    setChats([...oldChats, {
-      id: chatID.current,
-      date,
-      chat: chat
-    }]);
-  }, [chat, context, setChats]);
 
   return (
     <div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
       <section
         ref={chatref}
-        className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2`}>
+        className={`${chatStyles.chat} flex flex-col px-6 md:px-2`}>
         {
-          chat.map((msg, index) => (
+          currentChat?.chat.map((msg, index) => (
             msg.type === 'question' ? (
               <Question key={index} question={msg.txt} />
             ) : (
@@ -155,10 +160,11 @@ const Chat = ({ id }) => {
                 key={index}
                 response={msg.txt}
                 error={msg?.error}
-                documents={msg.documents}
                 end={() => {
                   if (chatref.current) {
-                    chatref.current.scrollTop = chatref.current.scrollHeight;
+                    setTimeout(() => {
+                      chatref.current.scrollTop = chatref.current.scrollHeight;
+                    }, 0);
                   }
                 }}
               />
@@ -166,21 +172,34 @@ const Chat = ({ id }) => {
         }
         {
           loading && (
-            <Loading />
+            // <Loading />
+            <div className="flex ml-14">
+              <p className='text-base text-shyne'>{loading}</p>
+              {/* <span className="emoji-rotator text-xs"></span> */}
+            </div>
           )
         }
         {
-          writing && <Responding data={toWrite} end={
+          writing && <Responding data={ {text: toWrite.text, additional: 'Quick response 2.1 seconds'}} end={
             () => {
               setWriting(false);
               setToWrite({});
-              setChat([...chat, { type: 'response', txt: toWrite.text, documents: toWrite.documents }]);
+              AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents });
             }
           } />
         }
-      </section>
+        {
+          writingLong && <Responding data={{ text: toWriteLong, noImg: true, additional: 'Thought for 7.33 seconds'}} end={
+            () => {
+              setWritingLong(false);
+              setToWriteLong({});
+              AddToCurrentChat({ type: 'response', txt: toWriteLong.text, documents: [] });
+            }
+          } />
+        }
+      </section >
       {
-        chat.length == 0 && (
+        (!currentChat || currentChat?.length == 0) && (
           <section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
             <p className="w-full text-sm pb-2">Ask your question in chat or select the following options to start from:</p>
             <div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
@@ -193,7 +212,7 @@ const Chat = ({ id }) => {
           </section>
         )
       }
-      <section className={`${chatStyles['new-message']} flex justify-center py-2 gap-2 px-6`}>
+      < section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
         <div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
           <input
             value={query}
@@ -209,13 +228,9 @@ const Chat = ({ id }) => {
             handleAddQuestion(query)
           }} />
         </div>
-      </section>
-    </div>
+      </section >
+    </div >
   )
 }
-
-Chat.propTypes = {
-  id: PropTypes.string,
-};
 
 export default Chat;

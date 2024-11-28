@@ -1,9 +1,6 @@
-import PropTypes from 'prop-types';
-import xIcon from '../assets/x.svg';
-import gearIcon from '../assets/gear.svg';
-import { useLocation } from 'react-router-dom';
-import backArrowIcon from '../assets/backArrow.svg';
 import { memo } from 'react';
+import PropTypes from 'prop-types';
+import { useLocation } from 'react-router-dom';
 import menuIcon from '../assets/menu.svg';
 
 const Header = ({
@@ -22,14 +19,15 @@ const Header = ({
   }
 
   return (
-    <header className={`${className} content-center p-4 pb-2 border-b-2 lg:border-b border-yellow lg:mx-3`}>
-      <div className="flex transition-all lg:justify-between justify-center w-full">
-        <div className="hidden lg:inline drawer-content">
+    <header className={`${className} content-center p-4 pb-2 border-b-2 lg:border-b md:bg-transparent bg-primary border-primary md:mx-3`}>
+      <div className="flex transition-all lg:justify-between justify-start w-full">
+        <div className="hidden md:inline drawer-content">
           <label htmlFor="mobile-drawer" className="drawer-button">
             <img src={menuIcon} alt="" />
           </label>
         </div>
-        <img className='h-6' src="/logo2.png" alt="" />
+        <img className='h-6 hidden md:block' src="/logo.png" alt="" />
+        <img className='h-6 block md:hidden' src="/logo2.png" alt="" />
         <div></div>
       </div>
     </header>

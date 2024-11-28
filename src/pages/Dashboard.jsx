@@ -20,7 +20,7 @@ const Dashboard = () => {
                 </li>
                 <li className="flex items-start">
                     <span className="w-5/6 flex gap-2">
-                        <span className="bg-yellow rounded-full flex w-2 h-2 px-1 mt-2">
+                        <span className="bg-primary rounded-full flex w-2 h-2 px-1 mt-2">
                         </span>Youth for Peace December 2024</span>
                     <progress className="w-1/6 mt-2 progress progress-warning" value="50" max="100">
                     </progress>

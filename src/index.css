@@ -22,11 +22,11 @@
 }
 
 ::selection {
-  @apply bg-lightYellow text-gray-950;
+  @apply bg-light text-white;
 }
 
-.bg-lightYellow::selection {
-  @apply bg-yellow text-gray-950;
+.bg-light::selection {
+  @apply bg-primary text-white;
 }
 
 .table :where(th, td) {
@@ -55,23 +55,23 @@ th {
 
 /* input text */
 input[type="text"] {
-  @apply bg-transparent outline-none
+  @apply bg-transparent outline-none;
 }
 
 .btn {
-  @apply px-4 py-2 flex items-center gap-2 rounded
+  @apply px-4 py-2 flex items-center gap-2 rounded;
 }
 
 .btn:hover {
-  @apply bg-lightYellow text-black border-gray-500
+  @apply bg-light text-white border-gray-500;
 }
 
 .btn-primary {
-  @apply bg-yellow rounded
+  @apply bg-primary rounded;
 }
 
 .btn-secondary {
-  @apply bg-transparent text-black border border-yellow rounded
+  @apply bg-transparent text-gray-950 border border-primary-soft rounded;
 }
 
 .brightness-0 {
@@ -79,7 +79,7 @@ input[type="text"] {
 }
 
 .refs {
-  @apply !h-0  overflow-hidden
+  @apply !h-0  overflow-hidden;
 }
 
 .response:last-child .refs {
@@ -100,4 +100,64 @@ input[type="text"] {
 
 .collapse-custom:not(.collapse-custom-open) > .collapse-custom-content {
   @apply max-h-0;
+}
+
+.text-shyne {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(45deg, #777777, #dadada, #777777);
+  background-size: 80%;
+  animation: animate 3s linear infinite;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: rgba(167, 167, 167, 0);
+}
+
+@keyframes animate {
+  0% {
+    background-position: -400%;
+  }
+  100% {
+    background-position: 400%;
+  }
+}
+
+.emoji-rotator {
+  display: inline-block;
+  animation: flip 2s infinite;
+  transform-origin: center;
+}
+
+@keyframes flip {
+  0% {
+    transform: rotateY(90deg);
+  }
+  5%, 95% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(90deg);
+  }
+}
+
+.emoji-rotator::before {
+  content: "🌏";
+  display: inline-block;
+  animation: emojiChange 6s infinite;
+}
+
+@keyframes emojiChange {
+  0%, 33% { /* America */
+    content: "🌎";
+  }
+  33.1%, 66% { /* Europe - Africa */
+    content: "🌍";
+  }
+  66.1%, 100% { /* Asia - Australia */
+    content: "🌏";
+  }
+}
+
+.text-shadow {
+  text-shadow: 1px 1px 0.5px rgba(0, 0, 0, 0.1);
 }

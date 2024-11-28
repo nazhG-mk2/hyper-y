@@ -6,7 +6,7 @@ const Suggestion = ({
     onClick,
 }) => {
     return (
-        <span className="px-4 py-2 bg-lightYellow text-black rounded-md cursor-pointer hover:bg-yellow md:whitespace-nowrap"
+        <span className="px-4 py-2 transition-all bg-light text-black rounded-md cursor-pointer hover:bg-primary-soft hover:text-white md:whitespace-nowrap"
             onClick={() => onClick(suggestion)}
         >
             {suggestion}

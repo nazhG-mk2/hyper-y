@@ -6,7 +6,7 @@ const StartScreenLayout = () => {
         <div className="flex">
             <div className="flex-1 grid place-content-between h-screen px-12 md:px-8 justify-center">
                 <div>
-                    <img src="/logo2.png" className="hidden md:block h-[1.5rem] antialiased mx-auto mt-[12vh]" alt="" />
+                    <img src="/logo.png" className="hidden md:block h-[1.5rem] antialiased mx-auto mt-[12vh]" alt="" />
                 </div>
                 <Outlet />
                 <footer className="mb-8">

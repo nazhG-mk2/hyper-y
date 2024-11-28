@@ -41,6 +41,7 @@ const Responding = ({ data, time = 4000,
       className='pb-8'
     >
       <Response response={currentText} open={true}
+      noImg={data.noImg} additionalResponse={data.additional || ''}
       />
     </div>
   );

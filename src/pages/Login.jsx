@@ -40,7 +40,7 @@ const Login = () => {
                 </button>
             </div>
             <p className="font-semibold">
-                Don’t have an account?   <a href="/singup" className="text-yellow">Signup</a>
+                Don’t have an account?   <a href="/singup" className="text-primary">Signup</a>
             </p>
         </main>
     )

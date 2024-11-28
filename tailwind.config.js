@@ -9,12 +9,13 @@ export default {
         sm: { max: '490px' },
       },
       colors: {
-        yellow: '#EDA334',
-        darkYellow: '#E1931D',
-        lightYellow: '#FBCD8A',
+        primary: '#FF0000',
+        'primary-soft': '#E94235',
+        dark: '#cc0000',
+        light: '#FF000026',
         secondary: '#747775',
         blue: '#1A77F2',
-      },
+      }, 
       fontFamily: {
         poppins: ['Poppins', 'sans-serif'],
       },

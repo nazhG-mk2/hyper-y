@@ -52,7 +52,7 @@ const SidebarMobile = () => {
                     {
                         chatsResults.length ?
                             chatsResults.map(chat => (
-                                <span key={chat.id} className="cursor-pointer transition-colors p-2 px-4 select-none active:bg-lightYellow">{chat.name}</span>
+                                <span key={chat.id} className="cursor-pointer transition-colors p-2 px-4 select-none active:bg-light">{chat.name}</span>
                             )) :
                             <span className="text-center text-sm text-secondary">No chats found</span>
                     }

@@ -1,6 +1,5 @@
-import { createContext, useContext, useReducer } from 'react';
+import { createContext, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { useChatState } from '../hooks/useChatState';
 
 const context = createContext();
 
@@ -17,6 +16,7 @@ const generateMockToken = () => {
 const initialState = {
     user: JSON.parse(localStorage.getItem('user')) || null, // User name displayed
     token: localStorage.getItem('token') || generateMockToken(), // User token for chat API
+    activeChat: null, // Active chat
 };
 
 // Set the local storage if it doesn't exist
@@ -25,17 +25,17 @@ if (!localStorage.getItem('token')) {
 }
 
 export const GlobalProvider = ({ children }) => {
-    const { chats, setChats, archivedChats, setArchivedChats } = useChatState(); // Usa el hook personalizado
-    const [state, updateState] = useReducer((state, newState) => ({ ...state, ...newState }),
-        { ...initialState, chats, archivedChats }
-    );
+    const state = {
+        ...initialState,
+    };
 
     return (
-        <context.Provider value={{ state, updateState, setChats, setArchivedChats }}>
+        <context.Provider value={{ state }}>
             {children}
         </context.Provider>
     );
 };
+
 
 GlobalProvider.propTypes = {
     children: PropTypes.node.isRequired,

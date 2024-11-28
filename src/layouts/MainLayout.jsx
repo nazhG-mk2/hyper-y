@@ -7,8 +7,7 @@ import { Outlet } from 'react-router-dom';
 const MainLayout = () => {
     return (
         <div className={`${layoutStyles['main-layout']} drawer`}>
-                <input id="mobile-drawer" type="checkbox" className="drawer-toggle" />
-
+            <input id="mobile-drawer" type="checkbox" className="drawer-toggle" />
             <Header className={layoutStyles['main__header']} />
             <SidebarMobile />
             <Sidebar />
