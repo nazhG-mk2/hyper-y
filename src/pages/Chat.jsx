@@ -180,7 +180,7 @@ const Chat = () => {
                 end={() => {
                   if (chatref.current) {
                     setTimeout(() => {
-                      chatref.current.scrollTop = chatref.current.scrollHeight;
+                      // chatref.current.scrollTop = chatref.current.scrollHeight;
                     }, 0);
                   }
                 }}
