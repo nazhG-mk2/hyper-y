@@ -37,12 +37,21 @@ const Chat = () => {
   const formatThinkingSteps = (steps) => {
     // REFINING_SEARCH → "Making sure we find the right information..."
     // FORMING_RESPONSE → "Preparing your answer..."
+    // FORMING_SEARCH_QUERY → "Forming the search query..."
+    // GETTING_RESPONSE → "Getting the response..."
     if (steps == 'REFINING_SEARCH') {
       return 'Making sure we find the right information...';
     }
     if (steps == 'FORMING_RESPONSE') {
       return 'Preparing your answer...';
     }
+    if (steps == 'FORMING_SEARCH_QUERY') {
+      return 'Forming the search query...';
+    }
+    if (steps == 'GETTING_RESPONSE') {
+      return 'Getting the response...';
+    }
+
     return steps;
   }
 
@@ -205,8 +214,8 @@ const Chat = () => {
             () => {
               setWritingLong(false);
               setToWriteLong({});
-              console.log('End of long response 🔥🔥🔥', );
-              
+              console.log('End of long response 🔥🔥🔥',);
+
               AddToCurrentChat({ type: 'response', txt: toWriteLong.text, documents: [] });
             }
           } />
