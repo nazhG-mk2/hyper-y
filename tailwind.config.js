@@ -14,7 +14,7 @@ export default {
         dark: '#cc0000',
         light: '#FF000026',
         secondary: '#747775',
-        blue: '#1A77F2',
+        'blue-facebook': '#1A77F2',
       }, 
       fontFamily: {
         poppins: ['Poppins', 'sans-serif'],

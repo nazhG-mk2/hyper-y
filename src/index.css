@@ -22,11 +22,11 @@
 }
 
 ::selection {
-  @apply bg-light text-white;
+  @apply bg-light text-gray-800;
 }
 
 .bg-light::selection {
-  @apply bg-primary text-white;
+  @apply bg-primary text-gray-100;
 }
 
 .table :where(th, td) {

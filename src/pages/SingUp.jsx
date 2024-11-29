@@ -14,7 +14,7 @@ const SingUp = () => {
             <h1 className="text-6xl font-bold sm:hidden">Hyper-Y Chatbot</h1>
             <p className="text-xl sm:text-sm sm:font-semibold">Select a service to SignUp</p>
             <div className="w-fit flex flex-col mb-4 mt-8 gap-4 text-lg">
-                <button className="btn bg-blue text-white border-none"
+                <button className="btn bg-blue-facebook text-white border-none"
                     onClick={handleSingUp}
                 >
                     <img src={facebookIcon} alt="" />

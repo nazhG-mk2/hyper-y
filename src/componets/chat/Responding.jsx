@@ -16,9 +16,9 @@ const Responding = ({ data, time = 4000,
 
   useEffect(() => {
     
-    const speed = Math.max(text.length / time, MINIMUM_SPEED);
+    const speed = Math.max(text?.length / time, MINIMUM_SPEED);
 
-    if (textIndex < text.length) {
+    if (textIndex < text?.length) {
       setCurrentText(text.slice(0, textIndex + 1));
 
       const timeout = setTimeout(() => {

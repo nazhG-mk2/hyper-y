@@ -35,9 +35,9 @@ const Response = ({
   })
 
   return useMemo(() => (
-    <div className="flex gap-3 md:gap-1 response md:mr-5  mb-5" ref={responseRef}>
-      <div className={`w-10 min-w-10 md:w-8 h-10 min-h-10 md:h-8 p-[2px] antialiased rounded-full flex ${noImg ? '': 'border border-gray-500'}`}>
-        <img className={`brightness-0 h-5 md:h-4 self-center ${noImg ? 'hidden': ''}`} src="/logo.png" />
+    <div className="flex gap-3 md:gap-1 response md:mr-5" ref={responseRef}>
+      <div className="w-10 min-w-10 md:w-8 h-10 min-h-10 md:h-8 p-[2px] antialiased rounded-full flex">
+        <img className="rounded-full self-center" src="/hyperY.png" />
       </div>
       <div className="flex flex-col">
         {
@@ -56,7 +56,9 @@ const Response = ({
                     components={{
                       ul: ({ ...props }) => <ul className="list-disc pl-5 flex flex-col" {...props} />,
                       ol: ({ ...props }) => <ol className="list-decimal pl-5 flex flex-col" {...props} />,
-                      li: ({ ...props }) => <li className="my-1 flex flex-col" {...props} />,
+                      li: ({ ...props }) => <li className="my-1 flex flex-col list-item" {...props} />,
+                      strong: ({ ...props }) => <strong className="text-lg contents" {...props} />,
+                      a: ({ ...props }) => <a className="text-blue-400 font-medium underline" {...props} />,
                     }}>
                     {response}
                   </ReactMarkdown>
@@ -66,7 +68,7 @@ const Response = ({
           }</div>
       </div>
     </div>
-  ), [response, error]);
+  ), [response, error, additionalResponse]);
 }
 
 Response.propTypes = {

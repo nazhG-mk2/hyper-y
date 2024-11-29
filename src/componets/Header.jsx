@@ -19,15 +19,15 @@ const Header = ({
   }
 
   return (
-    <header className={`${className} content-center p-4 pb-2 border-b-2 lg:border-b md:bg-transparent bg-primary border-primary md:mx-3`}>
+    <header className={`${className} content-center p-4 pb-2 border-b-2 lg:border-b lg:bg-transparent bg-primary border-primary lg:mx-3`}>
       <div className="flex transition-all lg:justify-between justify-start w-full">
-        <div className="hidden md:inline drawer-content">
+        <div className="hidden lg:inline drawer-content">
           <label htmlFor="mobile-drawer" className="drawer-button">
             <img src={menuIcon} alt="" />
           </label>
         </div>
-        <img className='h-6 hidden md:block' src="/logo.png" alt="" />
-        <img className='h-6 block md:hidden' src="/logo2.png" alt="" />
+        <img className='h-6 hidden lg:block' src="/logo.png" alt="" />
+        <img className='h-6 block lg:hidden' src="/logo2.png" alt="" />
         <div></div>
       </div>
     </header>

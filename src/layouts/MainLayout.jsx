@@ -10,7 +10,7 @@ const MainLayout = () => {
             <input id="mobile-drawer" type="checkbox" className="drawer-toggle" />
             <Header className={layoutStyles['main__header']} />
             <SidebarMobile />
-            <Sidebar />
+            <Sidebar className='lg:hidden' />
             <main className={`${layoutStyles['main__content']} max-w-[100vw]`}>
                 <Outlet />
             </main>

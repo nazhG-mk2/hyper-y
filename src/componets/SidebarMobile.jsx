@@ -4,28 +4,30 @@ import downArrowIcon from "../assets/downArrow.svg"
 import { useRef, useState } from "react";
 import Line from "./common/Line";
 import CommonFooter from "./common/CommonFooter";
+import Sidebar from "./Sidebar";
 
 const SidebarMobile = () => {
-    const [archivedChatsIsOpen, setArchivedChatsIsOpen] = useState(false);
-    const searchRef = useRef(null);
+    // const [archivedChatsIsOpen, setArchivedChatsIsOpen] = useState(false);
+    // const searchRef = useRef(null);
 
-    const [search, setSearch] = useState('');
-    const [chats, setChats] = useState([
-        { name: 'Launching a youth leadership program', id: 1 },
-        { name: 'YMCA Funding Programs', id: 2 },
-        { name: 'Sustainability', id: 3 },
-    ]);
+    // const [search, setSearch] = useState('');
+    // const [chats, setChats] = useState([
+    //     { name: 'Launching a youth leadership program', id: 1 },
+    //     { name: 'YMCA Funding Programs', id: 2 },
+    //     { name: 'Sustainability', id: 3 },
+    // ]);
 
-    const [chatsResults, setChatsResults] = useState(chats);
+    // const [chatsResults, setChatsResults] = useState(chats);
 
     return (
         <div className="drawer-side z-30">
             <label htmlFor="mobile-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
-            <div className="bg-white menu min-h-full py-6 px-0 border-r min-w-[80vw] border-secondary border-opacity-50">
+            <div className="bg-[#F8F8F8] menu min-h-full py-2 px-0 border-r min-w-[80vw] border-secondary border-opacity-50">
                 {/* <label htmlFor="mobile-drawer" aria-label="close sidebar" className="drawer-overlay">
                     <img src={xIcon} alt="" />
                     </label> */}
-                <div className="join rounded-full border border-secondary flex p-2 mx-4 gap-2 items-center justify-start">
+                <Sidebar className="flex-1" />
+                {/* <div className="join rounded-full border border-secondary flex p-2 mx-4 gap-2 items-center justify-start">
                     <img src={searchIcon} alt=""
                         onClick={() => searchRef.current.focus()}
                     />
@@ -56,7 +58,7 @@ const SidebarMobile = () => {
                             )) :
                             <span className="text-center text-sm text-secondary">No chats found</span>
                     }
-                </div>
+                </div> */}
             </div>
         </div>
     )

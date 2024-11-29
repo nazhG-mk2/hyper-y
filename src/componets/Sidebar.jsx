@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import sideBarStyle from './Sidebar.module.css';
 import ChatContext, { useChatContext } from '../contexts/Chat';
+import { useRef, useState } from 'react';
 
 const formatDate = (dateString) => {
     const inputDate = new Date(dateString);
@@ -37,9 +38,13 @@ const formatChatList = (chats) => {
 const Sidebar = ({ className = '' }) => {
     const { chats, deleteChat, currentChat, setCurrentChat } = useChatContext();
     const chatsList = formatChatList(chats);
+    const modalRef = useRef(null);
+
+    const [chatToDelete, setChatToDelete] = useState(null);
 
     const handleDeleteChat = (chatId) => {
         deleteChat(chatId);
+        if (chatToDelete.id === currentChat.id) window.location.href = '/chat';
     };
 
     const handleSelectChat = (chatId) => {
@@ -48,47 +53,70 @@ const Sidebar = ({ className = '' }) => {
     };
 
     return (
-        <section className={`${className} ${sideBarStyle['sidebar-grid']} gap-2 font-poppins p-5 bg-[#F8F8F8] lg:hidden`}>
+        <section className={`${className} ${sideBarStyle['sidebar-grid']} gap-2 font-poppins p-5 bg-[#F8F8F8]`}>
             <div className={`${sideBarStyle['chat-list']} overflow-y-auto`}>
-                {Object.entries(chatsList).map(([date, chats]) => (
-                    <div className="flex flex-col gap-1" key={date}>
-                        <p className="px-2 text-secondary text-sm">{date}</p>
-                        {chats.map(chat => {
-                            return (
-                            <div
-                                key={chat.id}
-                                className={`px-2 group text-black transition-all flex hover:bg-light justify-between items-center rounded-md cursor-pointer ${
-                                    currentChat?.id === chat.id ? 'bg-light' : ''
-                                }`}
-                                onClick={() => handleSelectChat(chat.id)} // Cambia el chat activo
-                            >
-                                <p
-                                    className="py-1 whitespace-nowrap overflow-hidden overflow-ellipsis"
-                                    title={chat.chat[0]?.txt || "Unnamed chat"}
-                                >
-                                    {chat.chat[0]?.txt || "Unnamed chat"}
-                                </p>
-                                <span
-                                    className="text-red-400 invisible group-hover:visible cursor-pointer w-4 h-4 text-center my-auto"
-                                    onClick={(e) => {
-                                        e.stopPropagation(); // Evita activar el `onClick` del padre
-                                        handleDeleteChat(chat.id);
-                                    }}
-                                >
-                                    ×
-                                </span>
-                            </div>
-                        )})}
-                    </div>
-                ))}
+                {chats.length === 0 ? <p className="text-center text-secondary hidden lg:block lg:mt-10">No chats yet</p> : (
+                    Object.entries(chatsList).map(([date, chats]) => (
+                        <div className="flex flex-col gap-1" key={date}>
+                            <p className="px-2 text-secondary text-sm">{date}</p>
+                            {chats.map(chat => {
+                                return (
+                                    <div
+                                        key={chat.id}
+                                        className={`px-2 group text-black transition-all flex hover:bg-light justify-between items-center rounded-md cursor-pointer ${currentChat?.id === chat.id ? 'bg-light' : ''
+                                            }`}
+                                        onClick={() => handleSelectChat(chat.id)} // Cambia el chat activo
+                                    >
+                                        <p
+                                            className="py-1 whitespace-nowrap overflow-hidden overflow-ellipsis"
+                                            title={chat.chat[0]?.txt || "Unnamed chat"}
+                                        >
+                                            {chat.chat[0]?.txt || "Unnamed chat"}
+                                        </p>
+                                        <span
+                                            className="text-red-400 invisible group-hover:visible cursor-pointer text-center"
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Evita activar el `onClick` del padre
+                                                // handleDeleteChat(chat.id);
+                                                setChatToDelete(() => chat);
+                                                modalRef.current.showModal();
+                                            }}
+                                        >
+                                            ×
+                                        </span>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )))}
             </div>
             <button
-                className={`${sideBarStyle['new-chat']} btn rounded-md bg-primary hover:bg-dark border-0 text-white`}
+                className={`${sideBarStyle['new-chat']} btn rounded-md max-w-[320px] min-w-[210] bg-primary hover:bg-dark border-0 text-white`}
                 onClick={() => window.location.href = '/chat'}
             >
                 Create new Chat
             </button>
             <p className={`${sideBarStyle['footer']} text-sm`}>Powered by HyperCycle Inc.</p>
+            <dialog ref={modalRef} className="modal">
+                <div className="modal-box bg-white">
+                    <h3 className="font-bold text-lg">
+                        Are you sure you want to delete this chat?
+                    </h3>
+                    <p className="p-3 rounded-xl mt-4 mx-auto w-fit border border-gray-400 border-dashed">{
+                        chatToDelete?.chat[0]?.txt || "Unnamed chat"
+                    }</p>
+                    <div className="modal-action">
+                        <form method="dialog" className='flex gap-3'>
+                            {/* if there is a button in form, it will close the modal */}
+                            <button className="btn border font-normal bg-white border-gray-950 text-gray-950 hover:bg-gray-100 hover:text-gray-950">Cancel</button>
+                            <button className="btn bg-primary border-0 hover:bg-dark transition-colors text-white" onClick={() => handleDeleteChat(chatToDelete.id)}>Confirm</button>
+                        </form>
+                    </div>
+                </div>
+                <form method="dialog" className="modal-backdrop">
+                    <button>close</button>
+                </form>
+            </dialog>
         </section>
     );
 };

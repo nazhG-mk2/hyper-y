@@ -22,7 +22,6 @@ const loadChats = () => {
 // Función para guardar los chats en el localStorage
 const saveChats = (chats, archivedChats = []) => {
     console.log('Saving 📥', chats);
-
     localStorage.setItem('chats', JSON.stringify({ chats: chats || [], archivedChats }));
 };
 
@@ -47,12 +46,17 @@ export const ChatProvider = ({ children }) => {
             console.log('New chat', _newChat);
             
             setCurrentChat(_newChat);
-            return prevChats.map(chat => chat.id === _newChat.id ? _newChat : chat).sort((a, b) => {
+            console.log(prevChats.map(chat => chat.id === _newChat.id ? _newChat : chat).sort((a, b) => {
+                return new Date(b.date) - new Date(a.date);
+            }));
+
+            const newChats = prevChats.map(chat => chat.id === _newChat.id ? _newChat : chat).sort((a, b) => {
                 return new Date(b.date) - new Date(a.date);
             });
+            
+            saveChats(newChats);
+            return newChats
         });
-        console.log('Saving 📥', chats);
-        saveChats(chats);
     };
 
     const deleteChat = (chatId) => {

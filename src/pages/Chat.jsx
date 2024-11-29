@@ -51,13 +51,17 @@ const Chat = () => {
       const gronkRequest = await axios.post('http://43.202.113.176/v1/chat/completions', {
         "messages": [
           {
+            "role": "system",
+            "content": "You are an expert on the YMCA globally at all scales of the organization. You provide concise and clear answers. If you do not have a clear answer to what is being asked, you should guide the user to provide more information so that you can eventually provide either a very clear answer to the user'\''s query, or direct them to a definite resource where they are likely to find what they need. In this initial response, you are to just provide a short response, in 5 lines or less, unless you are certain that you have the precise answer that the user is looking for, in which case a longer response is allowed. You will have the opportunity to perform a database search later in the process, so all the more reason to be brief here. You always respond in the language of the initial prompt from the user. You do not need to ask the user whether to perform a database search related to the query because it is going to be performed anyway. If you cannot provide useful general information indicate that you do not know and that you will look more into it for the user. If you can provide useful general information, just state it and indicate that you will look for more details."
+          },
+          {
             "role": "user",
-            "content": `in 3 lines or less (respond in the language of the question/sentence): ${q}`,
+            "content": q
           }
         ],
         "model": "grok-beta",
         "stream": false,
-        "temperature": 0
+        "temperature": .5
       }, {
         headers: {
           'Content-Type': 'application/json'
@@ -71,7 +75,7 @@ const Chat = () => {
       });
       const fullRequest = await axios.post('http://18.219.124.9:9999/stream_chat', {
         "user_query": q,
-        "searches": 4, "select_searches": [1, 2]
+        "searches": 2
       }).then(async (response) => {
         const parts = response.data.split('\n');
         // get the text between FORMING_RESPONSE and END_RESPONSE in the response
@@ -82,7 +86,7 @@ const Chat = () => {
 
         if (match) {
           console.log(match[1].trim());
-          setToWriteLong(match[1].trim());
+          setToWriteLong({ text: match[1].trim() });
         } else {
           console.log("No match found");
         }
@@ -107,6 +111,10 @@ const Chat = () => {
 
     } catch (error) {
       console.error('Error while fetching data:', error);
+      setSteps([]);
+      setCurrentStep(0);
+      setLoading(false);
+
 
       AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
     }
@@ -150,7 +158,7 @@ const Chat = () => {
     <div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
       <section
         ref={chatref}
-        className={`${chatStyles.chat} flex flex-col px-6 md:px-2`}>
+        className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2 overflow-x-hidden`}>
         {
           currentChat?.chat.map((msg, index) => (
             msg.type === 'question' ? (
@@ -170,6 +178,8 @@ const Chat = () => {
               />
             )))
         }
+        {/* <p className='text-base text-shyne'>Robert</p> */}
+
         {
           loading && (
             // <Loading />
@@ -180,19 +190,23 @@ const Chat = () => {
           )
         }
         {
-          writing && <Responding data={ {text: toWrite.text, additional: 'Quick response 2.1 seconds'}} end={
+          writing && <Responding data={toWrite} end={
             () => {
               setWriting(false);
               setToWrite({});
+              // change the msg to generate the complex response
+              setLoading('Gathering more insights...');
               AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents });
             }
           } />
         }
         {
-          writingLong && <Responding data={{ text: toWriteLong, noImg: true, additional: 'Thought for 7.33 seconds'}} end={
+          writingLong && <Responding data={{ text: toWriteLong.text, noImg: true }} end={
             () => {
               setWritingLong(false);
               setToWriteLong({});
+              console.log('End of long response 🔥🔥🔥', );
+              
               AddToCurrentChat({ type: 'response', txt: toWriteLong.text, documents: [] });
             }
           } />
