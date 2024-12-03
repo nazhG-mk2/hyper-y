@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import playIcon from '../assets/play.svg';
 import chatStyles from './Chat.module.css';
 import axios from 'axios';
@@ -9,6 +9,22 @@ import Suggestion from '../componets/chat/Suggestion';
 import Responding from '../componets/chat/Responding';
 // import { GlobalContext } from '../contexts/Global';
 import { useChatContext } from '../contexts/Chat';
+
+const requestLocation = () => {
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log("Latitude:", position.coords.latitude);
+        console.log("Longitude:", position.coords.longitude);
+      },
+      (error) => {
+        console.error("Error fetching location:", error.message);
+      }
+    );
+  } else {
+    console.error("Geolocation is not supported by this browser.");
+  }
+};
 
 const Chat = () => {
   // const { state: context } = GlobalContext();
@@ -28,10 +44,119 @@ const Chat = () => {
 
   const chatref = useRef(null);
 
+  const script = useMemo(() => [
+    (<Question key={0} question={'I want to play some pickleball.'
+    } />),
+    (<Responding
+      key={1}
+      agent={'fast'}
+      data={{
+        text:
+          'Okay, cool, I’ll pull in your local Y'
+      }}
+    />),
+    (<div
+      key={2}
+      onClick={requestLocation}
+    >
+      <Responding
+        key={3}
+        agent={'precise'}
+        data={{
+          text:
+            `Hi, here are the times available for pickleball today at our location:
+* Learn to Play Pickleball: 9:00 AM – 10:00 AM.
+* Open Play: 10:00 AM – 1:00 PM.
+
+Would you like me to book a court for you?
+`
+        }}
+      />
+    </div>),
+    (<Question key={4} question={'I’m actually going to be on the east side of town. Can you find something for me there?'
+    } />),
+    (<Responding
+      key={5}
+      agent={'precise'}
+      data={{
+        text:
+          'Sure, let me connect you with the YMCAs in the east side of Toronto.'
+      }}
+    />),
+    (<Responding
+      key={6}
+      agent={'toronto'}
+      data={{
+        text:
+          `We have several YMCAs offering pickleball on the east side of Toronto. Here are some options:
+    Steve & Sally Stavro Family YMCA (907 Kingston Rd):
+    Beginner's Learn to Play Pickleball Workshop: 5:00 PM – 6:00 PM
+    Steve & Sally Stavro Family YMCA
+    North York YMCA (567 Sheppard Ave E):
+    Learn to Play Pickleball: Wednesdays, 9:00 AM – 10:00 AM
+    Open Play: Wednesdays, 10:00 AM – 1:00 PM
+    North York YMCA
+    Scarborough YMCA (230 Town Centre Ct):
+    Open Play: 12:00 PM – 2:00 PM
+    Intermediate Play: 3:00 PM – 5:00 PM
+    Scarborough YMCA`
+      }}
+    />),
+    (<Question key={0} question={'How about the Stavro Y at 5 pm?'
+    } />),
+    // -> Dispatcher invites Steve & Sally Stavro Family YMCA to the chat
+    (<Responding
+      key={1}
+      agent={'family'}
+      data={{
+        text:
+          'Great! I’ve booked you for the Beginner\'s Learn to Play Pickleball Workshop at 5 PM.'
+      }}
+    />), 
+  ], []);
+
+  const [ScriptStep, setScriptStep] = useState(-1);
+
+  useEffect(() => {
+    if (ScriptStep === -1) return;
+    let stepTimeout;
+    if (ScriptStep == 0) {
+      stepTimeout = 0;
+    } else {
+      stepTimeout = 3000
+    }
+    console.log(script[ScriptStep]?.type);
+    
+    if (ScriptStep === 1) {
+    setLoading('Generating a quick response for you...');
+    }
+    if (ScriptStep === 2) {
+      setLoading('Gathering more insights...');
+    }
+    if (ScriptStep === 3) {
+      setLoading(false);
+    }
+    if (ScriptStep === 4) {
+      setLoading('Generating a quick response for you...');
+    }
+    if (ScriptStep === 5) {
+      setLoading('Gathering more insights...');
+    }
+    if (ScriptStep === 6) {
+      setLoading(false);
+    }
+    
+    if (ScriptStep < script.length) {
+
+      setTimeout(() => {
+        console.log('Step:', ScriptStep);
+        setScriptStep((prev) => prev + 1);
+      }, stepTimeout);
+    }
+  }, [ScriptStep, script]);
+
   const suggestions = [
-    'What is YMCA?',
-    'YMCA locations in Europe',
-    'YMCA locations in Italy',
+    'does YMCA offer yoga classes?'
   ];
 
   const formatThinkingSteps = (steps) => {
@@ -61,7 +186,7 @@ const Chat = () => {
         "messages": [
           {
             "role": "system",
-            "content": "You are an expert on the YMCA globally at all scales of the organization. You provide concise and clear answers. If you do not have a clear answer to what is being asked, you should guide the user to provide more information so that you can eventually provide either a very clear answer to the user'\''s query, or direct them to a definite resource where they are likely to find what they need. In this initial response, you are to just provide a short response, in 5 lines or less, unless you are certain that you have the precise answer that the user is looking for, in which case a longer response is allowed. You will have the opportunity to perform a database search later in the process, so all the more reason to be brief here. You always respond in the language of the initial prompt from the user. You do not need to ask the user whether to perform a database search related to the query because it is going to be performed anyway. If you cannot provide useful general information indicate that you do not know and that you will look more into it for the user. If you can provide useful general information, just state it and indicate that you will look for more details."
+            "content": "You are an expert on the YMCA globally at all scales of the organization. You provide concise and clear answers. If you do not have a clear answer to what is being asked, you should guide the user to provide more information so that you can eventually provide either a very clear answer to the user's query, or direct them to a definite resource where they are likely to find what they need. In this initial response, you are to just provide a short response, in 5 lines or less, unless you are certain that you have the precise answer that the user is looking for, in which case a longer response is allowed. You will have the opportunity to perform a database search later in the process, so all the more reason to be brief here. You always respond in the language of the initial prompt from the user. You do not need to ask the user whether to perform a database search related to the query because it is going to be performed anyway. If you cannot provide useful general information indicate that you do not know and that you will look more into it for the user. If you can provide useful general information, just state it and indicate that you will look for more details."
           },
           {
             "role": "user",
@@ -167,7 +292,7 @@ const Chat = () => {
     <div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
       <section
         ref={chatref}
-        className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2 overflow-x-hidden`}>
+        className={`${chatStyles.chat} flex flex-col px-6 md:px-2 overflow-x-hidden`}>
         {
           currentChat?.chat.map((msg, index) => (
             msg.type === 'question' ? (
@@ -187,8 +312,19 @@ const Chat = () => {
               />
             )))
         }
-        {/* <p className='text-base text-shyne'>Robert</p> */}
-
+        {/* SCRIPTING */}
+        {
+          ScriptStep >= 0 && script.slice(0, ScriptStep).map((step, index) => (
+            <div className='flex' key={index}>{step}</div>
+          ))
+        }
+        {/* <Question key={0} question={'does YMCA offer yoga classes?'
+    } /> */}
+        {
+          steps.length > 0 && steps.map((step, index) => (
+            <Response key={index} response={formatThinkingSteps(step)} />
+          ))
+        }
         {
           loading && (
             // <Loading />
@@ -222,13 +358,14 @@ const Chat = () => {
         }
       </section >
       {
-        (!currentChat || currentChat?.length == 0) && (
+        (ScriptStep == -1) && (
           <section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
-            <p className="w-full text-sm pb-2">Ask your question in chat or select the following options to start from:</p>
+            <p className="w-full text-sm pb-2">Play demo:</p>
             <div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
               {
                 suggestions.map((suggestion, index) => (
-                  <Suggestion key={index} suggestion={suggestion} onClick={() => handleAddQuestion(suggestion)} />
+                  <Suggestion key={index} suggestion={suggestion} onClick={() => setScriptStep((prev) => prev + 1)
+                  } />
                 ))
               }
             </div>
@@ -245,8 +382,8 @@ const Chat = () => {
                 handleAddQuestion(query);
               }
             }}
-            disabled={loading}
-            type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
+            disabled={true}
+            type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2 cursor-not-allowed" />
           <img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => {
             handleAddQuestion(query)
           }} />

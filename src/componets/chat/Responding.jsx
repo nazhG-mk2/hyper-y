@@ -5,8 +5,8 @@ import Response from './Response';
 const MINIMUM_SPEED = 1;
 
 const Responding = ({ data, time = 4000,
-  end = () => { }
-
+  end = () => { },
+  agent
 }) => {
   const { text } = data;
 
@@ -38,15 +38,16 @@ const Responding = ({ data, time = 4000,
         setSkipAnimation(true);
         setCurrentText(text);
       }}
-      className='pb-8'
+      className='pb-6'
     >
-      <Response response={currentText} open={true}
+      <Response agent={agent} response={currentText} open={true}
       noImg={data.noImg} additionalResponse={data.additional || ''}
       />
     </div>
   );
 };
 Responding.propTypes = {
+  agent: PropTypes.string,
   data: PropTypes.object,
   time: PropTypes.number,
   end: PropTypes.func
