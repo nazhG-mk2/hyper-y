@@ -63,7 +63,6 @@ const Chat = () => {
 			msg: (<Question
 				refToScroll={chatref}
 				key={0} question={'I want to play some pickleball.'} />),
-			delay: 0
 		},
 		{
 			msg: (<Responding
@@ -81,7 +80,6 @@ const Chat = () => {
 					}, 2000);
 				}}
 			/>),
-			delay: 1000
 		},
 		{
 			msg: (<div
@@ -108,14 +106,12 @@ Would you like me to book a court for you?
 					}}
 				/>
 			</div>),
-			delay: 3000
 		},
 		{
 			msg: (<Question key={4}
 				refToScroll={chatref}
 				question={'I’m actually going to be on the east side of town. Can you find something for me there?'
 				} />),
-			delay: 0
 		},
 		{
 			msg: (<Responding
@@ -130,10 +126,9 @@ Would you like me to book a court for you?
 					setLoading('We are connecting you with the YMCA GTA...');
 					setTimeout(() => {
 						setScriptStep((prev) => prev + 1);
-					}, 2000);
+					}, 3000);
 				}}
 			/>),
-			delay: 3000
 		},
 		{
 			msg: (<Responding
@@ -163,14 +158,12 @@ Would you like me to book a court for you?
 					}, 500);
 				}}
 			/>),
-			delay: 3000
 		},
 		{
 			msg: (<Question key={0}
 				refToScroll={chatref}
 				question={'How about the Stavro Y at 5 pm?'} />),
-			delay: 0
-		}, 
+		},
 		{
 			msg: (<Responding
 				key={1}
@@ -184,10 +177,9 @@ Would you like me to book a court for you?
 					setLoading('inviting Steve & Sally Stavro Family YMCA to the chat...');
 					setTimeout(() => {
 						setScriptStep((prev) => prev + 1);
-					}, 1000);
+					}, 3000);
 				}}
 			/>),
-			delay: 1000
 		},
 		{
 			msg: (<Responding
@@ -203,7 +195,7 @@ Would you like me to book a court for you?
 					setTimeout(() => {
 						setLoading(false);
 						setScriptStep((prev) => prev + 1);
-					}, 2000);
+					}, 3000);
 				}}
 			/>),
 		},
@@ -264,7 +256,7 @@ Would you like me to book a court for you?
 	// }, [ScriptStep, script]);
 
 	const [suggestions, setSuggestions] = useState([
-		'does YMCA offer yoga classes?'
+		'I want to play some pickleball'
 	]);
 
 	const formatThinkingSteps = (steps) => {
