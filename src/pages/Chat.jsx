@@ -44,120 +44,210 @@ const Chat = () => {
 
   const chatref = useRef(null);
 
+  const scrollToBottom = () => {
+    if (chatref.current) {
+      chatref.current.scrollTop = chatref.current.scrollHeight;
+    }
+  };
+
+  const isAtBottom = () => {
+    if (chatref.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatref.current;
+      return scrollHeight - scrollTop - clientHeight <= 50;
+    }
+    return false;
+  }
+
   const script = useMemo(() => [
-    (<Question key={0} question={'I want to play some pickleball.'
-    } />),
-    (<Responding
-      key={1}
-      agent={'fast'}
-      data={{
-        text:
-          'Okay, cool, I’ll pull in your local Y'
-      }}
-    />),
-    (<div
-      key={2}
-      onClick={requestLocation}
-    >
-      <Responding
-        key={3}
-        agent={'precise'}
+    {
+      msg: (<Question
+        refToScroll={chatref}
+        key={0} question={'I want to play some pickleball.'} />),
+      delay: 0
+    },
+    {
+      msg: (<Responding
+        key={1}
+        refToScroll={chatref}
+        agent={'fast'}
         data={{
           text:
-            `Hi, here are the times available for pickleball today at our location:
+            'Okay, cool, I’ll pull in your local Y'
+        }}
+        end={() => {
+          setLoading('Gathering more insights...');
+          setTimeout(() => {
+            setScriptStep((prev) => prev + 1);
+          }, 2000);
+        }}
+      />),
+      delay: 1000
+    },
+    {
+      msg: (<div
+        key={2}
+      >
+        <Responding
+          key={3}
+          refToScroll={chatref}
+          agent={'precise'}
+          data={{
+            text:
+              `Hi, here are the times available for pickleball today at our location:
 * Learn to Play Pickleball: 9:00 AM – 10:00 AM.
 * Open Play: 10:00 AM – 1:00 PM.
 
 Would you like me to book a court for you?
 `
+          }}
+          end={() => {
+            setLoading(false);
+            setTimeout(() => {
+              setSuggestions(['I’m actually going to be on the east side of town. Can you find something for me there?']);
+            }, 500);
+          }}
+        />
+      </div>),
+      delay: 3000
+    },
+    {
+      msg: (<Question key={4}
+        refToScroll={chatref}
+        question={'I’m actually going to be on the east side of town. Can you find something for me there?'
+        } />),
+      delay: 0
+    },
+    {
+      msg: (<Responding
+        key={5}
+        refToScroll={chatref}
+        agent={'precise'}
+        data={{
+          text:
+            'Sure, let me connect you with the YMCAs in the east side of Toronto.'
         }}
-      />
-    </div>),
-    (<Question key={4} question={'I’m actually going to be on the east side of town. Can you find something for me there?'
-    } />),
-    (<Responding
-      key={5}
-      agent={'precise'}
-      data={{
-        text:
-          'Sure, let me connect you with the YMCAs in the east side of Toronto.'
-      }}
-    />),
-    (<Responding
-      key={6}
-      agent={'toronto'}
-      data={{
-        text:
-          `We have several YMCAs offering pickleball on the east side of Toronto. Here are some options:
-    Steve & Sally Stavro Family YMCA (907 Kingston Rd):
-    Beginner's Learn to Play Pickleball Workshop: 5:00 PM – 6:00 PM
-    Steve & Sally Stavro Family YMCA
-    North York YMCA (567 Sheppard Ave E):
-    Learn to Play Pickleball: Wednesdays, 9:00 AM – 10:00 AM
-    Open Play: Wednesdays, 10:00 AM – 1:00 PM
-    North York YMCA
-    Scarborough YMCA (230 Town Centre Ct):
-    Open Play: 12:00 PM – 2:00 PM
-    Intermediate Play: 3:00 PM – 5:00 PM
-    Scarborough YMCA`
-      }}
-    />),
-    (<Question key={0} question={'How about the Stavro Y at 5 pm?'
-    } />),
-    // -> Dispatcher invites Steve & Sally Stavro Family YMCA to the chat
-    (<Responding
-      key={1}
-      agent={'family'}
-      data={{
-        text:
-          'Great! I’ve booked you for the Beginner\'s Learn to Play Pickleball Workshop at 5 PM.'
-      }}
-    />), 
+        end={() => {
+          setLoading('Gathering more insights...');
+          setTimeout(() => {
+            setScriptStep((prev) => prev + 1);
+          }, 2000);
+        }}
+      />),
+      delay: 3000
+    },
+    {
+      msg: (<Responding
+        key={6}
+        agent={'toronto'}
+        refToScroll={chatref}
+        data={{
+          text:
+            `We have several YMCAs offering pickleball on the east side of Toronto. Here are some options:
+    * Steve & Sally Stavro Family YMCA (907 Kingston Rd):
+      * Beginner's Learn to Play Pickleball Workshop: 5:00 PM – 6:00 PM
+    [Steve & Sally Stavro Family YMCA](https://www.ymcagta.org/find-a-y/the-steve-sally-stavro-family-ymca)
+    * North York YMCA (567 Sheppard Ave E):
+      * Learn to Play Pickleball: Wednesdays, 9:00 AM – 10:00 AM
+      * Open Play: Wednesdays, 10:00 AM – 1:00 PM
+    [North York YMCA](https://www.ymcagta.org/find-a-y/north-york-ymca)
+    * Scarborough YMCA (230 Town Centre Ct):
+      * Open Play: 12:00 PM – 2:00 PM
+      * Intermediate Play: 3:00 PM – 5:00 PM
+    [Scarborough YMCA](https://www.ymcagta.org/find-a-y/scarborough-ymca)
+        `
+        }}
+        end={() => {
+          setLoading(false);
+          setTimeout(() => {
+            setSuggestions(['How about the Stavro Y at 5 pm?']);
+          }, 500);
+        }}
+      />),
+      delay: 3000
+    },
+    {
+      msg: (<Question key={0}
+        refToScroll={chatref}
+        question={'How about the Stavro Y at 5 pm?'} />),
+      delay: 0
+    },
+    {
+      msg: (<Responding
+        key={1}
+        refToScroll={chatref}
+        agent={'chat'}
+        data={{
+          text:
+            `Dispatcher invites Steve & Sally Stavro Family YMCA to the chat`
+        }}
+        end={() => {
+          setLoading('Sally Stavro Family YMCA is typing...');
+          setTimeout(() => {
+            setLoading(false);
+            setScriptStep((prev) => prev + 1);
+          }, 2000);
+        }}
+      />),
+    },
+    {
+      msg: (<Responding
+        key={1}
+        refToScroll={chatref}
+        agent={'family'}
+        data={{
+          text:
+            `Great! I’ve booked you for the Beginner's Learn to Play Pickleball Workshop at 5 PM.`
+        }}
+        end={() => {
+
+        }}
+      />),
+    },
   ], []);
 
-  const [ScriptStep, setScriptStep] = useState(-1);
+  const [ScriptStep, setScriptStep] = useState(0);
 
-  useEffect(() => {
-    if (ScriptStep === -1) return;
-    let stepTimeout;
-    if (ScriptStep == 0) {
-      stepTimeout = 0;
-    } else {
-      stepTimeout = 3000
-    }
-    console.log(script[ScriptStep]?.type);
-    
-    if (ScriptStep === 1) {
-    setLoading('Generating a quick response for you...');
-    }
-    if (ScriptStep === 2) {
-      setLoading('Gathering more insights...');
-    }
-    if (ScriptStep === 3) {
-      setLoading(false);
-    }
-    if (ScriptStep === 4) {
-      setLoading('Generating a quick response for you...');
-    }
-    if (ScriptStep === 5) {
-      setLoading('Gathering more insights...');
-    }
-    if (ScriptStep === 6) {
-      setLoading(false);
-    }
-    
-    if (ScriptStep < script.length) {
+  // useEffect(() => {
+  //   if (ScriptStep === -1) return;
+  //   let stepTimeout;
+  //   if (ScriptStep == 0) {
+  //     stepTimeout = 0;
+  //   } else {
+  //     stepTimeout = 3000
+  //   }
+  //   console.log(script[ScriptStep]?.type);
 
-      setTimeout(() => {
-        console.log('Step:', ScriptStep);
-        setScriptStep((prev) => prev + 1);
-      }, stepTimeout);
-    }
-  }, [ScriptStep, script]);
+  //   if (ScriptStep === 1) {
+  //     setLoading('Generating a quick response for you...');
+  //   }
+  //   if (ScriptStep === 2) {
+  //     setLoading('Gathering more insights...');
+  //   }
+  //   if (ScriptStep === 3) {
+  //     setLoading(false);
+  //   }
+  //   if (ScriptStep === 4) {
+  //     setLoading('Generating a quick response for you...');
+  //   }
+  //   if (ScriptStep === 5) {
+  //     setLoading('Gathering more insights...');
+  //   }
+  //   if (ScriptStep === 6) {
+  //     setLoading(false);
+  //   }
 
-  const suggestions = [
+  //   if (ScriptStep < script.length) {
+
+  //     setTimeout(() => {
+  //       console.log('Step:', ScriptStep);
+  //       setScriptStep((prev) => prev + 1);
+  //     }, stepTimeout);
+  //   }
+  // }, [ScriptStep, script]);
+
+  const [suggestions, setSuggestions] = useState([
     'does YMCA offer yoga classes?'
-  ];
+  ]);
 
   const formatThinkingSteps = (steps) => {
     // REFINING_SEARCH → "Making sure we find the right information..."
@@ -288,11 +378,31 @@ Would you like me to book a court for you?
     setLoading('Generating a quick response for you...');
   }
 
+  useEffect(() => {
+
+    if (chatref?.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatref.current;
+
+      // Verificar si está cerca del final (puedes ajustar el margen, como 50px)
+      const isAtBottom = scrollHeight - scrollTop - clientHeight <= 50;
+      console.log("isAtBottom", isAtBottom ? "true" : "false");
+
+      if (isAtBottom) {
+        chatref.current.scrollTo({
+          top: scrollHeight,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [currentChat, loading]);
+
   return (
     <div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
       <section
         ref={chatref}
         className={`${chatStyles.chat} flex flex-col px-6 md:px-2 overflow-x-hidden`}>
+        {/* SCROLL TEST */}
+        {/* <span className='py-[45%] my-2 text-center rounded-xl bg-gray-200 border-double border-gray-300'>This Element is jus for test</span> */}
         {
           currentChat?.chat.map((msg, index) => (
             msg.type === 'question' ? (
@@ -315,11 +425,9 @@ Would you like me to book a court for you?
         {/* SCRIPTING */}
         {
           ScriptStep >= 0 && script.slice(0, ScriptStep).map((step, index) => (
-            <div className='flex' key={index}>{step}</div>
+            <div className='flex' key={index}>{step.msg}</div>
           ))
         }
-        {/* <Question key={0} question={'does YMCA offer yoga classes?'
-    } /> */}
         {
           steps.length > 0 && steps.map((step, index) => (
             <Response key={index} response={formatThinkingSteps(step)} />
@@ -358,13 +466,24 @@ Would you like me to book a court for you?
         }
       </section >
       {
-        (ScriptStep == -1) && (
-          <section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
-            <p className="w-full text-sm pb-2">Play demo:</p>
+        (true) && (
+          <section className={`${chatStyles['suggestions']} ${suggestions.length == 0 && 'invisible'} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
+            <p className="w-full text-xs pb-2">Suggestions:</p>
             <div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
               {
                 suggestions.map((suggestion, index) => (
-                  <Suggestion key={index} suggestion={suggestion} onClick={() => setScriptStep((prev) => prev + 1)
+                  <Suggestion key={index} suggestion={suggestion} onClick={() => {
+                    setSuggestions(() => []);
+                    setScriptStep((prev) => prev + 1);
+                    setLoading('Generating a quick response for you...');
+                    setTimeout(() => {
+                      scrollToBottom();
+                    }, 2);
+                    setTimeout(() => {
+                      setLoading(false);
+                      setScriptStep((prev) => prev + 1)
+                    }, 3000);
+                  }
                   } />
                 ))
               }
@@ -372,7 +491,7 @@ Would you like me to book a court for you?
           </section>
         )
       }
-      < section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
+      < section className={`${chatStyles['new-message']} flex justify-center ${suggestions.length == 0 ? 'pt-6' : "pt-0"} gap-2 px-6`}>
         <div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
           <input
             value={query}
