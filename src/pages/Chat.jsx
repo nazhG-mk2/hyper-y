@@ -384,6 +384,7 @@ Would you like me to book a court for you?
 	}, [currentStep, steps]);
 
 	const handleAddQuestion = (question) => {
+		if (!question) return;
 		AddToCurrentChat({ type: 'question', txt: question });
 		handleSubmit(question);
 		setQuery('');
@@ -540,7 +541,7 @@ Would you like me to book a court for you?
 						}}
 						disabled={true}
 						type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2 cursor-not-allowed" />
-					<img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => {
+					<img src={playIcon} alt="" className="w-8 h-8 cursor-not-allowed" onClick={() => {
 						handleAddQuestion(query)
 					}} />
 				</div>
