@@ -14,26 +14,42 @@ const Responding = ({ data, time = 4000,
   const [currentText, setCurrentText] = useState('');
   const [textIndex, setTextIndex] = useState(0);
   const [skipAnimation, setSkipAnimation] = useState(false);
-  const [fistRender, setFirstRender] = useState(true);
+  const isFirstRender = useRef(true);
   const msgRef = useRef(null);
+  const isUserScrolling = useRef(false);
 
   useEffect(() => {
+    const handleScroll = () => {
+      if (refToScroll?.current) {
+        const { scrollTop, scrollHeight, clientHeight } = refToScroll.current;
+        const isAtBottom = scrollHeight - scrollTop - clientHeight <= 5;
 
-    // if (skipAnimation) {
-    //   setCurrentText(text);
-    //   end();
-    //   return;
-    // }
+        // Actualiza la referencia si el usuario hace scroll manual
+        isUserScrolling.current = !isAtBottom;
+      }
+    };
 
-    if (refToScroll?.current) {
-      const { scrollTop, scrollHeight, clientHeight } = refToScroll.current;
+    const scrollElement = refToScroll.current;
+    if (scrollElement) {
+      scrollElement.addEventListener("scroll", handleScroll);
+    }
 
-      // Verificar si está cerca del final (puedes ajustar el margen, como 50px)
-      const isAtBottom = scrollHeight - scrollTop - clientHeight <= (20 + msgRef.current.clientHeight);
+    return () => {
+      if (scrollElement) {
+        scrollElement.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [refToScroll]);
 
-      console.log('isAtBottom - msg', isAtBottom ? 'true' : 'false', msgRef.current.clientHeight);
-
-
+  useEffect(() => {
+    let tolerance = 0;
+    if (isFirstRender.current) {
+      tolerance += msgRef.current.clientHeight;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = refToScroll.current;
+    
+    if (refToScroll?.current && !isUserScrolling.current) {
+      const isAtBottom = scrollHeight - scrollTop - clientHeight <= tolerance;
       if (isAtBottom) {
         refToScroll.current.scrollTo({
           top: scrollHeight,
@@ -41,6 +57,9 @@ const Responding = ({ data, time = 4000,
         });
       }
     }
+  }, [currentText, refToScroll, isFirstRender, isUserScrolling]);
+
+  useEffect(() => {
 
     const speed = Math.max(text?.length / time, MINIMUM_SPEED);
 
@@ -60,10 +79,6 @@ const Responding = ({ data, time = 4000,
 
   return (
     <div
-      onClick={() => {
-        setSkipAnimation(true);
-        setCurrentText(text);
-      }}
       ref={msgRef}
       className='pb-6'
     >

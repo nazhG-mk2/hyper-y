@@ -192,6 +192,8 @@ Would you like me to book a court for you?
 				}}
 				end={() => {
 					setLoading('Sally Stavro Family YMCA is typing...');
+					console.log('Sally Stavro Family YMCA is typing...');
+					
 					setTimeout(() => {
 						setLoading(false);
 						setScriptStep((prev) => prev + 1);
@@ -389,7 +391,6 @@ Would you like me to book a court for you?
 	}
 
 	useEffect(() => {
-
 		if (chatref?.current) {
 			const { scrollTop, scrollHeight, clientHeight } = chatref.current;
 
@@ -405,6 +406,31 @@ Would you like me to book a court for you?
 			}
 		}
 	}, [currentChat, loading]);
+
+	const [height, setHeight] = useState(0);
+
+	useEffect(() => {
+		const observer = new ResizeObserver((entries) => {
+			for (let entry of entries) {
+				if (entry.target === chatref.current) {
+					setHeight(entry.contentRect.height);
+					console.log("Height:", entry.contentRect.height);
+				}
+			}
+		});
+
+		const currentChatRef = chatref.current;
+
+		if (currentChatRef) {
+			observer.observe(currentChatRef);
+		}
+
+		return () => {
+			if (currentChatRef) {
+				observer.unobserve(currentChatRef);
+			}
+		};
+	}, []);
 
 	return (
 		<div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
