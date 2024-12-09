@@ -35,10 +35,15 @@ const Chat = () => {
   ];
 
   const formatThinkingSteps = (steps) => {
+    // FORMING_SEARCH_QUERIES → "Forming the search queries..."
     // REFINING_SEARCH → "Making sure we find the right information..."
     // FORMING_RESPONSE → "Preparing your answer..."
     // FORMING_SEARCH_QUERY → "Forming the search query..."
     // GETTING_RESPONSE → "Getting the response..."
+    // RATING_ACCURACY → "Rating the accuracy of the response..."
+    if (steps == 'FORMING_SEARCH_QUERIES') {
+      return 'Forming the search queries...';
+    }
     if (steps == 'REFINING_SEARCH') {
       return 'Making sure we find the right information...';
     }
@@ -50,6 +55,9 @@ const Chat = () => {
     }
     if (steps == 'GETTING_RESPONSE') {
       return 'Getting the response...';
+    }
+    if (steps == 'RATING_ACCURACY') {
+      return 'Rating the accuracy of the response...';
     }
 
     return steps;
