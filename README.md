@@ -1,8 +1,28 @@
-# React + Vite
+# Hyper-Y Alpha
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Hyper-Y is a chatbot focused on providing information about YMCA programs and services.
+this alpha is a proof of concept for a chatbot with multi-agent, where each agent is responsible for handling information about different YMCA programs and services.
 
-Currently, two official plugins are available:
+## Installation
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+* install the required packages by running the following command:
+
+```bash
+npm install
+```
+
+* run development environment by running the following command:
+
+```bash 
+npm run dev
+```
+
+* run production environment by running the following command:
+
+```bash
+npm run build && node server.js --watch
+``` 
+
+## For Developers
+
+check the main chat logic in `src\pages\Chat.jsx`.
