@@ -117,7 +117,7 @@ Would you like me to book a court for you?
 			msg: (<Responding
 				key={5}
 				refToScroll={chatref}
-				agent={'precise'}
+				agent={'fast'}
 				data={{
 					text:
 						'Sure, let me connect you with the YMCAs in the east side of Toronto.'
@@ -188,7 +188,7 @@ Would you like me to book a court for you?
 				agent={'chat'}
 				data={{
 					text:
-						`Dispatcher invites Steve & Sally Stavro Family YMCA to the chat`
+						`Hyper-Y dispatcher invites Steve & Sally Stavro Family YMCA to the chat`
 				}}
 				end={() => {
 					setLoading('Sally Stavro Family YMCA is typing...');
