@@ -31,7 +31,10 @@ const Chat = () => {
 	const [explanation, setExplanation] = useState('');
 	const [refinedAnswer, setRefinedAnswer] = useState('');
 
+	const [isRefiningQuery, setIsRefiningQuery] = useState(false);
+
 	const chatref = useRef(null);
+	const inputRef = useRef(null);
 
 	const suggestions = [
 		'What is YMCA?',
@@ -162,7 +165,48 @@ const Chat = () => {
 		}
 	};
 
+	const makeGrokkRequest = async (q) => {
+		/// q is the input question
+		/// currentChat is all the conversation
 
+		console.log("Making Grokk request for:", q);
+		setLoading("Making Grokk request");
+
+		try {
+			const response = await axios.post('http://43.202.113.176/v1/chat/completions', {
+				"messages": [
+					{
+						"role": "system",
+						"content": `
+						promt here
+						`
+					},
+					{
+						"role": "user",
+						"content": q
+					}
+				],
+				"model": "grok-beta",
+				"stream": false,
+				"temperature": 0.5
+			}, {
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+			console.log({ response });
+
+			setToWrite({ text: 'Well done! 😎', documents: [] });
+			setWriting(true);
+			setLoading(false);
+		} catch (error) {
+			console.error('Error while fetching data:', error);
+			AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
+		}
+	}
+	const makeElasticSearchRequest = async (q) => {
+		console.log("Making Elastic Search request for:", q);
+	}
 
 	//   const handleSubmit = async (q) => {
 	//     try {
@@ -294,10 +338,27 @@ const Chat = () => {
 										}, 0);
 									}
 								}}
+								funcOne={() => makeGrokkRequest()}
+								funcTwo={makeElasticSearchRequest}
+								funcThree={() => {
+									inputRef.current.focus();
+									setIsRefiningQuery(true);
+								}}
 							/>
 						)))
 				}
 				{/* <p className='text-base text-shyne'>Robert</p> */}
+
+
+				{/* <Response response="hola"
+					funcOne={() => {
+						inputRef.current.focus();
+						setIsRefiningQuery(true);
+					}}
+					funcTwo={makeElasticSearchRequest}
+					funcThree={() => makeGrokkRequest()}
+				/> */}
+
 
 				{
 					//   loading && (
@@ -315,8 +376,8 @@ const Chat = () => {
 							setToWrite({});
 							// change the msg to generate the complex response
 							AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents });
-						}
-					} />
+						}}
+					/>
 				}
 				{
 					//   writingLong && <Responding data={{ text: toWriteLong.text, noImg: true }} end={
@@ -346,18 +407,40 @@ const Chat = () => {
 			}
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
+					{
+						isRefiningQuery && (
+							<span
+								onClick={() => {
+									setIsRefiningQuery(false);
+								}}
+							>
+								Refining
+							</span>
+						)
+					}
 					<input
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') {
-								handleAddQuestion(query);
+								if (isRefiningQuery) {
+									makeGrokkRequest(query);
+									setIsRefiningQuery(false);
+								} else {
+									handleAddQuestion(query)
+								}
 							}
 						}}
 						disabled={loading}
+						ref={inputRef}
 						type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
 					<img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => {
-						handleAddQuestion(query)
+						if (isRefiningQuery) {
+							makeGrokkRequest(query);
+							setIsRefiningQuery(false);
+						} else {
+							handleAddQuestion(query)
+						}
 					}} />
 				</div>
 			</section >

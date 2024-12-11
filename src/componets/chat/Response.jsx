@@ -8,7 +8,10 @@ const Response = ({
   end = () => { },
   open = false,
   noImg = false,
-  additionalResponse = ''
+  additionalResponse = '',
+  funcOne = () => { },
+  funcTwo = () => { },
+  funcThree = () => { },
 }) => {
   useEffect(() => {
     end();
@@ -34,7 +37,7 @@ const Response = ({
     }
   })
 
-  return useMemo(() => (
+  return (
     <div className="flex gap-3 md:gap-1 response md:mr-5" ref={responseRef}>
       <div className="w-10 min-w-10 md:w-8 h-10 min-h-10 md:h-8 p-[2px] antialiased rounded-full flex">
         <img className="rounded-full self-center" src="/hyperY.png" />
@@ -66,9 +69,26 @@ const Response = ({
               </>
             ) : 'No response yet'
           }</div>
+        <div className='flex w-full gap-2 mt-2'>
+          <span className='bg-light px-3 p-1 rounded cursor-pointer'
+            onClick={funcOne}
+          >
+            Look for more details
+          </span>
+          <span className='bg-light px-3 p-1 rounded cursor-pointer'
+            onClick={funcTwo}
+          >
+            Do a database search
+          </span>
+          <span className='bg-light px-3 p-1 rounded cursor-pointer'
+            onClick={funcThree}
+          >
+            Refine your question
+          </span>
+        </div>
       </div>
     </div>
-  ), [response, error, additionalResponse]);
+  )
 }
 
 Response.propTypes = {
@@ -77,7 +97,10 @@ Response.propTypes = {
   end: PropTypes.func,
   open: PropTypes.bool,
   noImg: PropTypes.bool,
-  additionalResponse: PropTypes.string
+  additionalResponse: PropTypes.string,
+  funcOne: PropTypes.func,
+  funcTwo: PropTypes.func,
+  funcThree: PropTypes.func,
 };
 
 export default memo(Response)
