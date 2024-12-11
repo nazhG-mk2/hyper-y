@@ -12,7 +12,7 @@ const loadChats = () => {
     try {
         chatsInLocalStorage = JSON.parse(chatsInLocalStorage);
         const { chats, archivedChats } = chatsInLocalStorage;
-        console.log('Loading 📤', chats);
+        // console.log('Loading 📤', chats);
         return { chats: chats || [], archivedChats };
     } catch (e) {
         return { chats: [], archivedChats: [] };
@@ -21,7 +21,7 @@ const loadChats = () => {
 
 // Función para guardar los chats en el localStorage
 const saveChats = (chats, archivedChats = []) => {
-    console.log('Saving 📥', chats);
+    // console.log('Saving 📥', chats);
     localStorage.setItem('chats', JSON.stringify({ chats: chats || [], archivedChats }));
 };
 
@@ -43,12 +43,8 @@ export const ChatProvider = ({ children }) => {
             const _currentChat = [...currentChat.chat];
             _currentChat.push(newMsg);
             const _newChat = { ...currentChat, date, chat: _currentChat };
-            console.log('New chat', _newChat);
             
             setCurrentChat(_newChat);
-            console.log(prevChats.map(chat => chat.id === _newChat.id ? _newChat : chat).sort((a, b) => {
-                return new Date(b.date) - new Date(a.date);
-            }));
 
             const newChats = prevChats.map(chat => chat.id === _newChat.id ? _newChat : chat).sort((a, b) => {
                 return new Date(b.date) - new Date(a.date);
