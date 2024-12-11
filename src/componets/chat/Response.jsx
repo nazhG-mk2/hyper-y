@@ -73,7 +73,7 @@ const Response = ({
         }
         {
           agent == 'fast' && (
-            <span className='text-secondary text-sm my-2'>Hyper-Y Dispatcher</span>
+            <span className='text-secondary text-sm my-2'>Hyper-Y</span>
           )
         }
         {
@@ -93,7 +93,7 @@ const Response = ({
         }
         {
           agent == 'chat' && (
-            <span className="text-gray-400 text-xs mt-4">Hyper-Y dispatcher invites Steve & Sally Stavro Family YMCA to the chat</span>
+            <span className="text-gray-400 text-xs mt-4">Hyper-Y invites Steve & Sally Stavro Family YMCA to the chat</span>
           )
         }
         {

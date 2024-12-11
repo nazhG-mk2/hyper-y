@@ -188,7 +188,7 @@ Would you like me to book a court for you?
 				agent={'chat'}
 				data={{
 					text:
-						`Hyper-Y dispatcher invites Steve & Sally Stavro Family YMCA to the chat`
+						`Hyper-Y invites Steve & Sally Stavro Family YMCA to the chat`
 				}}
 				end={() => {
 					setLoading('Sally Stavro Family YMCA is typing...');
