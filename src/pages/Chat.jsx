@@ -11,6 +11,37 @@ import { useChatContext } from '../contexts/Chat';
 const GROK_URL = 'http://43.202.113.176/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:9999/stream_chat';
 
+const analyticalSystemPrompt = `
+You are an expert on the YMCA globally, and your role is to help the user get an accurate answer to their query.
+You are to follow these instructions very carefully. For the next user query you receive, do the following steps and produce the final answer in the specified format:
+
+    1. Answer the question briefly in 2-3 sentences. Do not end your initial response with a colon. If you must list something, complete the list within these 2-3 sentences.
+    2. Assign an accuracy score from 0 to 100 based on factual correctness and confidence.
+    3. Explain why you assigned this score, considering known facts, your familiarity with the subject, and any speculative elements.
+    4. Refine your initial response based on the score:
+        - Score 90-100 (High Confidence): Present your initial response and then ask whether the user needs more details or if they want to look into something else, suggesting something relevant.
+        - Score 70-89 (Moderate Confidence): Present your original response while making it clear that you are unsure about your response and ask whether you should do a database search, unless the question is subjective or speculative, in which case include probing the same topic more deeply as an additional option.
+        - Score 0-69 (Low Confidence): Acknowledge uncertainty, provide a more cautious answer, and recommend a deeper search with verification steps or external references.
+
+If your initial response unintentionally ends with a colon (implying more details were expected):
+
+    In the REFINED_ANSWER step, provide the missing details to ensure the answer is complete and does not leave the user hanging.
+
+**Final Output Format (use exactly these labels):**
+\`\`\`
+ORIGINAL_ANSWER: <Your initial 2-3 sentence answer>
+SCORE: <Numerical score between 0 and 100>
+EXPLANATION: <A brief explanation of why you assigned that score>
+REFINED_ANSWER: <Your refined answer following the rules above>
+\`\`\`
+`;
+
+const simpleSystemPrompt = `
+You are an expert on the YMCA globally, and your role is to help the user get an accurate answer to their query.
+You can be as detailed as you like in your response, but make sure to provide accurate information
+and cite your sources where necessary. Please provide sources as clickable links whenever possible.
+`;
+
 const formatGrokResponse = (response) => {
 	const { data: { choices } } = response;
 	const assistantResponse = choices[0].message.content.trim();
@@ -75,6 +106,8 @@ const Chat = () => {
 	const [writingLong, setWritingLong] = useState(false);
 	const [toWriteLong, setToWriteLong] = useState({});
 
+	const [chatHistory, setChatHistory] = useState([]);
+
 	const [originalAnswer, setOriginalAnswer] = useState('');
 	const [score, setScore] = useState('');
 	const [explanation, setExplanation] = useState('');
@@ -98,27 +131,7 @@ const Chat = () => {
 				"messages": [
 					{
 						"role": "system",
-						"content": `
-  You are an expert on the YMCA globally and your role is to help the user get to an accurate answer to their query.
-  You are to follow these instructions very carefully. For the next user query you receive, do the following steps and produce the final answer in the specified format:
-
-  1. Answer the question briefly in 2-3 sentences. This is your initial response.
-  2. Assign an accuracy score from 0 to 100 based on factual correctness and confidence.
-  3. Explain why you assigned this score, considering known facts, your familiarity with the subject, and any speculative elements.
-  4. Refine your initial response based on the score:
-	 - **Score 90-100 (High Confidence):** Expand with more depth and examples, citing relevant supporting information.
-	 - **Score 70-89 (Moderate Confidence):** Rephrase unclear sections, add more supporting details, and identify where additional research might help.
-	 - **Score 50-69 (Low Confidence):** Acknowledge uncertainty, provide a more cautious answer, and suggest verification steps or external references.
-	 - **Score 0-49 (Very Low Confidence):** State that the response is speculative, avoid unsupported claims, and recommend seeking expert advice or reliable sources.
-
-  **Final Output Format (use exactly these labels):**
-  \`\`\`
-  ORIGINAL_ANSWER: <Your initial 2-3 sentence answer>
-  SCORE: <Numerical score between 0 and 100>
-  EXPLANATION: <A brief explanation of why you assigned that score>
-  REFINED_ANSWER: <Your refined answer following the rules above>
-  \`\`\`
-  `
+						"content": analyticalSystemPrompt
 					},
 					{
 						"role": "user",
@@ -134,6 +147,9 @@ const Chat = () => {
 				}
 			});
 
+			// Add the user's query to the chat history here
+			addToChatHistory(q, 'user');
+
 			const { originalAnswer, score, explanation, refinedAnswer } = formatGrokResponse(response);
 
 			setOriginalAnswer(originalAnswer);
@@ -144,6 +160,9 @@ const Chat = () => {
 			// Display the refined answer to the user
 			setToWrite({ text: refinedAnswer, documents: [] });
 			setWriting(true);
+
+			// Add the user's query to the chat history here
+			addToChatHistory(refinedAnswer, 'assistant');
 
 			// Store or log the other details as needed
 			console.log("Original Answer:", originalAnswer);
@@ -162,50 +181,81 @@ const Chat = () => {
 		setLoading(false);
 	};
 
-	const makeRequest = async (query, url, promt) => {
+	const makeRequest = async (query, url, prompt, chatHistory = []) => {
 		// check if there is a query
 		if (!query) {
-			// if there is no query, get the last question from the chat
-			// this can happen if the user presses the suggestion button without typing anything
-			const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
-			// if there is no question in the chat, log an error and return
-			if (!lastQuestion) {
-				console.error('No question found in chat');
-				AddToCurrentChat({ type: 'response', error: true, txt: 'No question found in chat' });
-				return;
-			}
-			// set the query to the last question
-			query = lastQuestion.txt;
+			// Handle missing query
+			console.error('No query provided');
+			return;
 		}
-		console.log({ query });
+		// if (!query) {
+		// 	// if there is no query, get the last question from the chat
+		// 	// this can happen if the user presses the suggestion button without typing anything
+		// 	const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
+		// 	// if there is no question in the chat, log an error and return
+		// 	if (!lastQuestion) {
+		// 		console.error('No question found in chat');
+		// 		AddToCurrentChat({ type: 'response', error: true, txt: 'No question found in chat' });
+		// 		return;
+		// 	}
+		// 	// set the query to the last question
+		// 	query = lastQuestion.txt;
+		// }
+		// Add the user query to the chat history
+
+		// Add the user's query to the chat history here
+		addToChatHistory(query, 'user');
+
+		// Construct the messages array
+		let messages = [];
+
+		// Include the system prompt if it exists
+		if (prompt) {
+			messages.push({
+				"role": "system",
+				"content": prompt
+			});
+		}
+
+		// Include the previous chat history
+		chatHistory.forEach(entry => {
+			messages.push({
+				"role": entry.sender === 'user' ? 'user' : 'assistant',
+				"content": entry.message
+			});
+		});
+
+		// Add the current user query
+		messages.push({
+			"role": "user",
+			"content": query
+		});
+
+		// Log the messages for debugging
+		console.log({ messages });
 
 		console.log("Making Grokk request for:", query);
+		console.log("with messages:", messages);
 		// display a loading message
 		setLoading("Requesting data...");
 
 		// fetch the data
 		try {
 			const response = await axios.post(url, {
-				"messages": [
-					{
-						"role": "system",
-						"content": promt
-					},
-					{
-						"role": "user",
-						"content": query
-					}
-				],
+				"messages": messages,
 				"model": "grok-beta",
 				"stream": false,
-				"temperature": 0.5
+				"temperature": 0.4
 			}, {
 				headers: {
 					'Content-Type': 'application/json'
 				}
 			});
 
-			console.log({ response });
+			// console.log({ response });
+			// Handle the response
+			const data = response.data;
+			console.log("Response data:", data);
 
 			if ( url === GROK_URL ) {
 					const refinedAnswer = response.data.choices[0].message.content;
@@ -213,6 +263,9 @@ const Chat = () => {
 					// Display anwser to the user
 					setToWrite({ text: refinedAnswer, documents: [] });
 					setWriting(true);
+
+					// Update chat history with the response
+					addToChatHistory(refinedAnswer, 'assistant');
 					
 			}
 
@@ -225,20 +278,29 @@ const Chat = () => {
 		} catch (error) {
 			console.error('Error while fetching data:', error);
 			AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
+			setLoading(false);
 		}
 	}
 
-	const makeGrokRequest = async (query) => {
-		let promt = ''; // This is the prompt used in "Look for more details"
-		if ( isRefiningQuery ) {
-			promt = 'REFINING_SEARCH'; // This is the prompt used in "Refine your question"
+    const addToChatHistory = (message, sender) => {
+        setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
+    };
+	// const makeGrokRequest = async (query) => {
+	// 	let prompt = ''; // This is the prompt used in "Look for more details"
+	// 	if ( isRefiningQuery ) {
+	// 		promt = 'REFINING_SEARCH'; // This is the prompt used in "Refine your question"
+	// 	}
+	// 	await makeRequest(query, GROK_URL, prompt);
+	// }
+	const makeGrokRequest = async (query, prompt = '', chatHistory = []) => {
+		if (isRefiningQuery) {
+			prompt = 'REFINING_SEARCH';
 		}
-		await makeRequest(query, GROK_URL, promt);
-	}
-	const makeElasticSearchRequest = async (query) => {
+		await makeRequest(query, GROK_URL, prompt, chatHistory);
+	};
+	const makeElasticSearchRequest = async (query, prompt = '', chatHistory = []) => {
 		// this is the prompt use in "Do a database search"
-		const promt = '';
-		await makeRequest(query, ELASTICSEARCH_URL, promt);
+		await makeRequest(query, ELASTICSEARCH_URL, prompt, chatHistory);
 	}
 
 	const handleAddQuestion = (question) => {
@@ -269,7 +331,7 @@ const Chat = () => {
 										}, 0);
 									}
 								}}
-								funcOne={() => makeGrokRequest()}
+								funcOne={() => makeGrokRequest('Please expand on your initial response with more details.', simpleSystemPrompt, chatHistory)}
 								funcTwo={() => makeElasticSearchRequest()}
 								funcThree={() => {
 									inputRef.current.focus();
@@ -353,7 +415,7 @@ const Chat = () => {
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') {
 								if (isRefiningQuery) {
-									makeGrokRequest(query);
+									makeGrokRequest(query, '', chatHistory);
 									setIsRefiningQuery(false);
 								} else {
 									handleAddQuestion(query)
@@ -365,7 +427,11 @@ const Chat = () => {
 						type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
 					<img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => {
 						if (isRefiningQuery) {
-							makeGrokRequest(query);
+							// const prompt = `You are an expert in the YMCA globally at all levels.
+							// Your role is to help the user get an accurate answer to their query.
+							// Consider the user's current question and the previous context in
+							// formulating your response.`
+							makeGrokRequest(query, simpleSystemPrompt, chatHistory);
 							setIsRefiningQuery(false);
 						} else {
 							handleAddQuestion(query)
@@ -373,14 +439,14 @@ const Chat = () => {
 					}} />
 				</div>
 			</section >
-			{/* Debug section (remove or comment out when done verifying) */}
+			{/* Debug section (remove or comment out when done verifying)
 			<div style={{ border: '1px solid gray', padding: '10px', marginTop: '20px' }}>
 				<h2>Debug Info:</h2>
 				<p><strong>Original Answer:</strong> {originalAnswer}</p>
 				<p><strong>Score:</strong> {score}</p>
 				<p><strong>Explanation:</strong> {explanation}</p>
 				<p><strong>Refined Answer:</strong> {refinedAnswer}</p>
-			</div>
+			</div> */}
 		</div >
 	)
 }
