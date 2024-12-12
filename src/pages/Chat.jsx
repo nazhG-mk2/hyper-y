@@ -169,6 +169,14 @@ const Chat = () => {
 			console.log("Score:", score);
 			console.log("Explanation:", explanation);
 
+			if (score < 70) { // Do a database search
+				makeElasticSearchRequest();
+			} else if (score < 90) { // Look for more details
+				makeGrokRequest();
+			}
+
+			// Refine your question (?) - I'don't know what triggers this
+
 			// If you'd like to store these in state, define corresponding states:
 			// setOriginalAnswer(originalAnswer);
 			// setScore(score);
