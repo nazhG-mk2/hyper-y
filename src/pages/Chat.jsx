@@ -182,29 +182,26 @@ const Chat = () => {
 	};
 
 	const makeRequest = async (query, url, prompt, chatHistory = []) => {
+		/// TODO: handle stop writing
+		// if (writing) {}
+
 		// check if there is a query
 		if (!query) {
-			// Handle missing query
-			console.error('No query provided');
-			return;
+			// if there is no query, get the last question from the chat
+			// this can happen if the user presses the suggestion button without typing anything
+			const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
+			// if there is no question in the chat, log an error and return
+			if (!lastQuestion) {
+				console.error('No question found in chat');
+				AddToCurrentChat({ type: 'response', error: true, txt: 'No question found in chat' });
+				return;
+			}
+			// set the query to the last question
+			query = lastQuestion.txt;
 		}
-		// if (!query) {
-		// 	// if there is no query, get the last question from the chat
-		// 	// this can happen if the user presses the suggestion button without typing anything
-		// 	const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
-		// 	// if there is no question in the chat, log an error and return
-		// 	if (!lastQuestion) {
-		// 		console.error('No question found in chat');
-		// 		AddToCurrentChat({ type: 'response', error: true, txt: 'No question found in chat' });
-		// 		return;
-		// 	}
-		// 	// set the query to the last question
-		// 	query = lastQuestion.txt;
-		// }
-		// Add the user query to the chat history
 
-		// Add the user's query to the chat history here
-		addToChatHistory(query, 'user');
+		// // Add the user's query to the chat history here
+		// addToChatHistory(query, 'user');
 
 		// Construct the messages array
 		let messages = [];
@@ -239,17 +236,41 @@ const Chat = () => {
 		// display a loading message
 		setLoading("Requesting data...");
 
-		// fetch the data
-		try {
-			const response = await axios.post(url, {
-				"messages": messages,
+		const requestBody = url === GROK_URL ?
+			{ /// BODY FOR GROK REQUEST
+				"messages": [
+					{
+						"role": "system",
+						"content": prompt
+					},
+					{
+						"role": "user",
+						"content": query
+					}
+				],
 				"model": "grok-beta",
 				"stream": false,
-				"temperature": 0.4
-			}, {
-				headers: {
-					'Content-Type': 'application/json'
-				}
+				"temperature": 0.5
+			} :
+			{ /// BODY FOR ELASTICSEARCH REQUEST
+				"user_query": query,
+				"searches": 2
+			}
+
+		const requestHeaders = url === GROK_URL ?
+			{ /// HEADERS FOR GROK REQUEST
+				'Content-Type': 'application/json'
+			} :
+			{ /// HEADERS FOR ELASTICSEARCH REQUEST
+			};
+
+		console.log({ requestBody, requestHeaders });
+
+
+		try {
+			// fetch the data
+			const response = await axios.post(url, requestBody, {
+				headers: requestHeaders
 			});
 
 			// console.log({ response });
@@ -269,13 +290,35 @@ const Chat = () => {
 					
 			}
 
-			if ( url === ELASTICSEARCH_URL ) {
-				// TODO: Handle the response from the ElasticSearch API
+			if (url === ELASTICSEARCH_URL) {
+				const parts = response.data.split('\n');
+				// get the text between FORMING_RESPONSE and END_RESPONSE in the response
+				const match = response.data.match(/FORMING_RESPONSE([\s\S]*?)END_RESPONSE/);
+				console.log({ match });
+				// set the current step to 0 to start from the beginning
+				setCurrentStep(() => 0);
+
+				// we spect to find FORMING_RESPONSE warpping the text to write
+				// if we don't find it, log an error and return
+				if (!match) return console.error("No match found");
+
+				// set the text to write
+				setToWrite({ text: match[1].trim() });
+				setWriting(true);	
+
+				// find the position of FORMING_RESPONSE
+				const formingResponseIndex = parts.indexOf('FORMING_RESPONSE');
+				const _steps = parts.slice(0, formingResponseIndex);
+				// get only the _steps that are uppercase string no whitespaces
+				const _stepsFiltered = _steps.filter(step => step.trim() === step.toUpperCase() && step.indexOf(' ') === -1);
+				setSteps(_stepsFiltered);
 			}
 
 			// clear the loading message
 			setLoading(false);
 		} catch (error) {
+			// clear the loading message
+			setLoading(false);
 			console.error('Error while fetching data:', error);
 			AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
 			setLoading(false);
@@ -340,19 +383,6 @@ const Chat = () => {
 							/>
 						)))
 				}
-				{/* <p className='text-base text-shyne'>Robert</p> */}
-
-
-				{/* <Response response="hola"
-					funcOne={() => {
-						inputRef.current.focus();
-						setIsRefiningQuery(true);
-					}}
-					funcTwo={makeElasticSearchRequest}
-					funcThree={() => makeGrokkRequest()}
-				/> */}
-
-
 				{
 					loading && (
 						<div className="flex ml-14">
@@ -369,17 +399,6 @@ const Chat = () => {
 							AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents });
 						}}
 					/>
-				}
-				{
-					//   writingLong && <Responding data={{ text: toWriteLong.text, noImg: true }} end={
-					//     () => {
-					//       setWritingLong(false);
-					//       setToWriteLong({});
-					//       console.log('End of long response 🔥🔥🔥',);
-
-					//       AddToCurrentChat({ type: 'response', txt: toWriteLong.text, documents: [] });
-					//     }
-					//   } />
 				}
 			</section >
 			{
@@ -413,8 +432,14 @@ const Chat = () => {
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						onKeyDown={(e) => {
+							if (query === '') return;
 							if (e.key === 'Enter') {
 								if (isRefiningQuery) {
+									// clear input field
+									setQuery('');
+									// add the user's query to the chat history
+									AddToCurrentChat({ type: 'question', txt: query });
+
 									makeGrokRequest(query, '', chatHistory);
 									setIsRefiningQuery(false);
 								} else {
@@ -426,11 +451,18 @@ const Chat = () => {
 						ref={inputRef}
 						type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
 					<img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => {
+						if (query === '') return;
 						if (isRefiningQuery) {
 							// const prompt = `You are an expert in the YMCA globally at all levels.
 							// Your role is to help the user get an accurate answer to their query.
 							// Consider the user's current question and the previous context in
 							// formulating your response.`
+							
+							// clear input field
+							setQuery('');
+							// add the user's query to the chat history
+							AddToCurrentChat({ type: 'question', txt: query });
+
 							makeGrokRequest(query, simpleSystemPrompt, chatHistory);
 							setIsRefiningQuery(false);
 						} else {
