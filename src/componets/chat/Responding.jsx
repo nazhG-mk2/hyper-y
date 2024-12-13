@@ -15,22 +15,27 @@ const Responding = ({ data, time = 4000,
   const [skipAnimation, setSkipAnimation] = useState(false);
 
   useEffect(() => {
-    
+    if (skipAnimation) {
+      setCurrentText(text);
+      end();
+      return;
+    }
+  
     const speed = Math.max(text?.length / time, MINIMUM_SPEED);
-
+  
     if (textIndex < text?.length) {
-      setCurrentText(text.slice(0, textIndex + 1));
-
+      const nextChar = text.charAt(textIndex);
+      setCurrentText((prev) => prev + nextChar);
+  
       const timeout = setTimeout(() => {
-        setTextIndex(textIndex + 1);
+        setTextIndex((prevIndex) => prevIndex + 1);
       }, speed);
-
+  
       return () => clearTimeout(timeout);
     } else {
-      setSkipAnimation(false);
       end();
     }
-  }, [currentText, textIndex, data, time, end, skipAnimation, text]);
+  }, [text, textIndex, time, end, skipAnimation]);
 
   return (
     <div

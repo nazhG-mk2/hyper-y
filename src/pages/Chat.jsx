@@ -12,20 +12,22 @@ const GROK_URL = 'http://43.202.113.176/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:9999/stream_chat';
 
 const analyticalSystemPrompt = `
-You are an expert on the YMCA globally, and your role is to help the user get an accurate answer to their query.
-You are to follow these instructions very carefully. For the next user query you receive, do the following steps and produce the final answer in the specified format:
-
-    1. Answer the question briefly in 2-3 sentences. Do not end your initial response with a colon. If you must list something, complete the list within these 2-3 sentences.
-    2. Assign an accuracy score from 0 to 100 based on factual correctness and confidence.
-    3. Explain why you assigned this score, considering known facts, your familiarity with the subject, and any speculative elements.
-    4. Refine your initial response based on the score:
-        - Score 90-100 (High Confidence): Present your initial response and then ask whether the user needs more details or if they want to look into something else, suggesting something relevant.
-        - Score 70-89 (Moderate Confidence): Present your original response while making it clear that you are unsure about your response and ask whether you should do a database search, unless the question is subjective or speculative, in which case include probing the same topic more deeply as an additional option.
-        - Score 0-69 (Low Confidence): Acknowledge uncertainty, provide a more cautious answer, and recommend a deeper search with verification steps or external references.
-
-If your initial response unintentionally ends with a colon (implying more details were expected):
-
-    In the REFINED_ANSWER step, provide the missing details to ensure the answer is complete and does not leave the user hanging.
+System Prompt Instructions:
+	1. Write the ORIGINAL_ANSWER in 2-3 sentences. After writing the answer, check the end:
+		- If the ORIGINAL_ANSWER ends with a colon (:) or with a colon immediately followed by one or more backticks (e.g., :\` or : \` or similar), add extra words so that the sentence does not end with that pattern. Perform this fix only once.
+		- Ensure the final ORIGINAL_ANSWER does not end with a colon, nor with a colon followed by backticks.
+	2. Assign a SCORE (0-100) based on accuracy and confidence.
+	3. EXPLANATION: In 1-2 sentences, explain why you gave that score. Reference known facts, expertise, and any speculative elements.
+	4. Refine your answer based on the SCORE:
+		- 90-100 (High Confidence):
+        	- REFINED_ANSWER = ORIGINAL_ANSWER exactly.
+        	- NEXT_STEPS: Ask if the user wants more details or another related query. If the query is not location-specific, note that accuracy may vary by location.
+    	- 70-89 (Moderate Confidence):
+        	- REFINED_ANSWER = ORIGINAL_ANSWER, adding minimal clarifications if they reduce uncertainty.
+        	- NEXT_STEPS: Explain why it might be incomplete, offer a database search, and suggest follow-up queries.
+    	- 0-69 (Low Confidence):
+        	- REFINED_ANSWER = ORIGINAL_ANSWER improved if possible.
+        	- NEXT_STEPS: Acknowledge uncertainty, recommend further research, and external verification.
 
 **Final Output Format (use exactly these labels):**
 \`\`\`
@@ -33,13 +35,29 @@ ORIGINAL_ANSWER: <Your initial 2-3 sentence answer>
 SCORE: <Numerical score between 0 and 100>
 EXPLANATION: <A brief explanation of why you assigned that score>
 REFINED_ANSWER: <Your refined answer following the rules above>
+NEXT_STEPS: <Suggestions based on the score, including recommended actions>
 \`\`\`
 `;
 
-const simpleSystemPrompt = `
+const addDetailsPrompt = `
 You are an expert on the YMCA globally, and your role is to help the user get an accurate answer to their query.
 You can be as detailed as you like in your response, but make sure to provide accurate information
 and cite your sources where necessary. Please provide sources as clickable links whenever possible.
+Follow these steps in generating your response:
+
+1. Review the previous chat history and the user's most recent input.
+2. Clarify ambiguities or incomplete information as needed.
+3. Do not regurgitate information from the previous chat history, and ensure that the user's most reecent query is adequately addressed.
+4. Deliver a refined answer that directly addresses the user's most recent query.
+`;
+
+const refiningPrompt = `
+As a global YMCA expert, refine the user's query based on the previous conversation to provide a precise, helpful answer. Follow these steps:
+
+1. Review the previous chat history and the user's most recent input.
+2. Clarify ambiguities or incomplete information as needed.
+3. Do not regurgitate information from the previous chat history, and ensure that the user's most reecent query is adequately addressed.
+4. Deliver a refined answer that directly addresses the user's most recent query.
 `;
 
 const formatGrokResponse = (response) => {
@@ -64,13 +82,15 @@ const formatGrokResponse = (response) => {
 	const scoreMatch = assistantResponse.match(/SCORE:\s*(\d+)/);
 	const explanationMatch = assistantResponse.match(/EXPLANATION:\s*([\s\S]*?)\nREFINED_ANSWER:/);
 	const refinedMatch = assistantResponse.match(/REFINED_ANSWER:\s*(.*)/);
+	const nextStepsMatch = assistantResponse.match(/NEXT_STEPS:\s*([\s\S]*?)$/);
 
 	const originalAnswer = originalMatch ? originalMatch[1].trim() : '';
 	const score = scoreMatch ? scoreMatch[1].trim() : '';
 	const explanation = explanationMatch ? explanationMatch[1].trim() : '';
 	const refinedAnswer = refinedMatch ? refinedMatch[1].trim() : '';
+	const nextSteps = nextStepsMatch ? nextStepsMatch[1].trim() : '';
 
-	return { originalAnswer, score, explanation, refinedAnswer };
+	return { originalAnswer, score, explanation, refinedAnswer, nextSteps };
 }
 
 const formatThinkingSteps = (steps) => {
@@ -94,6 +114,18 @@ const formatThinkingSteps = (steps) => {
 	return steps;
 }
 
+const isValidMessage = (message) => {
+	return (
+	  typeof message.role === 'string' &&
+	  typeof message.content === 'string' &&
+	  message.content.trim().length > 0
+	);
+  };
+  
+  const validateChatHistory = (chatHistory) => {
+	return chatHistory.every(isValidMessage);
+  };
+
 const Chat = () => {
 	const { AddToCurrentChat, currentChat } = useChatContext();
 
@@ -112,6 +144,7 @@ const Chat = () => {
 	const [score, setScore] = useState('');
 	const [explanation, setExplanation] = useState('');
 	const [refinedAnswer, setRefinedAnswer] = useState('');
+	const [nextSteps, setNextSteps] = useState('');
 
 	const [isRefiningQuery, setIsRefiningQuery] = useState(false);
 
@@ -124,55 +157,128 @@ const Chat = () => {
 		'YMCA locations in Italy',
 	];
 
-	const handleSubmit = async (q) => {
+	const buildRequestOptions = (url, messages, query, prompt) => {
+		let requestBody = {};
+		let requestHeaders = {};
+	  
+		if (url === GROK_URL) {
+		  requestBody = {
+			"messages": messages,
+			"model": "grok-beta",
+			"stream": false,
+			"temperature": 0.5,
+		  };
+		  requestHeaders = {
+			'Content-Type': 'application/json',
+		  };
+		} else if (url === ELASTICSEARCH_URL) {
+		  requestBody = {
+			"user_query": query,
+			"searches": 2,
+		  };
+		  requestHeaders = {
+			// Add any necessary headers for Elasticsearch
+		  };
+		}
+	  
+		return { requestBody, requestHeaders };
+	  };
+
+	const handleSubmit = async (q, prompt = analyticalSystemPrompt, chatHistory = []) => {
 		setLoading("Generating a quick response for you...");
 		try {
-			const response = await axios.post('http://43.202.113.176/v1/chat/completions', {
-				"messages": [
-					{
-						"role": "system",
-						"content": analyticalSystemPrompt
-					},
-					{
-						"role": "user",
-						"content": q
-					}
-				],
-				"model": "grok-beta",
-				"stream": false,
-				"temperature": 0.5
-			}, {
-				headers: {
-					'Content-Type': 'application/json'
-				}
+			// const response = await axios.post('http://43.202.113.176/v1/chat/completions', {
+			// 	"messages": [
+			// 		{
+			// 			"role": "system",
+			// 			"content": analyticalSystemPrompt
+			// 		},
+			// 		{
+			// 			"role": "user",
+			// 			"content": q
+			// 		}
+			// 	],
+			// 	"model": "grok-beta",
+			// 	"stream": false,
+			// 	"temperature": 0.5
+			// }, {
+			// 	headers: {
+			// 		'Content-Type': 'application/json'
+			// 	}
+			// });
+
+			// Construct the messages array
+			let messages = [];
+
+			// Include the previous chat history
+			chatHistory.forEach(entry => {
+				messages.push({
+					"role": entry.sender === 'user' ? 'user' : 'assistant',
+					"content": entry.message
+				});
 			});
 
-			// Add the user's query to the chat history here
-			addToChatHistory(q, 'user');
+			// Include the system prompt if it exists
+			if (prompt) {
+				messages.push({
+					"role": "system",
+					"content": prompt
+				});
+			}
+	
+			// Add the current user query
+			messages.push({
+				"role": "user",
+				"content": q
+			});
 
-			const { originalAnswer, score, explanation, refinedAnswer } = formatGrokResponse(response);
+			// Use the buildRequestOptions function
+			const { requestBody, requestHeaders } = buildRequestOptions(GROK_URL, messages, q, prompt);
+		  
+			// Make the API call
+			try {
+				const response = await axios.post(GROK_URL, requestBody, {
+				headers: requestHeaders,
+				});
+				// Handle the response as needed
 
-			setOriginalAnswer(originalAnswer);
-			setScore(score);
-			setExplanation(explanation);
-			setRefinedAnswer(refinedAnswer);
+				// Add the user's query to the chat history here
+				addToChatHistory(q, 'user');
 
-			// Display the refined answer to the user
-			setToWrite({ text: refinedAnswer, documents: [] });
-			setWriting(true);
+				const { originalAnswer, score, explanation, refinedAnswer, nextSteps } = formatGrokResponse(response);
 
-			// Add the user's query to the chat history here
-			addToChatHistory(refinedAnswer, 'assistant');
+				setOriginalAnswer(originalAnswer);
+				setScore(score);
+				setExplanation(explanation);
+				setRefinedAnswer(refinedAnswer);
+				setNextSteps(nextSteps)
 
-			// Store or log the other details as needed
-			console.log("Original Answer:", originalAnswer);
-			console.log("Score:", score);
-			console.log("Explanation:", explanation);
 
-			// If you'd like to store these in state, define corresponding states:
-			// setOriginalAnswer(originalAnswer);
-			// setScore(score);
-			// setExplanation(explanation);
+				// for (let i = 0; i < nextSteps.length; i++) {
+				// 	console.log(`Character at ${i}: '${nextSteps[i]}' (Code: ${nextSteps.charCodeAt(i)})`);
+				// }
+
+				// Display the refined answer and next steps to the user
+				const cleanedNextSteps = nextSteps.replace(/```\s*$/, '').trim();
+				const responseToWrite = `${refinedAnswer}\n\n${cleanedNextSteps}`.trimEnd();
+				setToWrite({ text: responseToWrite, documents: [] });
+				setWriting(true);
+
+				// Add the user's query to the chat history here
+				addToChatHistory(responseToWrite, 'assistant');
+
+				// Store or log the other details as needed
+				console.log("Original Answer:", originalAnswer);
+				console.log("Score:", score);
+				console.log("Explanation:", explanation);
+
+				// If you'd like to store these in state, define corresponding states:
+				// setOriginalAnswer(originalAnswer);
+				// setScore(score);
+				// setExplanation(explanation);
+			} catch (error) {
+			  console.error('Error in handleSubmit:', error);
+			}
 
 		} catch (error) {
 			console.error('Error while fetching data:', error);
@@ -199,9 +305,6 @@ const Chat = () => {
 			// set the query to the last question
 			query = lastQuestion.txt;
 		}
-
-		// // Add the user's query to the chat history here
-		// addToChatHistory(query, 'user');
 
 		// Construct the messages array
 		let messages = [];
@@ -231,38 +334,31 @@ const Chat = () => {
 		// Log the messages for debugging
 		console.log({ messages });
 
-		console.log("Making Grokk request for:", query);
+		console.log("Making request for:", query);
 		console.log("with messages:", messages);
 		// display a loading message
 		setLoading("Requesting data...");
 
-		const requestBody = url === GROK_URL ?
-			{ /// BODY FOR GROK REQUEST
-				"messages": [
-					{
-						"role": "system",
-						"content": prompt
-					},
-					{
-						"role": "user",
-						"content": query
-					}
-				],
-				"model": "grok-beta",
-				"stream": false,
-				"temperature": 0.5
-			} :
-			{ /// BODY FOR ELASTICSEARCH REQUEST
-				"user_query": query,
-				"searches": 2
-			}
+		// const requestBody = url === GROK_URL ?
+		// 	{ /// BODY FOR GROK REQUEST
+		// 		"messages": messages,
+		// 		"model": "grok-beta",
+		// 		"stream": false,
+		// 		"temperature": 0.5
+		// 	} :
+		// 	{ /// BODY FOR ELASTICSEARCH REQUEST
+		// 		"user_query": query,
+		// 		"searches": 2
+		// 	}
 
-		const requestHeaders = url === GROK_URL ?
-			{ /// HEADERS FOR GROK REQUEST
-				'Content-Type': 'application/json'
-			} :
-			{ /// HEADERS FOR ELASTICSEARCH REQUEST
-			};
+		// const requestHeaders = url === GROK_URL ?
+		// 	{ /// HEADERS FOR GROK REQUEST
+		// 		'Content-Type': 'application/json'
+		// 	} :
+		// 	{ /// HEADERS FOR ELASTICSEARCH REQUEST
+		// 	};
+
+		const { requestBody, requestHeaders } = buildRequestOptions(url, messages, query, prompt);
 
 		console.log({ requestBody, requestHeaders });
 
@@ -272,6 +368,9 @@ const Chat = () => {
 			const response = await axios.post(url, requestBody, {
 				headers: requestHeaders
 			});
+
+			// Add the user's query to the chat history here
+			addToChatHistory(query, 'user');
 
 			// console.log({ response });
 			// Handle the response
@@ -312,6 +411,9 @@ const Chat = () => {
 				// get only the _steps that are uppercase string no whitespaces
 				const _stepsFiltered = _steps.filter(step => step.trim() === step.toUpperCase() && step.indexOf(' ') === -1);
 				setSteps(_stepsFiltered);
+
+				// Update chat history with the response
+				addToChatHistory(match[1].trim(), 'assistant');
 			}
 
 			// clear the loading message
@@ -337,7 +439,7 @@ const Chat = () => {
 	// }
 	const makeGrokRequest = async (query, prompt = '', chatHistory = []) => {
 		if (isRefiningQuery) {
-			prompt = 'REFINING_SEARCH';
+			prompt = refiningPrompt;
 		}
 		await makeRequest(query, GROK_URL, prompt, chatHistory);
 	};
@@ -374,7 +476,7 @@ const Chat = () => {
 										}, 0);
 									}
 								}}
-								funcOne={() => makeGrokRequest('Please expand on your initial response with more details.', simpleSystemPrompt, chatHistory)}
+								funcOne={() => makeGrokRequest('Please expand on your initial response with more details.', addDetailsPrompt, chatHistory)}
 								funcTwo={() => makeElasticSearchRequest()}
 								funcThree={() => {
 									inputRef.current.focus();
@@ -432,8 +534,11 @@ const Chat = () => {
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						onKeyDown={(e) => {
-							if (query === '') return;
 							if (e.key === 'Enter') {
+								if (!query || query.trim() === '') {
+								  console.error('Cannot send an empty query');
+								  return;
+								}
 								if (isRefiningQuery) {
 									// clear input field
 									setQuery('');
@@ -463,7 +568,7 @@ const Chat = () => {
 							// add the user's query to the chat history
 							AddToCurrentChat({ type: 'question', txt: query });
 
-							makeGrokRequest(query, simpleSystemPrompt, chatHistory);
+							makeGrokRequest(query, addDetailsPrompt, chatHistory);
 							setIsRefiningQuery(false);
 						} else {
 							handleAddQuestion(query)
