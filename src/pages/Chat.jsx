@@ -184,14 +184,9 @@ const Chat = () => {
 		return { requestBody, requestHeaders };
 	};
 
-	// Refining the user's query will make the input field to copy the last question in the chat
 	useEffect(() => {
 		if (isRefiningQuery) {
 			const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
-			if (lastQuestion) {
-				setQuery(lastQuestion.txt);
-			}
-		} else { // Clear the query when not refining
 			setQuery('');
 		}
 	}, [isRefiningQuery, currentChat]);
