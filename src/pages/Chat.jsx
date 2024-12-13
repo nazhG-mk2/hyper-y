@@ -116,15 +116,15 @@ const formatThinkingSteps = (steps) => {
 
 const isValidMessage = (message) => {
 	return (
-	  typeof message.role === 'string' &&
-	  typeof message.content === 'string' &&
-	  message.content.trim().length > 0
+		typeof message.role === 'string' &&
+		typeof message.content === 'string' &&
+		message.content.trim().length > 0
 	);
-  };
-  
-  const validateChatHistory = (chatHistory) => {
+};
+
+const validateChatHistory = (chatHistory) => {
 	return chatHistory.every(isValidMessage);
-  };
+};
 
 const Chat = () => {
 	const { AddToCurrentChat, currentChat } = useChatContext();
@@ -160,29 +160,41 @@ const Chat = () => {
 	const buildRequestOptions = (url, messages, query, prompt) => {
 		let requestBody = {};
 		let requestHeaders = {};
-	  
+
 		if (url === GROK_URL) {
-		  requestBody = {
-			"messages": messages,
-			"model": "grok-beta",
-			"stream": false,
-			"temperature": 0.5,
-		  };
-		  requestHeaders = {
-			'Content-Type': 'application/json',
-		  };
+			requestBody = {
+				"messages": messages,
+				"model": "grok-beta",
+				"stream": false,
+				"temperature": 0.5,
+			};
+			requestHeaders = {
+				'Content-Type': 'application/json',
+			};
 		} else if (url === ELASTICSEARCH_URL) {
-		  requestBody = {
-			"user_query": query,
-			"searches": 2,
-		  };
-		  requestHeaders = {
-			// Add any necessary headers for Elasticsearch
-		  };
+			requestBody = {
+				"user_query": query,
+				"searches": 2,
+			};
+			requestHeaders = {
+				// Add any necessary headers for Elasticsearch
+			};
 		}
-	  
+
 		return { requestBody, requestHeaders };
-	  };
+	};
+
+	// Refining the user's query will make the input field to copy the last question in the chat
+	useEffect(() => {
+		if (isRefiningQuery) {
+			const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
+			if (lastQuestion) {
+				setQuery(lastQuestion.txt);
+			}
+		} else { // Clear the query when not refining
+			setQuery('');
+		}
+	}, [isRefiningQuery, currentChat]);
 
 	const handleSubmit = async (q, prompt = analyticalSystemPrompt, chatHistory = []) => {
 		setLoading("Generating a quick response for you...");
@@ -225,7 +237,7 @@ const Chat = () => {
 					"content": prompt
 				});
 			}
-	
+
 			// Add the current user query
 			messages.push({
 				"role": "user",
@@ -234,11 +246,11 @@ const Chat = () => {
 
 			// Use the buildRequestOptions function
 			const { requestBody, requestHeaders } = buildRequestOptions(GROK_URL, messages, q, prompt);
-		  
+
 			// Make the API call
 			try {
 				const response = await axios.post(GROK_URL, requestBody, {
-				headers: requestHeaders,
+					headers: requestHeaders,
 				});
 				// Handle the response as needed
 
@@ -277,7 +289,7 @@ const Chat = () => {
 				// setScore(score);
 				// setExplanation(explanation);
 			} catch (error) {
-			  console.error('Error in handleSubmit:', error);
+				console.error('Error in handleSubmit:', error);
 			}
 
 		} catch (error) {
@@ -339,29 +351,9 @@ const Chat = () => {
 		// display a loading message
 		setLoading("Requesting data...");
 
-		// const requestBody = url === GROK_URL ?
-		// 	{ /// BODY FOR GROK REQUEST
-		// 		"messages": messages,
-		// 		"model": "grok-beta",
-		// 		"stream": false,
-		// 		"temperature": 0.5
-		// 	} :
-		// 	{ /// BODY FOR ELASTICSEARCH REQUEST
-		// 		"user_query": query,
-		// 		"searches": 2
-		// 	}
-
-		// const requestHeaders = url === GROK_URL ?
-		// 	{ /// HEADERS FOR GROK REQUEST
-		// 		'Content-Type': 'application/json'
-		// 	} :
-		// 	{ /// HEADERS FOR ELASTICSEARCH REQUEST
-		// 	};
-
 		const { requestBody, requestHeaders } = buildRequestOptions(url, messages, query, prompt);
 
 		console.log({ requestBody, requestHeaders });
-
 
 		try {
 			// fetch the data
@@ -377,16 +369,17 @@ const Chat = () => {
 			const data = response.data;
 			console.log("Response data:", data);
 
-			if ( url === GROK_URL ) {
-					const refinedAnswer = response.data.choices[0].message.content;
-					
-					// Display anwser to the user
-					setToWrite({ text: refinedAnswer, documents: [] });
-					setWriting(true);
+			let additionalResponse = '';
 
-					// Update chat history with the response
-					addToChatHistory(refinedAnswer, 'assistant');
-					
+			if (url === GROK_URL) {
+				const refinedAnswer = response.data.choices[0].message.content;
+
+				// Display anwser to the user
+				setToWrite({ text: refinedAnswer, documents: [] });
+				setWriting(true);
+
+				// Update chat history with the response
+				addToChatHistory(refinedAnswer, 'assistant');
 			}
 
 			if (url === ELASTICSEARCH_URL) {
@@ -401,9 +394,35 @@ const Chat = () => {
 				// if we don't find it, log an error and return
 				if (!match) return console.error("No match found");
 
+				// Get the documents from the response
+				const docLabel = 'REFERENCES';
+				const docIndex = parts.indexOf(docLabel);
+				let documents = [];
+				try { // try to parse the documents
+					documents = JSON.parse(parts.slice(docIndex + 1, docIndex + 2)).map(doc => doc[4] == "" ? doc[2].slice(0, doc[2].indexOf('_') > -1 ? doc[2].indexOf('_') : doc[2].length) : doc[4]);
+					// remove suplicate documents
+					documents = [...new Set(documents)];
+					additionalResponse = 'Database search results:';
+					console.log({ documents });
+
+				} catch (error) {
+					console.error('Error while parsing documents:', error);
+				}
+
+				// Get the accuracy score from the response
+				let accuracy = 0;
+				const accuracyLabel = 'RATING_ACCURACY';
+				try {
+					const accuracyIndex = parts.indexOf(accuracyLabel);
+					accuracy = JSON.parse(parts.slice(accuracyIndex + 1, accuracyIndex + 2)).accuracy;
+					console.info('Accuracy:', accuracy);
+				} catch (error) {
+					console.error('Error while parsing accuracy:', error);
+				}
+
 				// set the text to write
-				setToWrite({ text: match[1].trim() });
-				setWriting(true);	
+				setToWrite({ text: match[1].trim(), documents, additionalResponse, accuracy });
+				setWriting(true);
 
 				// find the position of FORMING_RESPONSE
 				const formingResponseIndex = parts.indexOf('FORMING_RESPONSE');
@@ -427,16 +446,10 @@ const Chat = () => {
 		}
 	}
 
-    const addToChatHistory = (message, sender) => {
-        setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
-    };
-	// const makeGrokRequest = async (query) => {
-	// 	let prompt = ''; // This is the prompt used in "Look for more details"
-	// 	if ( isRefiningQuery ) {
-	// 		promt = 'REFINING_SEARCH'; // This is the prompt used in "Refine your question"
-	// 	}
-	// 	await makeRequest(query, GROK_URL, prompt);
-	// }
+	const addToChatHistory = (message, sender) => {
+		setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
+	};
+
 	const makeGrokRequest = async (query, prompt = '', chatHistory = []) => {
 		if (isRefiningQuery) {
 			prompt = refiningPrompt;
@@ -476,12 +489,17 @@ const Chat = () => {
 										}, 0);
 									}
 								}}
+								showMoreOptions={index === currentChat.chat.length - 1 && !(loading || writing)}
 								funcOne={() => makeGrokRequest('Please expand on your initial response with more details.', addDetailsPrompt, chatHistory)}
 								funcTwo={() => makeElasticSearchRequest()}
 								funcThree={() => {
 									inputRef.current.focus();
 									setIsRefiningQuery(true);
 								}}
+								noImg={!(index != 0 && currentChat.chat[index - 1].type === 'response')}
+								documents={msg.documents}
+								additionalResponse={msg.additionalResponse}
+								accuracy={msg.accuracy}
 							/>
 						)))
 				}
@@ -496,9 +514,9 @@ const Chat = () => {
 					writing && <Responding data={toWrite} end={
 						() => {
 							setWriting(false);
-							setToWrite({});
 							// change the msg to generate the complex response
-							AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents });
+							AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents, additionalResponse: toWrite.additionalResponse, accuracy: toWrite.accuracy });
+							setToWrite({});
 						}}
 					/>
 				}
@@ -522,6 +540,8 @@ const Chat = () => {
 					{
 						isRefiningQuery && (
 							<span
+								title='Cancel refining the query'
+								className='cursor-pointer'
 								onClick={() => {
 									setIsRefiningQuery(false);
 								}}
@@ -536,8 +556,8 @@ const Chat = () => {
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') {
 								if (!query || query.trim() === '') {
-								  console.error('Cannot send an empty query');
-								  return;
+									console.error('Cannot send an empty query');
+									return;
 								}
 								if (isRefiningQuery) {
 									// clear input field
@@ -562,7 +582,7 @@ const Chat = () => {
 							// Your role is to help the user get an accurate answer to their query.
 							// Consider the user's current question and the previous context in
 							// formulating your response.`
-							
+
 							// clear input field
 							setQuery('');
 							// add the user's query to the chat history
