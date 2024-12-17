@@ -11,596 +11,376 @@ import { useChatContext } from '../contexts/Chat';
 const GROK_URL = 'http://43.202.113.176/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:9999/stream_chat';
 
-const analyticalSystemPrompt = `
-System Prompt Instructions:
-	1. Write the ORIGINAL_ANSWER in 2-3 sentences. After writing the answer, check the end:
-		- If the ORIGINAL_ANSWER ends with a colon (:) or with a colon immediately followed by one or more backticks (e.g., :\` or : \` or similar), add extra words so that the sentence does not end with that pattern. Perform this fix only once.
-		- Ensure the final ORIGINAL_ANSWER does not end with a colon, nor with a colon followed by backticks.
-	2. Assign a SCORE (0-100) based on accuracy and confidence.
-	3. EXPLANATION: In 1-2 sentences, explain why you gave that score. Reference known facts, expertise, and any speculative elements.
-	4. Refine your answer based on the SCORE:
-		- 90-100 (High Confidence):
-        	- REFINED_ANSWER = ORIGINAL_ANSWER exactly.
-        	- NEXT_STEPS: Ask if the user wants more details or another related query. If the query is not location-specific, note that accuracy may vary by location.
-    	- 70-89 (Moderate Confidence):
-        	- REFINED_ANSWER = ORIGINAL_ANSWER, adding minimal clarifications if they reduce uncertainty.
-        	- NEXT_STEPS: Explain why it might be incomplete, offer a database search, and suggest follow-up queries.
-    	- 0-69 (Low Confidence):
-        	- REFINED_ANSWER = ORIGINAL_ANSWER improved if possible.
-        	- NEXT_STEPS: Acknowledge uncertainty, recommend further research, and external verification.
-
-**Final Output Format (use exactly these labels):**
-\`\`\`
-ORIGINAL_ANSWER: <Your initial 2-3 sentence answer>
-SCORE: <Numerical score between 0 and 100>
-EXPLANATION: <A brief explanation of why you assigned that score>
-REFINED_ANSWER: <Your refined answer following the rules above>
-NEXT_STEPS: <Suggestions based on the score, including recommended actions>
-\`\`\`
-`;
-
-const addDetailsPrompt = `
-You are an expert on the YMCA globally, and your role is to help the user get an accurate answer to their query.
-You can be as detailed as you like in your response, but make sure to provide accurate information
-and cite your sources where necessary. Please provide sources as clickable links whenever possible.
-Follow these steps in generating your response:
-
-1. Review the previous chat history and the user's most recent input.
-2. Clarify ambiguities or incomplete information as needed.
-3. Do not regurgitate information from the previous chat history, and ensure that the user's most reecent query is adequately addressed.
-4. Deliver a refined answer that directly addresses the user's most recent query.
-`;
-
-const refiningPrompt = `
-As a global YMCA expert, refine the user's query based on the previous conversation to provide a precise, helpful answer. Follow these steps:
-
-1. Review the previous chat history and the user's most recent input.
-2. Clarify ambiguities or incomplete information as needed.
-3. Do not regurgitate information from the previous chat history, and ensure that the user's most reecent query is adequately addressed.
-4. Deliver a refined answer that directly addresses the user's most recent query.
+const grokPrompt = `
+You are an expert on the YMCA globally at all scales of the organization.
+You provide concise and clear answers.
+If you do not have a clear answer to what is being asked, you should guide the user to provide more information so that you can eventually provide either a very clear answer to the user's query, or direct them to a definite resource where they are likely to find what they need.
+In this initial response, you are to just provide a short response, in 5 lines or less, unless you are certain that you have the precise answer that the user is looking for, in which case a longer response is allowed.
+You will have the opportunity to perform a database search later in the process, so all the more reason to be brief here.
+You always respond in the language of the initial prompt from the user.
+You do not need to ask the user whether to perform a database search related to the query because it is going to be performed anyway.
+If you cannot provide useful general information indicate that you do not know and that you will look more into it for the user.
+If you can provide useful general information, just state it and indicate that you will look for more details.
 `;
 
 const formatGrokResponse = (response) => {
-	const { data: { choices } } = response;
-	const assistantResponse = choices[0].message.content.trim();
+  const { data: { choices } } = response;
+  const assistantResponse = choices[0].message.content.trim();
 
-	// Now we parse the assistantResponse to extract ORIGINAL_ANSWER, SCORE, EXPLANATION, and REFINED_ANSWER.
-	// We expect the response in the format:
-	// ORIGINAL_ANSWER: ...
-	// SCORE: ...
-	// EXPLANATION: ...
-	// REFINED_ANSWER: ...
+  // Now we parse the assistantResponse to extract ORIGINAL_ANSWER, SCORE, EXPLANATION, and REFINED_ANSWER.
+  // We expect the response in the format:
+  // ORIGINAL_ANSWER: ...
+  // SCORE: ...
+  // EXPLANATION: ...
+  // REFINED_ANSWER: ...
 
-	// A regex approach:
-	// We can use something like:
-	// ORIGINAL_ANSWER:\s*(.*)
-	// SCORE:\s*(\d+)
-	// EXPLANATION:\s*(.*?)(?=REFINED_ANSWER:)
-	// REFINED_ANSWER:\s*(.*)
+  // A regex approach:
+  // We can use something like:
+  // ORIGINAL_ANSWER:\s*(.*)
+  // SCORE:\s*(\d+)
+  // EXPLANATION:\s*(.*?)(?=REFINED_ANSWER:)
+  // REFINED_ANSWER:\s*(.*)
 
-	const originalMatch = assistantResponse.match(/ORIGINAL_ANSWER:\s*(.*)/);
-	const scoreMatch = assistantResponse.match(/SCORE:\s*(\d+)/);
-	const explanationMatch = assistantResponse.match(/EXPLANATION:\s*([\s\S]*?)\nREFINED_ANSWER:/);
-	const refinedMatch = assistantResponse.match(/REFINED_ANSWER:\s*(.*)/);
-	const nextStepsMatch = assistantResponse.match(/NEXT_STEPS:\s*([\s\S]*?)$/);
+  const originalMatch = assistantResponse.match(/ORIGINAL_ANSWER:\s*(.*)/);
+  const scoreMatch = assistantResponse.match(/SCORE:\s*(\d+)/);
+  const explanationMatch = assistantResponse.match(/EXPLANATION:\s*([\s\S]*?)\nREFINED_ANSWER:/);
+  const refinedMatch = assistantResponse.match(/REFINED_ANSWER:\s*(.*)/);
+  const nextStepsMatch = assistantResponse.match(/NEXT_STEPS:\s*([\s\S]*?)$/);
 
-	const originalAnswer = originalMatch ? originalMatch[1].trim() : '';
-	const score = scoreMatch ? scoreMatch[1].trim() : '';
-	const explanation = explanationMatch ? explanationMatch[1].trim() : '';
-	const refinedAnswer = refinedMatch ? refinedMatch[1].trim() : '';
-	const nextSteps = nextStepsMatch ? nextStepsMatch[1].trim() : '';
+  const originalAnswer = originalMatch ? originalMatch[1].trim() : '';
+  const score = scoreMatch ? scoreMatch[1].trim() : '';
+  const explanation = explanationMatch ? explanationMatch[1].trim() : '';
+  const refinedAnswer = refinedMatch ? refinedMatch[1].trim() : '';
+  const nextSteps = nextStepsMatch ? nextStepsMatch[1].trim() : '';
 
-	return { originalAnswer, score, explanation, refinedAnswer, nextSteps };
+  return { originalAnswer, score, explanation, refinedAnswer, nextSteps };
 }
 
 const formatThinkingSteps = (steps) => {
-	// REFINING_SEARCH → "Making sure we find the right information..."
-	// FORMING_RESPONSE → "Preparing your answer..."
-	// FORMING_SEARCH_QUERY → "Forming the search query..."
-	// GETTING_RESPONSE → "Getting the response..."
-	if (steps == 'REFINING_SEARCH') {
-		return 'Making sure we find the right information...';
-	}
-	if (steps == 'FORMING_RESPONSE') {
-		return 'Preparing your answer...';
-	}
-	if (steps == 'FORMING_SEARCH_QUERY') {
-		return 'Forming the search query...';
-	}
-	if (steps == 'GETTING_RESPONSE') {
-		return 'Getting the response...';
-	}
+  // REFINING_SEARCH → "Making sure we find the right information..."
+  // FORMING_RESPONSE → "Preparing your answer..."
+  // FORMING_SEARCH_QUERY → "Forming the search query..."
+  // GETTING_RESPONSE → "Getting the response..."
+  if (steps == 'REFINING_SEARCH') {
+    return 'Making sure we find the right information...';
+  }
+  if (steps == 'FORMING_RESPONSE') {
+    return 'Preparing your answer...';
+  }
+  if (steps == 'FORMING_SEARCH_QUERY') {
+    return 'Forming the search query...';
+  }
+  if (steps == 'GETTING_RESPONSE') {
+    return 'Getting the response...';
+  }
 
-	return steps;
+  return steps;
 }
 
 const isValidMessage = (message) => {
-	return (
-		typeof message.role === 'string' &&
-		typeof message.content === 'string' &&
-		message.content.trim().length > 0
-	);
+  return (
+    typeof message.role === 'string' &&
+    typeof message.content === 'string' &&
+    message.content.trim().length > 0
+  );
 };
 
 const validateChatHistory = (chatHistory) => {
-	return chatHistory.every(isValidMessage);
+  return chatHistory.every(isValidMessage);
 };
 
+const suggestions = [
+  'What is YMCA?',
+  'YMCA locations in Europe',
+  'YMCA locations in Italy',
+];
+
 const Chat = () => {
-	const { AddToCurrentChat, currentChat } = useChatContext();
+  const { AddToCurrentChat, currentChat } = useChatContext();
 
-	const [query, setQuery] = useState('');
-	const [loading, setLoading] = useState(false);
-	const [writing, setWriting] = useState(false);
-	const [toWrite, setToWrite] = useState({});
-	const [steps, setSteps] = useState([]);
-	const [currentStep, setCurrentStep] = useState([]);
-	const [writingLong, setWritingLong] = useState(false);
-	const [toWriteLong, setToWriteLong] = useState({});
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const [toWrite, setToWrite] = useState({});
+  const [steps, setSteps] = useState([]);
+  const [currentStep, setCurrentStep] = useState([]);
+  const [writingLong, setWritingLong] = useState(false);
+  const [toWriteLong, setToWriteLong] = useState({});
 
-	const [chatHistory, setChatHistory] = useState([]);
+  const [chatHistory, setChatHistory] = useState([]);
 
-	const [originalAnswer, setOriginalAnswer] = useState('');
-	const [score, setScore] = useState('');
-	const [explanation, setExplanation] = useState('');
-	const [refinedAnswer, setRefinedAnswer] = useState('');
-	const [nextSteps, setNextSteps] = useState('');
+  const chatref = useRef(null);
+  const inputRef = useRef(null);
 
-	const [isRefiningQuery, setIsRefiningQuery] = useState(false);
+  const buildRequestOptions = (url, messages, query) => {
+    let requestBody = {};
+    let requestHeaders = {};
 
-	const chatref = useRef(null);
-	const inputRef = useRef(null);
+    if (url === GROK_URL) {
+      requestBody = {
+        "messages": messages,
+        "model": "grok-beta",
+        "stream": false,
+        "temperature": 0.5,
+      };
+      requestHeaders = {
+        'Content-Type': 'application/json',
+      };
+    } else if (url === ELASTICSEARCH_URL) {
+      requestBody = {
+        "user_query": query,
+        "searches": 2,
+      };
+      requestHeaders = {
+        // Add any necessary headers for Elasticsearch
+      };
+    }
 
-	const suggestions = [
-		'What is YMCA?',
-		'YMCA locations in Europe',
-		'YMCA locations in Italy',
-	];
+    return { requestBody, requestHeaders };
+  };
 
-	const buildRequestOptions = (url, messages, query, prompt) => {
-		let requestBody = {};
-		let requestHeaders = {};
+  const makeRequest = async (query, url, prompt = false) => {
+    /// TODO: handle stop writing
+    // if (writing) {}
 
-		if (url === GROK_URL) {
-			requestBody = {
-				"messages": messages,
-				"model": "grok-beta",
-				"stream": false,
-				"temperature": 0.5,
-			};
-			requestHeaders = {
-				'Content-Type': 'application/json',
-			};
-		} else if (url === ELASTICSEARCH_URL) {
-			requestBody = {
-				"user_query": query,
-				"searches": 2,
-			};
-			requestHeaders = {
-				// Add any necessary headers for Elasticsearch
-			};
-		}
+    // check if there is a query
+    if (!query) {
+      // if there is no query, get the last question from the chat
+      // this can happen if the user presses the suggestion button without typing anything
+      const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
+      // if there is no question in the chat, log an error and return
+      if (!lastQuestion) {
+        console.error('No question found in chat');
+        AddToCurrentChat({ type: 'response', error: true, txt: 'No question found in chat' });
+        return;
+      }
+      // set the query to the last question
+      query = lastQuestion.txt;
+    }
 
-		return { requestBody, requestHeaders };
-	};
+    // Construct the messages array
+    let messages = [];
 
-	useEffect(() => {
-		if (isRefiningQuery) {
-			const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
-			setQuery('');
-		}
-	}, [isRefiningQuery, currentChat]);
+    // Include the system prompt if it exists
+    if (prompt) {
+      messages.push({
+        "role": "system",
+        "content": prompt
+      });
+    }
 
-	const handleSubmit = async (q, prompt = analyticalSystemPrompt, chatHistory = []) => {
-		setLoading("Generating a quick response for you...");
-		try {
-			// const response = await axios.post('http://43.202.113.176/v1/chat/completions', {
-			// 	"messages": [
-			// 		{
-			// 			"role": "system",
-			// 			"content": analyticalSystemPrompt
-			// 		},
-			// 		{
-			// 			"role": "user",
-			// 			"content": q
-			// 		}
-			// 	],
-			// 	"model": "grok-beta",
-			// 	"stream": false,
-			// 	"temperature": 0.5
-			// }, {
-			// 	headers: {
-			// 		'Content-Type': 'application/json'
-			// 	}
-			// });
+    // Include the previous chat history
+    chatHistory.forEach(entry => {
+      messages.push({
+        "role": entry.sender === 'user' ? 'user' : 'assistant',
+        "content": entry.message
+      });
+    });
 
-			// Construct the messages array
-			let messages = [];
+    // Add the current user query
+    messages.push({
+      "role": "user",
+      "content": query
+    });
 
-			// Include the previous chat history
-			chatHistory.forEach(entry => {
-				messages.push({
-					"role": entry.sender === 'user' ? 'user' : 'assistant',
-					"content": entry.message
-				});
-			});
+    console.log("Making request for:", query);
+    console.log("with messages:", { messages });
 
-			// Include the system prompt if it exists
-			if (prompt) {
-				messages.push({
-					"role": "system",
-					"content": prompt
-				});
-			}
+    // display a loading message
+    if (url === GROK_URL) setLoading("Generating a quick response for you...");
+    if (url === ELASTICSEARCH_URL) setLoading("Searching the database...");
 
-			// Add the current user query
-			messages.push({
-				"role": "user",
-				"content": q
-			});
+    const { requestBody, requestHeaders } = buildRequestOptions(url, messages, query);
 
-			// Use the buildRequestOptions function
-			const { requestBody, requestHeaders } = buildRequestOptions(GROK_URL, messages, q, prompt);
+    try {
+      // fetch the data
+      const response = await axios.post(url, requestBody, {
+        headers: requestHeaders
+      });
 
-			// Make the API call
-			try {
-				const response = await axios.post(GROK_URL, requestBody, {
-					headers: requestHeaders,
-				});
-				// Handle the response as needed
+      // Add the user's query to the chat history here
+      addToChatHistory(query, 'user');
 
-				// Add the user's query to the chat history here
-				addToChatHistory(q, 'user');
+      // Handle the response
+      const data = response.data;
+      console.log("Response data:", data);
 
-				const { originalAnswer, score, explanation, refinedAnswer, nextSteps } = formatGrokResponse(response);
+      let additionalResponse = '';
 
-				setOriginalAnswer(originalAnswer);
-				setScore(score);
-				setExplanation(explanation);
-				setRefinedAnswer(refinedAnswer);
-				setNextSteps(nextSteps)
+      if (url === GROK_URL) {
+        const refinedAnswer = response.data.choices[0].message.content;
 
+        // Display anwser to the user
+        setToWrite({ text: refinedAnswer, documents: [] });
+        setWriting(true);
 
-				// for (let i = 0; i < nextSteps.length; i++) {
-				// 	console.log(`Character at ${i}: '${nextSteps[i]}' (Code: ${nextSteps.charCodeAt(i)})`);
-				// }
+        // Update chat history with the response
+        addToChatHistory(refinedAnswer, 'assistant');
+      }
+      if (url === ELASTICSEARCH_URL) {
+        const parts = response.data.split('\n');
+        // get the text between FORMING_RESPONSE and END_RESPONSE in the response
+        const match = response.data.match(/FORMING_RESPONSE([\s\S]*?)END_RESPONSE/);
+        console.log({ match });
+        // set the current step to 0 to start from the beginning
+        setCurrentStep(() => 0);
 
-				// Display the refined answer and next steps to the user
-				const cleanedNextSteps = nextSteps.replace(/```\s*$/, '').trim();
-				const responseToWrite = `${refinedAnswer}\n\n${cleanedNextSteps}`.trimEnd();
-				setToWrite({ text: responseToWrite, documents: [] });
-				setWriting(true);
+        // we spect to find FORMING_RESPONSE warpping the text to write
+        // if we don't find it, log an error and return
+        if (!match) return console.error("No match found");
 
-				// Add the user's query to the chat history here
-				addToChatHistory(responseToWrite, 'assistant');
+        // Get the documents from the response
+        const docLabel = 'REFERENCES';
+        const docIndex = parts.indexOf(docLabel);
+        let documents = [];
+        try { // try to parse the documents
+          documents = JSON.parse(parts.slice(docIndex + 1, docIndex + 2)).map(doc => doc[4] == "" ? doc[2].slice(0, doc[2].indexOf('_') > -1 ? doc[2].indexOf('_') : doc[2].length) : doc[4]);
+          // remove suplicate documents
+          documents = [...new Set(documents)];
+          additionalResponse = 'Database search results:';
+          console.log({ documents });
 
-				// Store or log the other details as needed
-				console.log("Original Answer:", originalAnswer);
-				console.log("Score:", score);
-				console.log("Explanation:", explanation);
+        } catch (error) {
+          console.error('Error while parsing documents:', error);
+        }
 
-				// If you'd like to store these in state, define corresponding states:
-				// setOriginalAnswer(originalAnswer);
-				// setScore(score);
-				// setExplanation(explanation);
-			} catch (error) {
-				console.error('Error in handleSubmit:', error);
-			}
+        // Get the accuracy score from the response
+        let accuracy = 0;
+        const accuracyLabel = 'RATING_ACCURACY';
+        try {
+          const accuracyIndex = parts.indexOf(accuracyLabel);
+          accuracy = JSON.parse(parts.slice(accuracyIndex + 1, accuracyIndex + 2)).accuracy;
+          console.info('Accuracy:', accuracy);
+        } catch (error) {
+          console.error('Error while parsing accuracy:', error);
+        }
 
-		} catch (error) {
-			console.error('Error while fetching data:', error);
-			AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
-		}
-		setLoading(false);
-	};
+        // set the text to write
+        setToWrite({ text: match[1].trim(), documents, additionalResponse, accuracy });
+        setWriting(true);
 
-	const makeRequest = async (query, url, prompt, chatHistory = []) => {
-		/// TODO: handle stop writing
-		// if (writing) {}
+        // find the position of FORMING_RESPONSE
+        const formingResponseIndex = parts.indexOf('FORMING_RESPONSE');
+        const _steps = parts.slice(0, formingResponseIndex);
+        // get only the _steps that are uppercase string no whitespaces
+        const _stepsFiltered = _steps.filter(step => step.trim() === step.toUpperCase() && step.indexOf(' ') === -1);
+        setSteps(_stepsFiltered);
 
-		// check if there is a query
-		if (!query) {
-			// if there is no query, get the last question from the chat
-			// this can happen if the user presses the suggestion button without typing anything
-			const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
-			// if there is no question in the chat, log an error and return
-			if (!lastQuestion) {
-				console.error('No question found in chat');
-				AddToCurrentChat({ type: 'response', error: true, txt: 'No question found in chat' });
-				return;
-			}
-			// set the query to the last question
-			query = lastQuestion.txt;
-		}
+        // Update chat history with the response
+        addToChatHistory(match[1].trim(), 'assistant');
+      }
+    } catch (error) {
+      console.error('Error while fetching data:', error);
+      AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
+      setLoading(false);
+    } finally {
+      // clear the loading message
+      setLoading(false);
+    }
+  }
 
-		// Construct the messages array
-		let messages = [];
+  const addToChatHistory = (message, sender) => {
+    setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
+  };
 
-		// Include the system prompt if it exists
-		if (prompt) {
-			messages.push({
-				"role": "system",
-				"content": prompt
-			});
-		}
+  const makeGrokRequest = async (query) => {
+    await makeRequest(query, GROK_URL, grokPrompt);
+  };
+  const makeElasticSearchRequest = async (query) => {
+    // this is the prompt use in "Do a database search"
+    await makeRequest(query, ELASTICSEARCH_URL);
+  }
 
-		// Include the previous chat history
-		chatHistory.forEach(entry => {
-			messages.push({
-				"role": entry.sender === 'user' ? 'user' : 'assistant',
-				"content": entry.message
-			});
-		});
+  const handleAddQuestion = async (question) => {
+    setQuery('');
+    AddToCurrentChat({ type: 'question', txt: question });
+    await makeGrokRequest(question);
+    await makeElasticSearchRequest(question);
+  }
 
-		// Add the current user query
-		messages.push({
-			"role": "user",
-			"content": query
-		});
+  return (
+    <div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
+      <section
+        ref={chatref}
+        className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2 overflow-x-hidden`}>
+        {
+          currentChat?.chat.map((msg, index) => (
+            msg.type === 'question' ? (
+              <Question key={index} question={msg.txt} />
+            ) : (
+              <Response
+                key={index}
+                response={msg.txt}
+                error={msg?.error}
 
-		// Log the messages for debugging
-		console.log({ messages });
-
-		console.log("Making request for:", query);
-		console.log("with messages:", messages);
-		// display a loading message
-		setLoading("Requesting data...");
-
-		const { requestBody, requestHeaders } = buildRequestOptions(url, messages, query, prompt);
-
-		console.log({ requestBody, requestHeaders });
-
-		try {
-			// fetch the data
-			const response = await axios.post(url, requestBody, {
-				headers: requestHeaders
-			});
-
-			// Add the user's query to the chat history here
-			addToChatHistory(query, 'user');
-
-			// console.log({ response });
-			// Handle the response
-			const data = response.data;
-			console.log("Response data:", data);
-
-			let additionalResponse = '';
-
-			if (url === GROK_URL) {
-				const refinedAnswer = response.data.choices[0].message.content;
-
-				// Display anwser to the user
-				setToWrite({ text: refinedAnswer, documents: [] });
-				setWriting(true);
-
-				// Update chat history with the response
-				addToChatHistory(refinedAnswer, 'assistant');
-			}
-
-			if (url === ELASTICSEARCH_URL) {
-				const parts = response.data.split('\n');
-				// get the text between FORMING_RESPONSE and END_RESPONSE in the response
-				const match = response.data.match(/FORMING_RESPONSE([\s\S]*?)END_RESPONSE/);
-				console.log({ match });
-				// set the current step to 0 to start from the beginning
-				setCurrentStep(() => 0);
-
-				// we spect to find FORMING_RESPONSE warpping the text to write
-				// if we don't find it, log an error and return
-				if (!match) return console.error("No match found");
-
-				// Get the documents from the response
-				const docLabel = 'REFERENCES';
-				const docIndex = parts.indexOf(docLabel);
-				let documents = [];
-				try { // try to parse the documents
-					documents = JSON.parse(parts.slice(docIndex + 1, docIndex + 2)).map(doc => doc[4] == "" ? doc[2].slice(0, doc[2].indexOf('_') > -1 ? doc[2].indexOf('_') : doc[2].length) : doc[4]);
-					// remove suplicate documents
-					documents = [...new Set(documents)];
-					additionalResponse = 'Database search results:';
-					console.log({ documents });
-
-				} catch (error) {
-					console.error('Error while parsing documents:', error);
-				}
-
-				// Get the accuracy score from the response
-				let accuracy = 0;
-				const accuracyLabel = 'RATING_ACCURACY';
-				try {
-					const accuracyIndex = parts.indexOf(accuracyLabel);
-					accuracy = JSON.parse(parts.slice(accuracyIndex + 1, accuracyIndex + 2)).accuracy;
-					console.info('Accuracy:', accuracy);
-				} catch (error) {
-					console.error('Error while parsing accuracy:', error);
-				}
-
-				// set the text to write
-				setToWrite({ text: match[1].trim(), documents, additionalResponse, accuracy });
-				setWriting(true);
-
-				// find the position of FORMING_RESPONSE
-				const formingResponseIndex = parts.indexOf('FORMING_RESPONSE');
-				const _steps = parts.slice(0, formingResponseIndex);
-				// get only the _steps that are uppercase string no whitespaces
-				const _stepsFiltered = _steps.filter(step => step.trim() === step.toUpperCase() && step.indexOf(' ') === -1);
-				setSteps(_stepsFiltered);
-
-				// Update chat history with the response
-				addToChatHistory(match[1].trim(), 'assistant');
-			}
-
-			// clear the loading message
-			setLoading(false);
-		} catch (error) {
-			// clear the loading message
-			setLoading(false);
-			console.error('Error while fetching data:', error);
-			AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
-			setLoading(false);
-		}
-	}
-
-	const addToChatHistory = (message, sender) => {
-		setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
-	};
-
-	const makeGrokRequest = async (query, prompt = '', chatHistory = []) => {
-		if (isRefiningQuery) {
-			prompt = refiningPrompt;
-		}
-		await makeRequest(query, GROK_URL, prompt, chatHistory);
-	};
-	const makeElasticSearchRequest = async (query, prompt = '', chatHistory = []) => {
-		// this is the prompt use in "Do a database search"
-		await makeRequest(query, ELASTICSEARCH_URL, prompt, chatHistory);
-	}
-
-	const handleAddQuestion = (question) => {
-		AddToCurrentChat({ type: 'question', txt: question });
-		handleSubmit(question);
-		setQuery('');
-		setLoading('Generating a quick response for you...');
-	}
-
-	return (
-		<div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
-			<section
-				ref={chatref}
-				className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2 overflow-x-hidden`}>
-				{
-					currentChat?.chat.map((msg, index) => (
-						msg.type === 'question' ? (
-							<Question key={index} question={msg.txt} />
-						) : (
-							<Response
-								key={index}
-								response={msg.txt}
-								error={msg?.error}
-								end={() => {
-									if (chatref.current) {
-										setTimeout(() => {
-											// chatref.current.scrollTop = chatref.current.scrollHeight;
-										}, 0);
-									}
-								}}
-								showMoreOptions={index === currentChat.chat.length - 1 && !(loading || writing)}
-								funcOne={() => makeGrokRequest('Please expand on your initial response with more details.', addDetailsPrompt, chatHistory)}
-								funcTwo={() => makeElasticSearchRequest()}
-								funcThree={() => {
-									inputRef.current.focus();
-									setIsRefiningQuery(true);
-								}}
-								noImg={!(index != 0 && currentChat.chat[index - 1].type === 'response')}
-								documents={msg.documents}
-								additionalResponse={msg.additionalResponse}
-								accuracy={msg.accuracy}
-							/>
-						)))
-				}
-				{
-					loading && (
-						<div className="flex ml-14">
-							<p className='text-base text-shyne'>{loading}</p>
-						</div>
-					)
-				}
-				{
-					writing && <Responding data={toWrite} end={
-						() => {
-							setWriting(false);
-							// change the msg to generate the complex response
-							AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents, additionalResponse: toWrite.additionalResponse, accuracy: toWrite.accuracy });
-							setToWrite({});
-						}}
-					/>
-				}
-			</section >
-			{
-				(!currentChat || currentChat?.length == 0) && (
-					<section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
-						<p className="w-full text-sm pb-2">Ask your question in chat or select the following options to start from:</p>
-						<div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
-							{
-								suggestions.map((suggestion, index) => (
-									<Suggestion key={index} suggestion={suggestion} onClick={() => handleAddQuestion(suggestion)} />
-								))
-							}
-						</div>
-					</section>
-				)
-			}
-			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
-				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
-					{
-						isRefiningQuery && (
-							<span
-								title='Cancel refining the query'
-								className='cursor-pointer'
-								onClick={() => {
-									setIsRefiningQuery(false);
-								}}
-							>
-								Refining
-							</span>
-						)
-					}
-					<input
-						value={query}
-						onChange={(e) => setQuery(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') {
-								if (!query || query.trim() === '') {
-									console.error('Cannot send an empty query');
-									return;
-								}
-								if (isRefiningQuery) {
-									// clear input field
-									setQuery('');
-									// add the user's query to the chat history
-									AddToCurrentChat({ type: 'question', txt: query });
-
-									makeGrokRequest(query, '', chatHistory);
-									setIsRefiningQuery(false);
-								} else {
-									handleAddQuestion(query)
-								}
-							}
-						}}
-						disabled={loading}
-						ref={inputRef}
-						type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
-					<img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => {
-						if (query === '') return;
-						if (isRefiningQuery) {
-							// const prompt = `You are an expert in the YMCA globally at all levels.
-							// Your role is to help the user get an accurate answer to their query.
-							// Consider the user's current question and the previous context in
-							// formulating your response.`
-
-							// clear input field
-							setQuery('');
-							// add the user's query to the chat history
-							AddToCurrentChat({ type: 'question', txt: query });
-
-							makeGrokRequest(query, addDetailsPrompt, chatHistory);
-							setIsRefiningQuery(false);
-						} else {
-							handleAddQuestion(query)
-						}
-					}} />
-				</div>
-			</section >
-			{/* Debug section (remove or comment out when done verifying)
-			<div style={{ border: '1px solid gray', padding: '10px', marginTop: '20px' }}>
-				<h2>Debug Info:</h2>
-				<p><strong>Original Answer:</strong> {originalAnswer}</p>
-				<p><strong>Score:</strong> {score}</p>
-				<p><strong>Explanation:</strong> {explanation}</p>
-				<p><strong>Refined Answer:</strong> {refinedAnswer}</p>
-			</div> */}
-		</div >
-	)
+                end={() => {
+                  if (chatref.current) {
+                    setTimeout(() => {
+                      // chatref.current.scrollTop = chatref.current.scrollHeight;
+                    }, 0);
+                  }
+                }}
+                noImg={!(index != 0 && currentChat.chat[index - 1].type === 'response')}
+                documents={msg.documents}
+                additionalResponse={msg.additionalResponse}
+                accuracy={msg.accuracy}
+              />
+            )))
+        }
+        {
+          writing && <Responding data={toWrite} end={
+            () => {
+              setWriting(false);
+              // change the msg to generate the complex response
+              AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents, additionalResponse: toWrite.additionalResponse, accuracy: toWrite.accuracy });
+              setToWrite({});
+            }}
+          />
+        }
+        {
+          loading && (
+            <div className="flex ml-14">
+              <p className='text-base text-shyne'>{loading}</p>
+            </div>
+          )
+        }
+      </section >
+      {
+        (!currentChat || currentChat?.length == 0) && (
+          <section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
+            <p className="w-full text-sm pb-2">Ask your question in chat or select the following options to start from:</p>
+            <div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
+              {
+                suggestions.map((suggestion, index) => (
+                  <Suggestion key={index} suggestion={suggestion} onClick={() => handleAddQuestion(suggestion)} />
+                ))
+              }
+            </div>
+          </section>
+        )
+      }
+      < section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
+        <div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (!query || query.trim() === '') {
+                  console.error('Cannot send an empty query');
+                  return;
+                }
+                handleAddQuestion(query)
+              }
+            }}
+            disabled={loading}
+            ref={inputRef}
+            type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
+          <img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => handleAddQuestion(query)} />
+        </div>
+      </section >
+    </div >
+  )
 }
 
 export default Chat;

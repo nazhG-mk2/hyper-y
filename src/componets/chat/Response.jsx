@@ -10,10 +10,6 @@ const Response = ({
   noImg = false,
   additionalResponse = '',
   documents = [],
-  funcOne = () => { },
-  funcTwo = () => { },
-  funcThree = () => { },
-  showMoreOptions = false,
   accuracy = 0,
 }) => {
   useEffect(() => {
@@ -48,7 +44,7 @@ const Response = ({
       <div className="flex flex-col">
         {
           additionalResponse && (
-            <span className='text-secondary text-sm mb-4'>{additionalResponse}</span>
+            <span className='text-secondary text-sm mb-5'>{additionalResponse}</span>
           )
         }
         <div className={`rounded-md px-4 py-3 mr-[64px] md:mr-0 flex-1 transition-all duration-500 ${error ? 'bg-red-200 text-gray-950' : 'bg-[#F5F5F5]'}`}>
@@ -98,26 +94,6 @@ const Response = ({
               </>
             ) : 'No response yet'
           }</div>
-        {
-          showMoreOptions && (
-            <div className='flex w-full gap-2 mt-2 flex-wrap'>
-              <span className='bg-light transition-colors hover:bg-primary-soft hover:text-white px-3 py-2 rounded cursor-pointer'
-                onClick={funcOne}
-              >
-                Look for more details
-              </span>
-              <span className='bg-light transition-colors hover:bg-primary-soft hover:text-white px-3 py-2 rounded cursor-pointer'
-                onClick={funcTwo}
-              >
-                Do a database search
-              </span>
-              <span className='bg-light transition-colors hover:bg-primary-soft hover:text-white px-3 py-2 rounded cursor-pointer'
-                onClick={funcThree}
-              >
-                Refine your question
-              </span>
-            </div>)
-        }
       </div>
     </div>
   )
@@ -132,10 +108,6 @@ Response.propTypes = {
   open: PropTypes.bool,
   noImg: PropTypes.bool,
   additionalResponse: PropTypes.string,
-  funcOne: PropTypes.func,
-  funcTwo: PropTypes.func,
-  funcThree: PropTypes.func,
-  showMoreOptions: PropTypes.bool,
 };
 
 export default memo(Response)
