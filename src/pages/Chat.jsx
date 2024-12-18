@@ -7,6 +7,7 @@ import Response from '../componets/chat/Response';
 import Suggestion from '../componets/chat/Suggestion';
 import Responding from '../componets/chat/Responding';
 import { useChatContext } from '../contexts/Chat';
+import { useTranslation } from 'react-i18next';
 
 const GROK_URL = 'http://43.202.113.176/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:9999/stream_chat';
@@ -127,6 +128,7 @@ const validateChatHistory = (chatHistory) => {
 };
 
 const Chat = () => {
+    const { t } = useTranslation();
 	const { AddToCurrentChat, currentChat } = useChatContext();
 
 	const [query, setQuery] = useState('');
@@ -519,7 +521,7 @@ const Chat = () => {
 			{
 				(!currentChat || currentChat?.length == 0) && (
 					<section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
-						<p className="w-full text-sm pb-2">Ask your question in chat or select the following options to start from:</p>
+						<p className="w-full text-sm pb-2">{t("suggestion_msg")}</p>
 						<div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
 							{
 								suggestions.map((suggestion, index) => (
@@ -569,7 +571,7 @@ const Chat = () => {
 						}}
 						disabled={loading}
 						ref={inputRef}
-						type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
+						type="text" placeholder={t("new_message")} className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
 					<img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => {
 						if (query === '') return;
 						if (isRefiningQuery) {
