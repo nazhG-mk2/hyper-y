@@ -2,6 +2,8 @@ import PropTypes from 'prop-types';
 import { memo, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
+const formatLink = (url) => url.startsWith("https://") ? url : `https://${url}`;
+
 const Response = ({
   response,
   error = false,
@@ -81,7 +83,7 @@ const Response = ({
                               // const type = doc..replace("websites/", "").replace("pdfs/", "").replace("pdf/", "").replace("images/", "").replace("videos/", "").replace("audios/", "").replace("files/", "")
                               return (
                                 <li key={index} className='text-sm'>
-                                  <a href={`https://${doc}`} target="_blank" rel="noreferrer" className="">{doc}</a>
+                                  <a href={formatLink(doc)} target="_blank" rel="noreferrer" className="">{doc}</a>
                                 </li>)
                             })
                           }
