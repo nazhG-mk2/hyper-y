@@ -5,7 +5,7 @@ import { dirname, join } from 'path';
 
 const app = express();
 app.use(cors());
-const PORT = 9010;
+const PORT = 9007;
 
 // Obtener __dirname usando import.meta.url
 const __filename = fileURLToPath(import.meta.url);

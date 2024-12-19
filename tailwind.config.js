@@ -12,7 +12,7 @@ export default {
         primary: '#FF0000',
         'primary-soft': '#E94235',
         dark: '#cc0000',
-        light: '#FF000026',
+        light: '#ffd9d9',
         secondary: '#747775',
         'blue-facebook': '#1A77F2',
       }, 

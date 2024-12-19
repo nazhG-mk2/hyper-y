@@ -101,7 +101,7 @@ const Response = ({
             ) : 'No response yet'
           }</div>
         {
-          showMoreOptions && (
+          (showMoreOptions && !error) && (
             <div className='flex w-full gap-2 mt-2 flex-wrap'>
               <span className='bg-light transition-colors hover:bg-primary-soft hover:text-white px-3 py-2 rounded cursor-pointer'
                 onClick={funcOne}

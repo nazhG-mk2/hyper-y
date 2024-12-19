@@ -8,6 +8,7 @@ import Suggestion from '../componets/chat/Suggestion';
 import Responding from '../componets/chat/Responding';
 import { useChatContext } from '../contexts/Chat';
 import { useTranslation } from 'react-i18next';
+import Error from '../componets/common/Error';
 
 const GROK_URL = 'http://43.202.113.176/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:9999/stream_chat';
@@ -128,7 +129,7 @@ const validateChatHistory = (chatHistory) => {
 };
 
 const Chat = () => {
-    const { t } = useTranslation();
+	const { t } = useTranslation();
 	const { AddToCurrentChat, currentChat } = useChatContext();
 
 	const [query, setQuery] = useState('');
@@ -152,6 +153,7 @@ const Chat = () => {
 
 	const chatref = useRef(null);
 	const inputRef = useRef(null);
+	const errorRef = useRef(null);
 
 	const suggestions = [
 		'What is YMCA?',
@@ -245,53 +247,40 @@ const Chat = () => {
 			const { requestBody, requestHeaders } = buildRequestOptions(GROK_URL, messages, q, prompt);
 
 			// Make the API call
-			try {
-				const response = await axios.post(GROK_URL, requestBody, {
-					headers: requestHeaders,
-				});
-				// Handle the response as needed
+			const response = await axios.post('https://httpstat.us/500', requestBody, {
+				headers: requestHeaders,
+			});
+			// Handle the response as needed
 
-				// Add the user's query to the chat history here
-				addToChatHistory(q, 'user');
+			// Add the user's query to the chat history here
+			addToChatHistory(q, 'user');
 
-				const { originalAnswer, score, explanation, refinedAnswer, nextSteps } = formatGrokResponse(response);
+			const { originalAnswer, score, explanation, refinedAnswer, nextSteps } = formatGrokResponse(response);
 
-				setOriginalAnswer(originalAnswer);
-				setScore(score);
-				setExplanation(explanation);
-				setRefinedAnswer(refinedAnswer);
-				setNextSteps(nextSteps)
+			setOriginalAnswer(originalAnswer);
+			setScore(score);
+			setExplanation(explanation);
+			setRefinedAnswer(refinedAnswer);
+			setNextSteps(nextSteps)
 
 
-				// for (let i = 0; i < nextSteps.length; i++) {
-				// 	console.log(`Character at ${i}: '${nextSteps[i]}' (Code: ${nextSteps.charCodeAt(i)})`);
-				// }
+			// for (let i = 0; i < nextSteps.length; i++) {
+			// 	console.log(`Character at ${i}: '${nextSteps[i]}' (Code: ${nextSteps.charCodeAt(i)})`);
+			// }
 
-				// Display the refined answer and next steps to the user
-				const cleanedNextSteps = nextSteps.replace(/```\s*$/, '').trim();
-				const responseToWrite = `${refinedAnswer}\n\n${cleanedNextSteps}`.trimEnd();
-				setToWrite({ text: responseToWrite, documents: [] });
-				setWriting(true);
+			// Display the refined answer and next steps to the user
+			const cleanedNextSteps = nextSteps.replace(/```\s*$/, '').trim();
+			const responseToWrite = `${refinedAnswer}\n\n${cleanedNextSteps}`.trimEnd();
+			setToWrite({ text: responseToWrite, documents: [] });
+			setWriting(true);
 
-				// Add the user's query to the chat history here
-				addToChatHistory(responseToWrite, 'assistant');
-
-				// Store or log the other details as needed
-				console.log("Original Answer:", originalAnswer);
-				console.log("Score:", score);
-				console.log("Explanation:", explanation);
-
-				// If you'd like to store these in state, define corresponding states:
-				// setOriginalAnswer(originalAnswer);
-				// setScore(score);
-				// setExplanation(explanation);
-			} catch (error) {
-				console.error('Error in handleSubmit:', error);
-			}
+			// Add the user's query to the chat history here
+			addToChatHistory(responseToWrite, 'assistant');
 
 		} catch (error) {
+			errorRef.current.showError();
 			console.error('Error while fetching data:', error);
-			AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
+			AddToCurrentChat({ type: 'response', error: true, txt: 'Service Unavailable' });
 		}
 		setLoading(false);
 	};
@@ -354,7 +343,7 @@ const Chat = () => {
 
 		try {
 			// fetch the data
-			const response = await axios.post(url, requestBody, {
+			const response = await axios.post('https://httpstat.us/500', requestBody, {
 				headers: requestHeaders
 			});
 
@@ -435,10 +424,11 @@ const Chat = () => {
 			// clear the loading message
 			setLoading(false);
 		} catch (error) {
+			errorRef.current.showError();
 			// clear the loading message
 			setLoading(false);
 			console.error('Error while fetching data:', error);
-			AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
+			AddToCurrentChat({ type: 'response', error: true, txt: 'Service Unavailable' });
 			setLoading(false);
 		}
 	}
@@ -593,14 +583,8 @@ const Chat = () => {
 					}} />
 				</div>
 			</section >
-			{/* Debug section (remove or comment out when done verifying)
-			<div style={{ border: '1px solid gray', padding: '10px', marginTop: '20px' }}>
-				<h2>Debug Info:</h2>
-				<p><strong>Original Answer:</strong> {originalAnswer}</p>
-				<p><strong>Score:</strong> {score}</p>
-				<p><strong>Explanation:</strong> {explanation}</p>
-				<p><strong>Refined Answer:</strong> {refinedAnswer}</p>
-			</div> */}
+
+			<Error ref={errorRef} />
 		</div >
 	)
 }

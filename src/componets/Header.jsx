@@ -21,7 +21,7 @@ const Header = ({
 
   return (
     <header className={`${className} content-center items-center p-4 pb-2 border-b-2 lg:border-b lg:bg-transparent bg-primary border-primary lg:mx-3`}>
-      <div className="flex transition-all justify-between w-full">
+      <div className="flex transition-all justify-between w-full items-center">
         <div className="hidden lg:inline drawer-content">
           <label htmlFor="mobile-drawer" className="drawer-button">
             <img src={menuIcon} alt="" />
@@ -29,9 +29,7 @@ const Header = ({
         </div>
         <img className='h-6 hidden lg:block' src="/logo.png" alt="" />
         <img className='h-6 block lg:hidden' src="/logo2.png" alt="" />
-        <div>
-          <LanguageSwitcher />
-        </div>
+        <LanguageSwitcher />
       </div>
     </header>
 
