@@ -247,7 +247,7 @@ const Chat = () => {
 			const { requestBody, requestHeaders } = buildRequestOptions(GROK_URL, messages, q, prompt);
 
 			// Make the API call
-			const response = await axios.post('https://httpstat.us/500', requestBody, {
+			const response = await axios.post(GROK_URL, requestBody, {
 				headers: requestHeaders,
 			});
 			// Handle the response as needed
@@ -343,7 +343,7 @@ const Chat = () => {
 
 		try {
 			// fetch the data
-			const response = await axios.post('https://httpstat.us/500', requestBody, {
+			const response = await axios.post(url, requestBody, {
 				headers: requestHeaders
 			});
 
