@@ -2,43 +2,44 @@ import PropTypes from 'prop-types';
 import sideBarStyle from './Sidebar.module.css';
 import ChatContext, { useChatContext } from '../contexts/Chat';
 import { useRef, useState } from 'react';
-
-const formatDate = (dateString) => {
-    const inputDate = new Date(dateString);
-    const now = new Date();
-
-    const diffTime = now - inputDate; // Diferencia en ms
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "today";
-    if (diffDays === 1) return "yesterday";
-
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    if (inputDate >= startOfWeek) return "this week";
-    if (inputDate >= startOfMonth) return "this month";
-
-    const month = inputDate.toLocaleString('default', { month: 'long' });
-    return `${month} ${inputDate.getFullYear()}`;
-};
-
-const formatChatList = (chats) => {
-    const groupedChats = {};
-    chats.forEach(chat => {
-        const date = formatDate(chat.date);
-        if (!groupedChats[date]) groupedChats[date] = [];
-        groupedChats[date].push(chat);
-    });
-    return groupedChats;
-};
+import { useTranslation } from 'react-i18next';
 
 const Sidebar = ({ className = '' }) => {
+    const { t } = useTranslation();
     const { chats, deleteChat, currentChat, setCurrentChat } = useChatContext();
-    const chatsList = formatChatList(chats);
     const modalRef = useRef(null);
+
+    const formatDate = (dateString) => {
+        const inputDate = new Date(dateString);
+        const now = new Date();
+
+        const diffTime = now - inputDate; // Diferencia en ms
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return t('today');
+        if (diffDays === 1) return t('yesterday');
+
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        if (inputDate >= startOfWeek) return t('thisWeek');
+        if (inputDate >= startOfMonth) return t('thisMonth');
+
+        const month = inputDate.toLocaleString('default', { month: 'long' });
+        return `${month} ${inputDate.getFullYear()}`;
+    };
+
+    const formatChatList = (chats) => {
+        const groupedChats = {};
+        chats.forEach(chat => {
+            const date = formatDate(chat.date);
+            if (!groupedChats[date]) groupedChats[date] = [];
+            groupedChats[date].push(chat);
+        });
+        return groupedChats;
+    };
 
     const [chatToDelete, setChatToDelete] = useState(null);
 
@@ -52,10 +53,13 @@ const Sidebar = ({ className = '' }) => {
         setCurrentChat(selectedChat); // Actualiza el chat activo
     };
 
+    const chatsList = formatChatList(chats);
+
+
     return (
         <section className={`${className} ${sideBarStyle['sidebar-grid']} gap-2 font-poppins p-5 bg-[#F8F8F8]`}>
             <div className={`${sideBarStyle['chat-list']} overflow-y-auto`}>
-                {chats.length === 0 ? <p className="text-center text-secondary hidden lg:block lg:mt-10">No chats yet</p> : (
+                {chats.length === 0 ? <p className="text-center text-secondary hidden lg:block lg:mt-10">{t('noChats')}</p> : (
                     Object.entries(chatsList).map(([date, chats]) => (
                         <div className="flex flex-col gap-1" key={date}>
                             <p className="px-2 text-secondary text-sm">{date}</p>
@@ -94,13 +98,13 @@ const Sidebar = ({ className = '' }) => {
                 className={`${sideBarStyle['new-chat']} btn rounded-md max-w-[320px] min-w-[210] bg-primary hover:bg-dark border-0 text-white`}
                 onClick={() => window.location.href = '/chat'}
             >
-                Create new Chat
+                {t('createNewChat')}
             </button>
-            <p className={`${sideBarStyle['footer']} text-sm`}>Powered by HyperCycle Inc.</p>
+            <p className={`${sideBarStyle['footer']} text-sm`}>{t('footer')}</p>
             <dialog ref={modalRef} className="modal">
                 <div className="modal-box bg-white">
                     <h3 className="font-bold text-lg">
-                        Are you sure you want to delete this chat?
+                        {t('deleteChat')}
                     </h3>
                     <p className="p-3 rounded-xl mt-4 mx-auto w-fit border border-gray-400 border-dashed">{
                         chatToDelete?.chat[0]?.txt || "Unnamed chat"
@@ -109,12 +113,12 @@ const Sidebar = ({ className = '' }) => {
                         <form method="dialog" className='flex gap-3'>
                             {/* if there is a button in form, it will close the modal */}
                             <button className="btn border font-normal bg-white border-gray-950 text-gray-950 hover:bg-gray-100 hover:text-gray-950">Cancel</button>
-                            <button className="btn bg-primary border-0 hover:bg-dark transition-colors text-white" onClick={() => handleDeleteChat(chatToDelete.id)}>Confirm</button>
+                            <button className="btn bg-primary border-0 hover:bg-dark transition-colors text-white" onClick={() => handleDeleteChat(chatToDelete.id)}>{t('confirm')}</button>
                         </form>
                     </div>
                 </div>
                 <form method="dialog" className="modal-backdrop">
-                    <button>close</button>
+                    <button>{t('close')}</button>
                 </form>
             </dialog>
         </section>

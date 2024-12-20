@@ -7,6 +7,8 @@ import Response from '../componets/chat/Response';
 import Suggestion from '../componets/chat/Suggestion';
 import Responding from '../componets/chat/Responding';
 import { useChatContext } from '../contexts/Chat';
+import { useTranslation } from 'react-i18next';
+import Error from '../componets/common/Error';
 
 const GROK_URL = 'http://43.202.113.176/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:9999/stream_chat';
@@ -24,363 +26,367 @@ If you can provide useful general information, just state it and indicate that y
 `;
 
 const formatGrokResponse = (response) => {
-  const { data: { choices } } = response;
-  const assistantResponse = choices[0].message.content.trim();
+	const { data: { choices } } = response;
+	const assistantResponse = choices[0].message.content.trim();
 
-  // Now we parse the assistantResponse to extract ORIGINAL_ANSWER, SCORE, EXPLANATION, and REFINED_ANSWER.
-  // We expect the response in the format:
-  // ORIGINAL_ANSWER: ...
-  // SCORE: ...
-  // EXPLANATION: ...
-  // REFINED_ANSWER: ...
+	// Now we parse the assistantResponse to extract ORIGINAL_ANSWER, SCORE, EXPLANATION, and REFINED_ANSWER.
+	// We expect the response in the format:
+	// ORIGINAL_ANSWER: ...
+	// SCORE: ...
+	// EXPLANATION: ...
+	// REFINED_ANSWER: ...
 
-  // A regex approach:
-  // We can use something like:
-  // ORIGINAL_ANSWER:\s*(.*)
-  // SCORE:\s*(\d+)
-  // EXPLANATION:\s*(.*?)(?=REFINED_ANSWER:)
-  // REFINED_ANSWER:\s*(.*)
+	// A regex approach:
+	// We can use something like:
+	// ORIGINAL_ANSWER:\s*(.*)
+	// SCORE:\s*(\d+)
+	// EXPLANATION:\s*(.*?)(?=REFINED_ANSWER:)
+	// REFINED_ANSWER:\s*(.*)
 
-  const originalMatch = assistantResponse.match(/ORIGINAL_ANSWER:\s*(.*)/);
-  const scoreMatch = assistantResponse.match(/SCORE:\s*(\d+)/);
-  const explanationMatch = assistantResponse.match(/EXPLANATION:\s*([\s\S]*?)\nREFINED_ANSWER:/);
-  const refinedMatch = assistantResponse.match(/REFINED_ANSWER:\s*(.*)/);
-  const nextStepsMatch = assistantResponse.match(/NEXT_STEPS:\s*([\s\S]*?)$/);
+	const originalMatch = assistantResponse.match(/ORIGINAL_ANSWER:\s*(.*)/);
+	const scoreMatch = assistantResponse.match(/SCORE:\s*(\d+)/);
+	const explanationMatch = assistantResponse.match(/EXPLANATION:\s*([\s\S]*?)\nREFINED_ANSWER:/);
+	const refinedMatch = assistantResponse.match(/REFINED_ANSWER:\s*(.*)/);
+	const nextStepsMatch = assistantResponse.match(/NEXT_STEPS:\s*([\s\S]*?)$/);
 
-  const originalAnswer = originalMatch ? originalMatch[1].trim() : '';
-  const score = scoreMatch ? scoreMatch[1].trim() : '';
-  const explanation = explanationMatch ? explanationMatch[1].trim() : '';
-  const refinedAnswer = refinedMatch ? refinedMatch[1].trim() : '';
-  const nextSteps = nextStepsMatch ? nextStepsMatch[1].trim() : '';
+	const originalAnswer = originalMatch ? originalMatch[1].trim() : '';
+	const score = scoreMatch ? scoreMatch[1].trim() : '';
+	const explanation = explanationMatch ? explanationMatch[1].trim() : '';
+	const refinedAnswer = refinedMatch ? refinedMatch[1].trim() : '';
+	const nextSteps = nextStepsMatch ? nextStepsMatch[1].trim() : '';
 
-  return { originalAnswer, score, explanation, refinedAnswer, nextSteps };
+	return { originalAnswer, score, explanation, refinedAnswer, nextSteps };
 }
 
 const formatThinkingSteps = (steps) => {
-  // REFINING_SEARCH → "Making sure we find the right information..."
-  // FORMING_RESPONSE → "Preparing your answer..."
-  // FORMING_SEARCH_QUERY → "Forming the search query..."
-  // GETTING_RESPONSE → "Getting the response..."
-  if (steps == 'REFINING_SEARCH') {
-    return 'Making sure we find the right information...';
-  }
-  if (steps == 'FORMING_RESPONSE') {
-    return 'Preparing your answer...';
-  }
-  if (steps == 'FORMING_SEARCH_QUERY') {
-    return 'Forming the search query...';
-  }
-  if (steps == 'GETTING_RESPONSE') {
-    return 'Getting the response...';
-  }
+	// REFINING_SEARCH → "Making sure we find the right information..."
+	// FORMING_RESPONSE → "Preparing your answer..."
+	// FORMING_SEARCH_QUERY → "Forming the search query..."
+	// GETTING_RESPONSE → "Getting the response..."
+	if (steps == 'REFINING_SEARCH') {
+		return 'Making sure we find the right information...';
+	}
+	if (steps == 'FORMING_RESPONSE') {
+		return 'Preparing your answer...';
+	}
+	if (steps == 'FORMING_SEARCH_QUERY') {
+		return 'Forming the search query...';
+	}
+	if (steps == 'GETTING_RESPONSE') {
+		return 'Getting the response...';
+	}
 
-  return steps;
+	return steps;
 }
 
 const isValidMessage = (message) => {
-  return (
-    typeof message.role === 'string' &&
-    typeof message.content === 'string' &&
-    message.content.trim().length > 0
-  );
+	return (
+		typeof message.role === 'string' &&
+		typeof message.content === 'string' &&
+		message.content.trim().length > 0
+	);
 };
 
 const validateChatHistory = (chatHistory) => {
-  return chatHistory.every(isValidMessage);
+	return chatHistory.every(isValidMessage);
 };
 
-const suggestions = [
-  'What is YMCA?',
-  'YMCA locations in Europe',
-  'YMCA locations in Italy',
-];
-
 const Chat = () => {
-  const { AddToCurrentChat, currentChat } = useChatContext();
+	const { t } = useTranslation();
+	const { AddToCurrentChat, currentChat } = useChatContext();
 
-  const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [writing, setWriting] = useState(false);
-  const [toWrite, setToWrite] = useState({});
-  const [steps, setSteps] = useState([]);
-  const [currentStep, setCurrentStep] = useState([]);
-  const [writingLong, setWritingLong] = useState(false);
-  const [toWriteLong, setToWriteLong] = useState({});
+	const [query, setQuery] = useState('');
+	const [loading, setLoading] = useState(false);
+	const [writing, setWriting] = useState(false);
+	const [toWrite, setToWrite] = useState({});
+	const [steps, setSteps] = useState([]);
+	const [currentStep, setCurrentStep] = useState([]);
+	const [writingLong, setWritingLong] = useState(false);
+	const [toWriteLong, setToWriteLong] = useState({});
 
-  const [chatHistory, setChatHistory] = useState([]);
+	const [chatHistory, setChatHistory] = useState([]);
 
-  const chatref = useRef(null);
-  const inputRef = useRef(null);
+	const chatref = useRef(null);
+	const inputRef = useRef(null);
+	const errorRef = useRef(null);
 
-  const buildRequestOptions = (url, messages, query) => {
-    let requestBody = {};
-    let requestHeaders = {};
+	const suggestions = [
+		t('suggestion_1'),
+		t('suggestion_2'),
+		t('suggestion_3'),
+	];
 
-    if (url === GROK_URL) {
-      requestBody = {
-        "messages": messages,
-        "model": "grok-beta",
-        "stream": false,
-        "temperature": 0.5,
-      };
-      requestHeaders = {
-        'Content-Type': 'application/json',
-      };
-    } else if (url === ELASTICSEARCH_URL) {
-      requestBody = {
-        "user_query": query,
-        "searches": 2,
-      };
-      requestHeaders = {
-        // Add any necessary headers for Elasticsearch
-      };
-    }
+	const buildRequestOptions = (url, messages, query) => {
+		let requestBody = {};
+		let requestHeaders = {};
 
-    return { requestBody, requestHeaders };
-  };
+		if (url === GROK_URL) {
+			requestBody = {
+				"messages": messages,
+				"model": "grok-beta",
+				"stream": false,
+				"temperature": 0.5,
+			};
+			requestHeaders = {
+				'Content-Type': 'application/json',
+			};
+		} else if (url === ELASTICSEARCH_URL) {
+			requestBody = {
+				"user_query": query,
+				"searches": 2,
+			};
+			requestHeaders = {
+				// Add any necessary headers for Elasticsearch
+			};
+		}
 
-  const makeRequest = async (query, url, prompt = false) => {
-    /// TODO: handle stop writing
-    // if (writing) {}
+		return { requestBody, requestHeaders };
+	};
 
-    // check if there is a query
-    if (!query) {
-      // if there is no query, get the last question from the chat
-      // this can happen if the user presses the suggestion button without typing anything
-      const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
-      // if there is no question in the chat, log an error and return
-      if (!lastQuestion) {
-        console.error('No question found in chat');
-        AddToCurrentChat({ type: 'response', error: true, txt: 'No question found in chat' });
-        return;
-      }
-      // set the query to the last question
-      query = lastQuestion.txt;
-    }
+	const makeRequest = async (query, url, prompt = false) => {
+		/// TODO: handle stop writing
+		// if (writing) {}
 
-    // Construct the messages array
-    let messages = [];
+		// check if there is a query
+		if (!query) {
+			// if there is no query, get the last question from the chat
+			// this can happen if the user presses the suggestion button without typing anything
+			const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
+			// if there is no question in the chat, log an error and return
+			if (!lastQuestion) {
+				console.error('No question found in chat');
+				AddToCurrentChat({ type: 'response', error: true, txt: 'No question found in chat' });
+				return;
+			}
+			// set the query to the last question
+			query = lastQuestion.txt;
+		}
 
-    // Include the system prompt if it exists
-    if (prompt) {
-      messages.push({
-        "role": "system",
-        "content": prompt
-      });
-    }
+		// Construct the messages array
+		let messages = [];
 
-    // Include the previous chat history
-    chatHistory.forEach(entry => {
-      messages.push({
-        "role": entry.sender === 'user' ? 'user' : 'assistant',
-        "content": entry.message
-      });
-    });
+		// Include the system prompt if it exists
+		if (prompt) {
+			messages.push({
+				"role": "system",
+				"content": prompt
+			});
+		}
 
-    // Add the current user query
-    messages.push({
-      "role": "user",
-      "content": query
-    });
+		// Include the previous chat history
+		chatHistory.forEach(entry => {
+			messages.push({
+				"role": entry.sender === 'user' ? 'user' : 'assistant',
+				"content": entry.message
+			});
+		});
 
-    console.log("Making request for:", query);
-    console.log("with messages:", { messages });
+		// Add the current user query
+		messages.push({
+			"role": "user",
+			"content": query
+		});
 
-    // display a loading message
-    if (url === GROK_URL) setLoading("Generating a quick response for you...");
-    if (url === ELASTICSEARCH_URL) setLoading("Searching the database...");
+		console.log("Making request for:", query);
+		console.log("with messages:", { messages });
 
-    const { requestBody, requestHeaders } = buildRequestOptions(url, messages, query);
+		// display a loading message
+		if (url === GROK_URL) setLoading("Generating a quick response for you...");
+		if (url === ELASTICSEARCH_URL) setLoading("Searching the database...");
 
-    try {
-      // fetch the data
-      const response = await axios.post(url, requestBody, {
-        headers: requestHeaders
-      });
+		const { requestBody, requestHeaders } = buildRequestOptions(url, messages, query);
 
-      // Add the user's query to the chat history here
-      addToChatHistory(query, 'user');
+		try {
+			// fetch the data
+			const response = await axios.post(url, requestBody, {
+				headers: requestHeaders
+			});
 
-      // Handle the response
-      const data = response.data;
-      console.log("Response data:", data);
+			// Add the user's query to the chat history here
+			addToChatHistory(query, 'user');
 
-      let additionalResponse = '';
+			// Handle the response
+			const data = response.data;
+			console.log("Response data:", data);
 
-      if (url === GROK_URL) {
-        const refinedAnswer = response.data.choices[0].message.content;
+			let additionalResponse = '';
 
-        // Display anwser to the user
-        setToWrite({ text: refinedAnswer, documents: [] });
-        setWriting(true);
+			if (url === GROK_URL) {
+				const refinedAnswer = response.data.choices[0].message.content;
 
-        // Update chat history with the response
-        addToChatHistory(refinedAnswer, 'assistant');
-      }
-      if (url === ELASTICSEARCH_URL) {
-        const parts = response.data.split('\n');
-        // get the text between FORMING_RESPONSE and END_RESPONSE in the response
-        const match = response.data.match(/FORMING_RESPONSE([\s\S]*?)END_RESPONSE/);
-        console.log({ match });
-        // set the current step to 0 to start from the beginning
-        setCurrentStep(() => 0);
+				// Display anwser to the user
+				setToWrite({ text: refinedAnswer, documents: [] });
+				setWriting(true);
 
-        // we spect to find FORMING_RESPONSE warpping the text to write
-        // if we don't find it, log an error and return
-        if (!match) return console.error("No match found");
+				// Update chat history with the response
+				addToChatHistory(refinedAnswer, 'assistant');
+			}
+			if (url === ELASTICSEARCH_URL) {
+				const parts = response.data.split('\n');
+				// get the text between FORMING_RESPONSE and END_RESPONSE in the response
+				const match = response.data.match(/FORMING_RESPONSE([\s\S]*?)END_RESPONSE/);
+				console.log({ match });
+				// set the current step to 0 to start from the beginning
+				setCurrentStep(() => 0);
 
-        // Get the documents from the response
-        const docLabel = 'REFERENCES';
-        const docIndex = parts.indexOf(docLabel);
-        let documents = [];
-        try { // try to parse the documents
-          documents = JSON.parse(parts.slice(docIndex + 1, docIndex + 2)).map(doc => doc[4] == "" ? doc[2].slice(0, doc[2].indexOf('_') > -1 ? doc[2].indexOf('_') : doc[2].length) : doc[4]);
-          // remove suplicate documents
-          documents = [...new Set(documents)];
-          additionalResponse = 'Database search results:';
-          console.log({ documents });
+				// we spect to find FORMING_RESPONSE warpping the text to write
+				// if we don't find it, log an error and return
+				if (!match) return console.error("No match found");
 
-        } catch (error) {
-          console.error('Error while parsing documents:', error);
-        }
+				// Get the documents from the response
+				const docLabel = 'REFERENCES';
+				const docIndex = parts.indexOf(docLabel);
+				let documents = [];
+				try { // try to parse the documents
+					documents = JSON.parse(parts.slice(docIndex + 1, docIndex + 2)).map(doc => doc[4] == "" ? doc[2].slice(0, doc[2].indexOf('_') > -1 ? doc[2].indexOf('_') : doc[2].length) : doc[4]);
+					// remove suplicate documents
+					documents = [...new Set(documents)];
+					additionalResponse = t('database_search');
+					console.log({ documents });
 
-        // Get the accuracy score from the response
-        let accuracy = 0;
-        const accuracyLabel = 'RATING_ACCURACY';
-        try {
-          const accuracyIndex = parts.indexOf(accuracyLabel);
-          accuracy = JSON.parse(parts.slice(accuracyIndex + 1, accuracyIndex + 2)).accuracy;
-          console.info('Accuracy:', accuracy);
-        } catch (error) {
-          console.error('Error while parsing accuracy:', error);
-        }
+				} catch (error) {
+					console.error('Error while parsing documents:', error);
+				}
 
-        // set the text to write
-        setToWrite({ text: match[1].trim(), documents, additionalResponse, accuracy });
-        setWriting(true);
+				// Get the accuracy score from the response
+				let accuracy = 0;
+				const accuracyLabel = 'RATING_ACCURACY';
+				try {
+					const accuracyIndex = parts.indexOf(accuracyLabel);
+					accuracy = JSON.parse(parts.slice(accuracyIndex + 1, accuracyIndex + 2)).accuracy;
+					console.info('Accuracy:', accuracy);
+				} catch (error) {
+					console.error('Error while parsing accuracy:', error);
+				}
 
-        // find the position of FORMING_RESPONSE
-        const formingResponseIndex = parts.indexOf('FORMING_RESPONSE');
-        const _steps = parts.slice(0, formingResponseIndex);
-        // get only the _steps that are uppercase string no whitespaces
-        const _stepsFiltered = _steps.filter(step => step.trim() === step.toUpperCase() && step.indexOf(' ') === -1);
-        setSteps(_stepsFiltered);
+				// set the text to write
+				setToWrite({ text: match[1].trim(), documents, additionalResponse, accuracy });
+				setWriting(true);
 
-        // Update chat history with the response
-        addToChatHistory(match[1].trim(), 'assistant');
-      }
-    } catch (error) {
-      console.error('Error while fetching data:', error);
-      AddToCurrentChat({ type: 'response', error: true, txt: 'Error - Service Unavailable' });
-      setLoading(false);
-    } finally {
-      // clear the loading message
-      setLoading(false);
-    }
-  }
+				// find the position of FORMING_RESPONSE
+				const formingResponseIndex = parts.indexOf('FORMING_RESPONSE');
+				const _steps = parts.slice(0, formingResponseIndex);
+				// get only the _steps that are uppercase string no whitespaces
+				const _stepsFiltered = _steps.filter(step => step.trim() === step.toUpperCase() && step.indexOf(' ') === -1);
+				setSteps(_stepsFiltered);
 
-  const addToChatHistory = (message, sender) => {
-    setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
-  };
+				// Update chat history with the response
+				addToChatHistory(match[1].trim(), 'assistant');
+			}
+		} catch (error) {
+			console.error('Error while fetching data:', error);
+			errorRef.current.showError();
+			AddToCurrentChat({ type: 'response', error: true, txt: 'Service Unavailable' });
+			setLoading(false);
+		} finally {
+			// clear the loading message
+			setLoading(false);
+		}
+	}
 
-  const makeGrokRequest = async (query) => {
-    await makeRequest(query, GROK_URL, grokPrompt);
-  };
-  const makeElasticSearchRequest = async (query) => {
-    // this is the prompt use in "Do a database search"
-    await makeRequest(query, ELASTICSEARCH_URL);
-  }
+	const addToChatHistory = (message, sender) => {
+		setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
+	};
 
-  const handleAddQuestion = async (question) => {
-    setQuery('');
-    AddToCurrentChat({ type: 'question', txt: question });
-    await makeGrokRequest(question);
-    await makeElasticSearchRequest(question);
-  }
+	const makeGrokRequest = async (query) => {
+		await makeRequest(query, GROK_URL, grokPrompt);
+	};
+	const makeElasticSearchRequest = async (query) => {
+		// this is the prompt use in "Do a database search"
+		await makeRequest(query, ELASTICSEARCH_URL);
+	}
 
-  return (
-    <div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
-      <section
-        ref={chatref}
-        className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2 overflow-x-hidden`}>
-        {
-          currentChat?.chat.map((msg, index) => (
-            msg.type === 'question' ? (
-              <Question key={index} question={msg.txt} />
-            ) : (
-              <Response
-                key={index}
-                response={msg.txt}
-                error={msg?.error}
+	const handleAddQuestion = async (question) => {
+		setQuery('');
+		AddToCurrentChat({ type: 'question', txt: question });
+		await makeGrokRequest(question);
+		await makeElasticSearchRequest(question);
+	}
 
-                end={() => {
-                  if (chatref.current) {
-                    setTimeout(() => {
-                      // chatref.current.scrollTop = chatref.current.scrollHeight;
-                    }, 0);
-                  }
-                }}
-                noImg={!(index != 0 && currentChat.chat[index - 1].type === 'response')}
-                documents={msg.documents}
-                additionalResponse={msg.additionalResponse}
-                accuracy={msg.accuracy}
-              />
-            )))
-        }
-        {
-          writing && <Responding data={toWrite} end={
-            () => {
-              setWriting(false);
-              // change the msg to generate the complex response
-              AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents, additionalResponse: toWrite.additionalResponse, accuracy: toWrite.accuracy });
-              setToWrite({});
-            }}
-          />
-        }
-        {
-          loading && (
-            <div className="flex ml-14">
-              <p className='text-base text-shyne'>{loading}</p>
-            </div>
-          )
-        }
-      </section >
-      {
-        (!currentChat || currentChat?.length == 0) && (
-          <section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
-            <p className="w-full text-sm pb-2">Ask your question in chat or select the following options to start from:</p>
-            <div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
-              {
-                suggestions.map((suggestion, index) => (
-                  <Suggestion key={index} suggestion={suggestion} onClick={() => handleAddQuestion(suggestion)} />
-                ))
-              }
-            </div>
-          </section>
-        )
-      }
-      < section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
-        <div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                if (!query || query.trim() === '') {
-                  console.error('Cannot send an empty query');
-                  return;
-                }
-                handleAddQuestion(query)
-              }
-            }}
-            disabled={loading}
-            ref={inputRef}
-            type="text" placeholder="New Message" className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
-          <img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => handleAddQuestion(query)} />
-        </div>
-      </section >
-    </div >
-  )
+	return (
+		<div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
+			<section
+				ref={chatref}
+				className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2 overflow-x-hidden`}>
+				{
+					currentChat?.chat.map((msg, index) => (
+						msg.type === 'question' ? (
+							<Question key={index} question={msg.txt} />
+						) : (
+							<Response
+								key={index}
+								response={msg.txt}
+								error={msg?.error}
+
+								end={() => {
+									if (chatref.current) {
+										setTimeout(() => {
+											// chatref.current.scrollTop = chatref.current.scrollHeight;
+										}, 0);
+									}
+								}}
+								noImg={!(index != 0 && currentChat.chat[index - 1].type === 'response')}
+								documents={msg.documents}
+								additionalResponse={msg.additionalResponse}
+								accuracy={msg.accuracy}
+							/>
+						)))
+				}
+				{
+					writing && <Responding data={toWrite} end={
+						() => {
+							setWriting(false);
+							// change the msg to generate the complex response
+							AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents, additionalResponse: toWrite.additionalResponse, accuracy: toWrite.accuracy });
+							setToWrite({});
+						}}
+					/>
+				}
+				{
+					loading && (
+						<div className="flex ml-14">
+							<p className='text-base text-shyne'>{loading}</p>
+						</div>
+					)
+				}
+			</section >
+			{
+				(!currentChat || currentChat?.length == 0) && (
+					<section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
+						<p className="w-full text-sm pb-2">{t('suggestion_msg')}</p>
+						<div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
+							{
+								suggestions.map((suggestion, index) => (
+									<Suggestion key={index} suggestion={suggestion} onClick={() => handleAddQuestion(suggestion)} />
+								))
+							}
+						</div>
+					</section>
+				)
+			}
+			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
+				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
+					<input
+						value={query}
+						onChange={(e) => setQuery(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') {
+								if (!query || query.trim() === '') {
+									console.error('Cannot send an empty query');
+									return;
+								}
+								handleAddQuestion(query)
+							}
+						}}
+						disabled={loading}
+						ref={inputRef}
+						type="text" placeholder={t("new_message")} className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
+					<img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => handleAddQuestion(query)} />
+				</div>
+			</section >
+			<Error ref={errorRef} />
+		</div >
+	)
 }
 
 export default Chat;
