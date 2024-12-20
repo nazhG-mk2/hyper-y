@@ -1,3 +1,18 @@
 {
-  "welcome": "Bun venit"
+  "welcome": "Bine ai venit",
+  "new_message": "Mesaj nou",
+  "suggestion_msg": "Adresează-ți întrebarea în chat sau selectează opțiunile de mai jos pentru a începe:",
+  "suggestion_1": "Ce este YMCA?",
+  "suggestion_2": "Locații YMCA în Europa",
+  "suggestion_3": "Locații YMCA în Italia",
+  "createNewChat": "Crează un chat nou",
+  "today": "astăzi",
+  "yesterday": "ieri",
+  "thisWeek": "săptămâna aceasta",
+  "thisMonth": "luna aceasta",
+  "noChats": "Nu sunt chat-uri încă",
+  "footer": "Susținut de HyperCycle Inc.",
+  "deleteChat": "Ești sigur că vrei să ștergi acest chat?",
+  "confirm": "Confirmă",
+  "close": "Închide"
 }

@@ -1,3 +1,18 @@
 {
-  "welcome": "Bem-vindo"
+  "welcome": "Bem-vindo",
+  "new_message": "Nova mensagem",
+  "suggestion_msg": "Faça sua pergunta no chat ou selecione uma das opções abaixo para começar:",
+  "suggestion_1": "O que é YMCA?",
+  "suggestion_2": "Locais da YMCA na Europa",
+  "suggestion_3": "Locais da YMCA na Itália",
+  "createNewChat": "Criar novo chat",
+  "today": "hoje",
+  "yesterday": "ontem",
+  "thisWeek": "esta semana",
+  "thisMonth": "este mês",
+  "noChats": "Nenhum chat ainda",
+  "footer": "Desenvolvido por HyperCycle Inc.",
+  "deleteChat": "Tem certeza de que deseja excluir este chat?",
+  "confirm": "Confirmar",
+  "close": "Fechar"
 }

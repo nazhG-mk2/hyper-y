@@ -156,9 +156,9 @@ const Chat = () => {
 	const errorRef = useRef(null);
 
 	const suggestions = [
-		'What is YMCA?',
-		'YMCA locations in Europe',
-		'YMCA locations in Italy',
+		t('suggestion_1'),
+		t('suggestion_2'),
+		t('suggestion_3'),
 	];
 
 	const buildRequestOptions = (url, messages, query, prompt) => {

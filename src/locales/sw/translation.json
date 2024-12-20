@@ -1,3 +1,18 @@
 {
-  "welcome": "Karibu"
+  "welcome": "Karibu",
+  "new_message": "Ujumbe Mpya",
+  "suggestion_msg": "Uliza swali lako kwenye gumzo au chagua chaguzi zifuatazo kuanzia:",
+  "suggestion_1": "Nini YMCA?",
+  "suggestion_2": "Mioja ya YMCA huko Ulaya",
+  "suggestion_3": "Mioja ya YMCA nchini Italia",
+  "createNewChat": "Unda gumzo jipya",
+  "today": "leo",
+  "yesterday": "jana",
+  "thisWeek": "hii wiki",
+  "thisMonth": "hivi mwezi",
+  "noChats": "Hakuna gumzo bado",
+  "footer": "Imesimamiwa na HyperCycle Inc.",
+  "deleteChat": "Je, unakubaliana kufuta gumzo hili?",
+  "confirm": "Thibitisha",
+  "close": "Funga"
 }
