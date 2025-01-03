@@ -106,6 +106,8 @@ const Chat = () => {
 
 	const [chatHistory, setChatHistory] = useState([]);
 
+	const [isExpanded, setIsExpanded] = useState(false);
+
 	const chatref = useRef(null);
 	const inputRef = useRef(null);
 	const errorRef = useRef(null);
@@ -115,6 +117,19 @@ const Chat = () => {
 		t('suggestion_2'),
 		t('suggestion_3'),
 	];
+
+
+	useEffect(() => {
+		const handleResize = () => {
+			if (inputRef.current) {
+				const { scrollHeight } = inputRef.current;
+				
+				setIsExpanded(scrollHeight > 40);
+			}
+		};
+
+		handleResize(); // Para validar inicialmente
+	}, [query]);
 
 	const buildRequestOptions = (url, messages, query) => {
 		let requestBody = {};
@@ -366,9 +381,15 @@ const Chat = () => {
 			}
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
-					<input
+					<textarea
 						value={query}
-						onChange={(e) => setQuery(e.target.value)}
+						onChange={(e) => {
+							setQuery(e.target.value)
+							if (inputRef.current) {
+								const { scrollWidth, clientWidth } = inputRef.current;
+								setIsExpanded(scrollWidth > clientWidth);
+							}
+						}}
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') {
 								if (!query || query.trim() === '') {
@@ -380,7 +401,8 @@ const Chat = () => {
 						}}
 						disabled={loading}
 						ref={inputRef}
-						type="text" placeholder={t("new_message")} className="w-full text-gray-950 placeholder:text-gray-400 p-2" />
+						type="text" placeholder={t("new_message")}
+						className={`w-full resize-none bg-transparent outline-none text-gray-950 placeholder:text-gray-400 p-2 transition-all ${isExpanded ? "h-20" : "h-10"}`} />
 					<img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => handleAddQuestion(query)} />
 				</div>
 			</section >
