@@ -124,7 +124,7 @@ const Chat = () => {
 			if (inputRef.current) {
 				const { scrollHeight } = inputRef.current;
 				
-				setIsExpanded(scrollHeight > 40);
+				setIsExpanded(scrollHeight > 40 && query.length > 10);
 			}
 		};
 
@@ -382,10 +382,6 @@ const Chat = () => {
 							if (inputRef.current) {
 								const { scrollWidth, clientWidth } = inputRef.current;
 								setIsExpanded(scrollWidth > clientWidth);
-							}
-							// if empty o length less than 10, set expanded to false
-							if (e.target.value.length < 10) {
-								setIsExpanded(false);
 							}
 						}}
 						onKeyDown={(e) => {
