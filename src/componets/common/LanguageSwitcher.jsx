@@ -1,8 +1,23 @@
 import { useTranslation } from 'react-i18next';
 import gearIcon from "../../assets/gear.svg"
+import { useEffect } from 'react';
 
 const LanguageSwitcher = () => {
     const { i18n } = useTranslation();
+
+    const changeLanguage = (lng) => {
+        i18n.changeLanguage(lng);
+        // set locale in local storage
+        localStorage.setItem('locale', lng);
+    }
+
+    // load locale from local storage
+    useEffect(() => {
+        const locale = localStorage.getItem('locale');
+        if (locale) {
+            i18n.changeLanguage(locale);
+        }
+    }, [i18n]);
 
     return (
         <div className="dropdown dropdown-bottom dropdown-end">
@@ -11,25 +26,25 @@ const LanguageSwitcher = () => {
             </div>
             <ul tabIndex={0} className="dropdown-content menu mt-6 bg-light opacity-100 rounded-box z-[1] w-52 p-2 shadow">
                 <li>
-                    <button className='focus:text-dark' onClick={() => i18n.changeLanguage('en')}>English</button>
+                    <button className='focus:text-dark' onClick={() => changeLanguage('en')}>English</button>
                 </li>
                 <li>
-                    <button className='focus:text-dark' onClick={() => i18n.changeLanguage('es')}>Español</button>
+                    <button className='focus:text-dark' onClick={() => changeLanguage('es')}>Español</button>
                 </li>
                 <li>
-                    <button className='focus:text-dark' onClick={() => i18n.changeLanguage('fr')}>Français</button>
+                    <button className='focus:text-dark' onClick={() => changeLanguage('fr')}>Français</button>
                 </li>
                 <li>
-                    <button className='focus:text-dark' onClick={() => i18n.changeLanguage('pt')}>Português</button>
+                    <button className='focus:text-dark' onClick={() => changeLanguage('pt')}>Português</button>
                 </li>
                 {/* <li>
-                    <button className='focus:text-dark' onClick={() => i18n.changeLanguage('ar')}>العربية</button>
+                    <button className='focus:text-dark' onClick={() => changeLanguage('ar')}>العربية</button>
                 </li> */}
                 <li>
-                    <button className='focus:text-dark' onClick={() => i18n.changeLanguage('sw')}>Kiswahili</button>
+                    <button className='focus:text-dark' onClick={() => changeLanguage('sw')}>Kiswahili</button>
                 </li>
                 <li>
-                    <button className='focus:text-dark' onClick={() => i18n.changeLanguage('ro')}>Română</button>
+                    <button className='focus:text-dark' onClick={() => changeLanguage('ro')}>Română</button>
                 </li>
             </ul>
         </div>
