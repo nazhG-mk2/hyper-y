@@ -3,9 +3,14 @@ import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
+// env
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const app = express();
 app.use(cors());
-const PORT = 9008;
+const PORT = process.env.PORT || 9001;
 
 // Obtener __dirname usando import.meta.url
 const __filename = fileURLToPath(import.meta.url);
