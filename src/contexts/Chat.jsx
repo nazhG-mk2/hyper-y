@@ -33,6 +33,8 @@ export const ChatProvider = ({ children }) => {
     const AddToCurrentChat = (newMsg) => {
         const date = new Date().toISOString();
         setChats((prevChats) => {
+            console.log({ prevChats, newMsg, currentChat });
+            
             if (!currentChat) {
                 const id = `id-${Math.random().toString(36).slice(2, 9)}`;
                 const _newChat = { id, date, chat: [newMsg] };

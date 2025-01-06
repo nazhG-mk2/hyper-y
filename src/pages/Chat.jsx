@@ -202,9 +202,6 @@ const Chat = () => {
 			"content": query
 		});
 
-		console.log("Making request for:", query);
-		console.log("with messages:", { messages });
-
 		// display a loading message
 		if (url === GROK_URL) setLoading("Generating a quick response for you...");
 		if (url === ELASTICSEARCH_URL) setLoading("Searching the database...");
@@ -222,7 +219,6 @@ const Chat = () => {
 
 			// Handle the response
 			const data = response.data;
-			console.log("Response data:", data);
 
 			let additionalResponse = '';
 
@@ -240,7 +236,6 @@ const Chat = () => {
 				const parts = response.data.split('\n');
 				// get the text between FORMING_RESPONSE and END_RESPONSE in the response
 				const match = response.data.match(/FORMING_RESPONSE([\s\S]*?)END_RESPONSE/);
-				console.log({ match });
 				// set the current step to 0 to start from the beginning
 				setCurrentStep(() => 0);
 
@@ -257,8 +252,6 @@ const Chat = () => {
 					// remove suplicate documents
 					documents = [...new Set(documents)];
 					additionalResponse = t('database_search');
-					console.log({ documents });
-
 				} catch (error) {
 					console.error('Error while parsing documents:', error);
 				}
@@ -314,7 +307,7 @@ const Chat = () => {
 	const handleAddQuestion = async (question) => {
 		setQuery('');
 		AddToCurrentChat({ type: 'question', txt: question });
-		await makeGrokRequest(question);
+		// await makeGrokRequest(question);
 		await makeElasticSearchRequest(question);
 	}
 
