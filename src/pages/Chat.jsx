@@ -306,6 +306,7 @@ const Chat = () => {
 
 	const handleAddQuestion = async (question) => {
 		setQuery('');
+		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
 		// await makeGrokRequest(question);
 		await makeElasticSearchRequest(question);
@@ -381,6 +382,10 @@ const Chat = () => {
 							if (inputRef.current) {
 								const { scrollWidth, clientWidth } = inputRef.current;
 								setIsExpanded(scrollWidth > clientWidth);
+							}
+							// if empty o length less than 10, set expanded to false
+							if (e.target.value.length < 10) {
+								setIsExpanded(false);
 							}
 						}}
 						onKeyDown={(e) => {
