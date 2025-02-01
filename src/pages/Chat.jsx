@@ -284,7 +284,7 @@ const Chat = () => {
 		} catch (error) {
 			console.error('Error while fetching data:', error);
 			errorRef.current.showError();
-			AddToCurrentChat({ type: 'response', error: true, txt: 'Service Unavailable' });
+			// AddToCurrentChat({ type: 'response', error: true, txt: 'Service Unavailable' });
 			setLoading(false);
 		} finally {
 			// clear the loading message
