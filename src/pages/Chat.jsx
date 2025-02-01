@@ -138,7 +138,7 @@ const Chat = () => {
 		if (url === GROK_URL) {
 			requestBody = {
 				"messages": messages,
-				"model": "grok-beta",
+				"model": "llama-3.3-70b-versatile",
 				"stream": false,
 				"temperature": 0.5,
 			};
@@ -308,7 +308,7 @@ const Chat = () => {
 		setQuery('');
 		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
-		// await makeGrokRequest(question);
+		await makeGrokRequest(question);
 		await makeElasticSearchRequest(question);
 	}
 
