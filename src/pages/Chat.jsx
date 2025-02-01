@@ -359,7 +359,7 @@ const Chat = () => {
 					)
 				}
 			</section >
-			{
+			{/* {
 				(!currentChat || currentChat?.length == 0) && (
 					<section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
 						<p className="w-full text-sm pb-2">{t('suggestion_msg')}</p>
@@ -372,7 +372,7 @@ const Chat = () => {
 						</div>
 					</section>
 				)
-			}
+			} */}
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
 					<textarea
