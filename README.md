@@ -23,6 +23,40 @@ npm run dev
 npm run build && node server.js --watch
 ``` 
 
+## Podution Environment
+
+The fastest/easiest way to deploy the app is to PM2 + Serve.
+
+* install PM2 & Serve by running the following command:
+
+```bash
+npm install -g pm2 serve
+```
+
+* build the app by running the following command:
+
+```bash
+npm run build
+```
+
+* start the app by running the following command:
+
+```bash
+pm2 serve dist 3000 --name <E.G. experimental-demo>
+```
+
+* to stop the app run the following command:
+
+```bash
+pm2 stop <E.G. experimental-demo>
+```
+
+* you can also see the logs by running the following command:
+
+```bash
+pm2 logs <E.G. experimental-demo>
+```
+
 ## For Developers
 
 check the main chat logic in `src\pages\Chat.jsx`.
