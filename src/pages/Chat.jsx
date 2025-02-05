@@ -10,7 +10,7 @@ import { useChatContext } from '../contexts/Chat';
 import { useTranslation } from 'react-i18next';
 import Error from '../componets/common/Error';
 
-const GROK_URL = 'http://43.202.113.176/v1/chat/completions';
+const GROK_URL = 'http://15.164.237.192/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:8888/stream_chat';
 
 const grokPrompt = `
