@@ -161,3 +161,12 @@ input[type="text"] {
 .text-shadow {
   text-shadow: 1px 1px 0.5px rgba(0, 0, 0, 0.1);
 }
+
+.item:hover {
+  padding-right: 25px;
+}
+
+.item:hover + .item,
+.item:has(+ .item:hover) {
+  padding-right: 15px;
+}

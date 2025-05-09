@@ -104,6 +104,8 @@ const Chat = () => {
 	const [writingLong, setWritingLong] = useState(false);
 	const [toWriteLong, setToWriteLong] = useState({});
 
+	const [selected, setSelected] = useState('');
+
 	const [chatHistory, setChatHistory] = useState([]);
 
 	const [isExpanded, setIsExpanded] = useState(false);
@@ -123,7 +125,7 @@ const Chat = () => {
 		const handleResize = () => {
 			if (inputRef.current) {
 				const { scrollHeight } = inputRef.current;
-				
+
 				setIsExpanded(scrollHeight > 40 && query.length > 10);
 			}
 		};
@@ -138,7 +140,7 @@ const Chat = () => {
 		if (url === GROK_URL) {
 			requestBody = {
 				"messages": messages,
-				"model": "llama-3.3-70b-versatile",
+				"model": "llama3-70b-8192",
 				"stream": false,
 				"temperature": 0.5,
 			};
@@ -308,71 +310,111 @@ const Chat = () => {
 		setQuery('');
 		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
-		await makeGrokRequest(question);
-		await makeElasticSearchRequest(question);
+		if (selected.model & 1) {
+			await makeGrokRequest(question);
+		}
+		if (selected.model & 2) {
+			await makeElasticSearchRequest(question);
+		}
 	}
 
 	return (
 		<div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
 			<section
 				ref={chatref}
-				className={`${chatStyles.chat} flex flex-col gap-5 px-6 md:px-2 overflow-x-hidden`}>
-				{
-					currentChat?.chat.map((msg, index) => (
-						msg.type === 'question' ? (
-							<Question key={index} question={msg.txt} />
-						) : (
-							<Response
-								key={index}
-								response={msg.txt}
-								error={msg?.error}
+				className={`${chatStyles.chat} flex justify-end px-6 md:px-2`}>
+				<div className="flex flex-1 flex-col gap-5 w-max overflow-visible">
+					{
+						currentChat?.chat.map((msg, index) => (
+							msg.type === 'question' ? (
+								<Question key={index} question={msg.txt} />
+							) : (
+								<Response
+									key={index}
+									response={msg.txt}
+									error={msg?.error}
 
-								end={() => {
-									if (chatref.current) {
-										setTimeout(() => {
-											// chatref.current.scrollTop = chatref.current.scrollHeight;
-										}, 0);
-									}
-								}}
-								noImg={!(index != 0 && currentChat.chat[index - 1].type === 'response')}
-								documents={msg.documents}
-								additionalResponse={msg.additionalResponse}
-								accuracy={msg.accuracy}
-							/>
-						)))
-				}
-				{
-					writing && <Responding data={toWrite} end={
-						() => {
-							setWriting(false);
-							// change the msg to generate the complex response
-							AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents, additionalResponse: toWrite.additionalResponse, accuracy: toWrite.accuracy });
-							setToWrite({});
-						}}
-					/>
-				}
-				{
-					loading && (
-						<div className="flex ml-14">
-							<p className='text-base text-shyne'>{loading}</p>
+									end={() => {
+										if (chatref.current) {
+											setTimeout(() => {
+												// chatref.current.scrollTop = chatref.current.scrollHeight;
+											}, 0);
+										}
+									}}
+									noImg={!(index != 0 && currentChat.chat[index - 1].type === 'response')}
+									documents={msg.documents}
+									additionalResponse={msg.additionalResponse}
+									accuracy={msg.accuracy}
+								/>
+							)))
+					}
+					{
+						writing && <Responding data={toWrite} end={
+							() => {
+								setWriting(false);
+								// change the msg to generate the complex response
+								AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents, additionalResponse: toWrite.additionalResponse, accuracy: toWrite.accuracy });
+								setToWrite({});
+							}}
+						/>
+					}
+					{
+						loading && (
+							<div className="flex ml-14">
+								<p className='text-base text-shyne'>{loading}</p>
+							</div>
+						)
+					}
+				</div>
+				<div className="flex flex-col-reverse gap-2 max-h-12 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-5 right-5">
+					{[
+						{ src: "https://flagcdn.com/ca.svg", label: "YMCA - Canada", model: 1 },
+						{ src: "https://flagcdn.com/us.svg", label: "YMCA - US", model: 2 },
+						{ src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg", label: "YMCA - Europe", model: 3 },
+						{ src: "https://flagcdn.com/fr.svg", label: "YMCA - France" },
+						{ src: "https://flagcdn.com/de.svg", label: "YMCA - Germany" },
+						{ src: "https://flagcdn.com/es.svg", label: "YMCA - Spain" },
+						{ src: "https://flagcdn.com/it.svg", label: "YMCA - Italy" },
+						{ src: "https://flagcdn.com/gb.svg", label: "YMCA - United Kingdom" },
+						{ src: "https://flagcdn.com/ng.svg", label: "YMCA - Nigeria" },
+						{ src: "https://flagcdn.com/za.svg", label: "YMCA - South Africa" },
+						{ src: "https://flagcdn.com/ke.svg", label: "YMCA - Kenya" },
+						{ src: "https://flagcdn.com/eg.svg", label: "YMCA - Egypt" },
+						{ src: "https://flagcdn.com/gh.svg", label: "YMCA - Ghana" },
+						{ src: "https://flagcdn.com/ug.svg", label: "YMCA - Uganda" },
+						{ src: "https://flagcdn.com/tn.svg", label: "YMCA - Tunisia" },
+						{ src: "https://flagcdn.com/ma.svg", label: "YMCA - Morocco" },
+						{ src: "https://flagcdn.com/dz.svg", label: "YMCA - Algeria" },
+						{ src: "https://flagcdn.com/et.svg", label: "YMCA - Ethiopia" },
+						{ src: "https://flagcdn.com/sn.svg", label: "YMCA - Senegal" },
+						{ src: "https://flagcdn.com/cm.svg", label: "YMCA - Cameroon" },
+					].map((flag, index, arr) => (
+						<div
+							key={index}
+							className={`group transition-all duration-400 item flex gap-2 justify-end items-center ${selected.label === flag.label ? 'order-first ' : ''}
+								}`}
+							onClick={() => setSelected(flag)}
+						>
+							<span className="max-w-0 p-2 bg-white rounded-full bg-opacity-60 group-hover:max-w-[150px] opacity-0 group-hover:opacity-100 transition-all duration-300 text-gray-700 font-semibold whitespace-nowrap overflow-hidden">
+								{flag.label}
+							</span>
+							<div
+								className={`
+							w-10 h-10 rounded-full overflow-hidden border border-gray-400 transition-transform duration-300
+							${index === 0 ? "group-hover:-translate-x-1" : ""}
+							${index === 1 || index === arr.length - 1 ? "group-hover:-translate-x-0.5" : ""}
+						  `}
+							>
+								<img
+									src={flag.src}
+									className="w-full h-full object-cover"
+									alt={flag.label}
+								/>
+							</div>
 						</div>
-					)
-				}
+					))}
+				</div>
 			</section >
-			{/* {
-				(!currentChat || currentChat?.length == 0) && (
-					<section className={`${chatStyles['suggestions']} gap-2 px-5 pb-2 w-2/3 md:w-full justify-self-center max-w-[100vw]`}>
-						<p className="w-full text-sm pb-2">{t('suggestion_msg')}</p>
-						<div className="flex flex-wrap sm:flex-nowrap text-sm gap-2 overflow-x-auto pb-1">
-							{
-								suggestions.map((suggestion, index) => (
-									<Suggestion key={index} suggestion={suggestion} onClick={() => handleAddQuestion(suggestion)} />
-								))
-							}
-						</div>
-					</section>
-				)
-			} */}
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
 					<textarea

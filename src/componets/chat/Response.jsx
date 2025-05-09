@@ -41,7 +41,7 @@ const Response = ({
   return (
     <div className="flex gap-3 md:gap-1 response md:mr-5" ref={responseRef}>
       <div className="w-10 min-w-10 md:w-8 h-10 min-h-10 md:h-8 p-[2px] antialiased rounded-full flex">
-        <img className={`rounded-full self-center ${!noImg && 'invisible'}`} src="/hyperY.png" />
+        <img className={`rounded-full h-8 w-8 object-cover invisible self-center ${!noImg && 'invisible'}`} src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg" />
       </div>
       <div className="flex flex-col">
         {
