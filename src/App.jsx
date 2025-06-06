@@ -10,13 +10,14 @@ import StartScreen from './pages/StartScreen';
 import Login from './pages/Login';
 import SingUp from './pages/SingUp';
 import StartScreenLayout from './layouts/StartScreenLayout';
+const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
 function App() {
   return (
     <GlobalProvider>
       <ChatProvider>
         <CurrentChatProvider>
-          <Router basename="/hyperY/">
+          <Router basename={VITE_BASE_ROUTE}>
             <Routes>
               <Route path="/" element={<StartScreenLayout />}>
                 <Route index element={<StartScreen />} />

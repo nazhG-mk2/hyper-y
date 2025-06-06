@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types';
-import sideBarStyle from './Sidebar.module.css';
-import ChatContext, { useChatContext } from '../contexts/Chat';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import sideBarStyle from './Sidebar.module.css';
+import { useChatContext } from '../contexts/Chat';
+const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
 const Sidebar = ({ className = '' }) => {
     const { t } = useTranslation();
@@ -45,7 +46,7 @@ const Sidebar = ({ className = '' }) => {
 
     const handleDeleteChat = (chatId) => {
         deleteChat(chatId);
-        window.location.pathname = '/hyperY/chat/';
+        window.location.pathname = `${VITE_BASE_ROUTE}/chat/`;
     };
 
     const handleSelectChat = (chatId) => {

@@ -30,6 +30,7 @@ const basicPrompt = `
 You are a helpful and friendly assistant. Answer user questions clearly and concisely. If you are unsure about something, politely let the user know or suggest where they might find more information. Always respond in the same language as the user's question. Keep your answers brief unless a detailed explanation is necessary.
 `;
 
+const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
 const formatGrokResponse = (response) => {
 	const { data: { choices } } = response;
@@ -126,7 +127,6 @@ const Chat = () => {
 		t('suggestion_2'),
 		t('suggestion_3'),
 	];
-
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -449,12 +449,12 @@ const Chat = () => {
 					<div className="flex items-center gap-1">
 						<div className="tooltip tooltip-primary flex items-center" data-tip={t("deep_search")}>
 							{on ? (
-								<img src="/hyperY/logo_ymca.png" alt=""
+								<img src={`${VITE_BASE_ROUTE}/logo_ymca.png`} alt=""
 									className='w-14 cursor-pointer'
 									onClick={() => setOn(!on)}
 								/>
 							) : (
-								<img src="/hyperY/logo_ymca.png" alt=""
+								<img src={`${VITE_BASE_ROUTE}/logo_ymca.png`} alt=""
 									className='w-14 cursor-pointer filter grayscale'
 									onClick={() => setOn(!on)}
 								/>
