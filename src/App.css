@@ -40,3 +40,17 @@
 .read-the-docs {
   color: #888;
 }
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip::after {
+  visibility: hidden;
+
+}
+
+.tooltip:hover::after {
+  visibility: hidden;
+}

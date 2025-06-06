@@ -45,7 +45,7 @@ const Sidebar = ({ className = '' }) => {
 
     const handleDeleteChat = (chatId) => {
         deleteChat(chatId);
-        if (chatToDelete.id === currentChat.id) window.location.href = '/chat';
+        window.location.pathname = '/hyperY/chat/';
     };
 
     const handleSelectChat = (chatId) => {
@@ -96,7 +96,7 @@ const Sidebar = ({ className = '' }) => {
             </div>
             <button
                 className={`${sideBarStyle['new-chat']} btn rounded-md max-w-[320px] min-w-[210] bg-primary hover:bg-dark border-0 text-white`}
-                onClick={() => window.location.href = '/chat'}
+                onClick={() => window.location.reload()}
             >
                 {t('createNewChat')}
             </button>

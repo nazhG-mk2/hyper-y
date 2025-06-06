@@ -9,8 +9,9 @@ import Responding from '../componets/chat/Responding';
 import { useChatContext } from '../contexts/Chat';
 import { useTranslation } from 'react-i18next';
 import Error from '../componets/common/Error';
+import { FaLightbulb, FaRegLightbulb } from "react-icons/fa";
 
-const GROK_URL = 'http://15.164.237.192/v1/chat/completions';
+const GROK_URL = 'https://appdemos.hyperpg.site/grok-demo';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:8888/stream_chat';
 
 const grokPrompt = `
@@ -24,6 +25,11 @@ You do not need to ask the user whether to perform a database search related to 
 If you cannot provide useful general information indicate that you do not know and that you will look more into it for the user.
 If you can provide useful general information, just state it and indicate that you will look for more details.
 `;
+
+const basicPrompt = `
+You are a helpful and friendly assistant. Answer user questions clearly and concisely. If you are unsure about something, politely let the user know or suggest where they might find more information. Always respond in the same language as the user's question. Keep your answers brief unless a detailed explanation is necessary.
+`;
+
 
 const formatGrokResponse = (response) => {
 	const { data: { choices } } = response;
@@ -40,7 +46,7 @@ const formatGrokResponse = (response) => {
 	// We can use something like:
 	// ORIGINAL_ANSWER:\s*(.*)
 	// SCORE:\s*(\d+)
-	// EXPLANATION:\s*(.*?)(?=REFINED_ANSWER:)
+	// EXPLANATION:\s*([\s\S]*?)\nREFINED_ANSWER:
 	// REFINED_ANSWER:\s*(.*)
 
 	const originalMatch = assistantResponse.match(/ORIGINAL_ANSWER:\s*(.*)/);
@@ -103,6 +109,7 @@ const Chat = () => {
 	const [currentStep, setCurrentStep] = useState([]);
 	const [writingLong, setWritingLong] = useState(false);
 	const [toWriteLong, setToWriteLong] = useState({});
+	const [on, setOn] = useState(false);
 
 	const [selected, setSelected] = useState('');
 
@@ -153,7 +160,8 @@ const Chat = () => {
 				"searches": 2,
 			};
 			requestHeaders = {
-				// Add any necessary headers for Elasticsearch
+				'timeout': 10000,
+				'Content-Type': 'application/json',
 			};
 		}
 
@@ -212,17 +220,12 @@ const Chat = () => {
 
 		try {
 			// fetch the data
+			console.log('Fetching data from:', url);
+
 			const response = await axios.post(url, requestBody, {
 				headers: requestHeaders
 			});
 
-			// Add the user's query to the chat history here
-			addToChatHistory(query, 'user');
-
-			// Handle the response
-			const data = response.data;
-
-			let additionalResponse = '';
 
 			if (url === GROK_URL) {
 				const refinedAnswer = response.data.choices[0].message.content;
@@ -249,6 +252,7 @@ const Chat = () => {
 				const docLabel = 'REFERENCES';
 				const docIndex = parts.indexOf(docLabel);
 				let documents = [];
+				let additionalResponse = '';
 				try { // try to parse the documents
 					documents = JSON.parse(parts.slice(docIndex + 1, docIndex + 2)).map(doc => doc[4] == "" ? doc[2].slice(0, doc[2].indexOf('_') > -1 ? doc[2].indexOf('_') : doc[2].length) : doc[4]);
 					// remove suplicate documents
@@ -285,6 +289,7 @@ const Chat = () => {
 			}
 		} catch (error) {
 			console.error('Error while fetching data:', error);
+			console.warn('Datos parciales:', error.response.data);
 			errorRef.current.showError();
 			// AddToCurrentChat({ type: 'response', error: true, txt: 'Service Unavailable' });
 			setLoading(false);
@@ -299,7 +304,11 @@ const Chat = () => {
 	};
 
 	const makeGrokRequest = async (query) => {
-		await makeRequest(query, GROK_URL, grokPrompt);
+		if (on) {
+			await makeRequest(query, GROK_URL, grokPrompt);
+		} else {
+			await makeRequest(query, GROK_URL, basicPrompt);
+		}
 	};
 	const makeElasticSearchRequest = async (query) => {
 		// this is the prompt use in "Do a database search"
@@ -310,12 +319,10 @@ const Chat = () => {
 		setQuery('');
 		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
-		if (selected.model & 1) {
-			await makeGrokRequest(question);
-		}
-		if (selected.model & 2) {
-			await makeElasticSearchRequest(question);
-		}
+		await makeGrokRequest(question);
+		// if (on) {
+		// 	await makeElasticSearchRequest(question);
+		// }
 	}
 
 	return (
@@ -323,7 +330,7 @@ const Chat = () => {
 			<section
 				ref={chatref}
 				className={`${chatStyles.chat} flex justify-end px-6 md:px-2`}>
-				<div className="flex flex-1 flex-col gap-5 w-max overflow-visible">
+				<div className="flex flex-1 flex-col gap-5 max-w-full overflow-visible">
 					{
 						currentChat?.chat.map((msg, index) => (
 							msg.type === 'question' ? (
@@ -366,28 +373,28 @@ const Chat = () => {
 						)
 					}
 				</div>
-				<div className="flex flex-col-reverse gap-2 max-h-12 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-5 right-5">
+				{/* <div className="flex flex-col-reverse z-20 gap-2 max-h-12 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-5 right-5">
 					{[
 						{ src: "https://flagcdn.com/ca.svg", label: "YMCA - Canada", model: 1 },
 						{ src: "https://flagcdn.com/us.svg", label: "YMCA - US", model: 2 },
 						{ src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg", label: "YMCA - Europe", model: 3 },
-						{ src: "https://flagcdn.com/fr.svg", label: "YMCA - France" },
-						{ src: "https://flagcdn.com/de.svg", label: "YMCA - Germany" },
-						{ src: "https://flagcdn.com/es.svg", label: "YMCA - Spain" },
-						{ src: "https://flagcdn.com/it.svg", label: "YMCA - Italy" },
-						{ src: "https://flagcdn.com/gb.svg", label: "YMCA - United Kingdom" },
-						{ src: "https://flagcdn.com/ng.svg", label: "YMCA - Nigeria" },
-						{ src: "https://flagcdn.com/za.svg", label: "YMCA - South Africa" },
-						{ src: "https://flagcdn.com/ke.svg", label: "YMCA - Kenya" },
-						{ src: "https://flagcdn.com/eg.svg", label: "YMCA - Egypt" },
-						{ src: "https://flagcdn.com/gh.svg", label: "YMCA - Ghana" },
-						{ src: "https://flagcdn.com/ug.svg", label: "YMCA - Uganda" },
-						{ src: "https://flagcdn.com/tn.svg", label: "YMCA - Tunisia" },
-						{ src: "https://flagcdn.com/ma.svg", label: "YMCA - Morocco" },
-						{ src: "https://flagcdn.com/dz.svg", label: "YMCA - Algeria" },
-						{ src: "https://flagcdn.com/et.svg", label: "YMCA - Ethiopia" },
-						{ src: "https://flagcdn.com/sn.svg", label: "YMCA - Senegal" },
-						{ src: "https://flagcdn.com/cm.svg", label: "YMCA - Cameroon" },
+						// { src: "https://flagcdn.com/fr.svg", label: "YMCA - France" },
+						// { src: "https://flagcdn.com/de.svg", label: "YMCA - Germany" },
+						// { src: "https://flagcdn.com/es.svg", label: "YMCA - Spain" },
+						// { src: "https://flagcdn.com/it.svg", label: "YMCA - Italy" },
+						// { src: "https://flagcdn.com/gb.svg", label: "YMCA - United Kingdom" },
+						// { src: "https://flagcdn.com/ng.svg", label: "YMCA - Nigeria" },
+						// { src: "https://flagcdn.com/za.svg", label: "YMCA - South Africa" },
+						// { src: "https://flagcdn.com/ke.svg", label: "YMCA - Kenya" },
+						// { src: "https://flagcdn.com/eg.svg", label: "YMCA - Egypt" },
+						// { src: "https://flagcdn.com/gh.svg", label: "YMCA - Ghana" },
+						// { src: "https://flagcdn.com/ug.svg", label: "YMCA - Uganda" },
+						// { src: "https://flagcdn.com/tn.svg", label: "YMCA - Tunisia" },
+						// { src: "https://flagcdn.com/ma.svg", label: "YMCA - Morocco" },
+						// { src: "https://flagcdn.com/dz.svg", label: "YMCA - Algeria" },
+						// { src: "https://flagcdn.com/et.svg", label: "YMCA - Ethiopia" },
+						// { src: "https://flagcdn.com/sn.svg", label: "YMCA - Senegal" },
+						// { src: "https://flagcdn.com/cm.svg", label: "YMCA - Cameroon" },
 					].map((flag, index, arr) => (
 						<div
 							key={index}
@@ -413,7 +420,7 @@ const Chat = () => {
 							</div>
 						</div>
 					))}
-				</div>
+				</div> */}
 			</section >
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
@@ -439,7 +446,27 @@ const Chat = () => {
 						ref={inputRef}
 						type="text" placeholder={t("new_message")}
 						className={`w-full resize-none bg-transparent outline-none text-gray-950 placeholder:text-gray-400 p-2 transition-all ${isExpanded ? "h-20" : "h-10"}`} />
-					<img src={playIcon} alt="" className="w-8 h-8 cursor-pointer" onClick={() => handleAddQuestion(query)} />
+					<div className="flex items-center gap-1">
+						<div className="tooltip tooltip-primary flex items-center" data-tip={t("deep_search")}>
+							{on ? (
+								<img src="/hyperY/logo_ymca.png" alt=""
+									className='w-14 cursor-pointer'
+									onClick={() => setOn(!on)}
+								/>
+							) : (
+								<img src="/hyperY/logo_ymca.png" alt=""
+									className='w-14 cursor-pointer filter grayscale'
+									onClick={() => setOn(!on)}
+								/>
+							)}
+						</div>
+						<img
+							src={playIcon}
+							alt=""
+							className="w-8 h-8 cursor-pointer"
+							onClick={() => handleAddQuestion(query)}
+						/>
+					</div>
 				</div>
 			</section >
 			<Error ref={errorRef} />

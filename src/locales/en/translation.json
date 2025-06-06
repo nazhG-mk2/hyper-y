@@ -15,5 +15,6 @@
   "deleteChat": "Are you sure you want to delete this chat?",
   "confirm": "Confirm",
   "close": "Close",
-  "database_search": "Database search results:"
+  "database_search": "Database search results:",
+  "deep_search": "YMCA mode"
 }

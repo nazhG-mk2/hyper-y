@@ -1,6 +1,8 @@
 import { useLayoutEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 
 const StartScreen = () => {
+    const navigate = useNavigate();
     useLayoutEffect(() => {
 
     }, [])
@@ -14,13 +16,13 @@ const StartScreen = () => {
                     Let’s Get Started!
                 </span>
                 <button className="px-8 md:px-4 py-4  mb-4 btn-primary md:bg-primary-soft md:border"
-                    onClick={() => window.location.href = '/login'}
+                    onClick={() => navigate('/login')}
                 >
                     <span className="md:hidden">Login to Coninue</span>
                     <span className="hidden md:block font-poppins text-white">I already have an account</span>
                 </button>
                 <button className="px-8 md:px-4 py-4 btn-secondary"
-                    onClick={() => window.location.href = '/singup'}
+                    onClick={() => navigate('/singup')}
                 >
                     <span className="md:hidden">Create new account</span>
                     <span className="hidden md:block font-poppins">Register a new account</span></button>

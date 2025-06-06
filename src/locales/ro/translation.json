@@ -15,5 +15,6 @@
   "deleteChat": "Ești sigur că vrei să ștergi acest chat?",
   "confirm": "Confirmă",
   "close": "Închide",
-  "database_search": "Rezultatele căutării în baza de date:"
+  "database_search": "Rezultatele căutării în baza de date:",
+  "deep_search": "Mod YMCA"
 }

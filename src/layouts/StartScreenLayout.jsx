@@ -20,7 +20,7 @@ const StartScreenLayout = () => {
                     backgroundImage: 'url(/bg-1.png)',
                 }}
             >
-                <img src="./logo_tag_line.png" alt="" />
+                <img src="/hyperY/logo_tag_line.png" alt="" />
             </div>
         </div>
     )
