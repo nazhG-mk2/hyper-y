@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
-import menuIcon from '../assets/menu.svg';
 import LanguageSwitcher from './common/LanguageSwitcher';
 
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
@@ -13,11 +12,13 @@ const Header = ({
       <div className="flex transition-all justify-between w-full items-center">
         <div className="hidden lg:inline drawer-content">
           <label htmlFor="mobile-drawer" className="drawer-button">
-            <img src={menuIcon} alt="" />
+          Graphics Programming Tutor
           </label>
         </div>
-        <img className='h-6 hidden lg:block' src={`${VITE_BASE_ROUTE}/logo.png`} alt="" />
-        <img className='h-6 block lg:hidden' src={`${VITE_BASE_ROUTE}/logo2.png`} alt="" />
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-800">Basic HTML Tutor</h1>
+          <h2 className="text-lg font-medium text-gray-600 mt-2">The first step in a promising career</h2>
+        </div>
         <LanguageSwitcher />
       </div>
     </header>
