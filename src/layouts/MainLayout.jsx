@@ -6,11 +6,11 @@ import { Outlet } from 'react-router-dom';
 
 const MainLayout = () => {
     return (
-        <div className={`${layoutStyles['main-layout']} drawer`}>
+        <div className={``}>
             <input id="mobile-drawer" type="checkbox" className="drawer-toggle" />
             <Header className={layoutStyles['main__header']} />
-            <SidebarMobile />
-            <Sidebar className='lg:hidden' />
+            {/* <SidebarMobile />
+            <Sidebar className='lg:hidden' /> */}
             <main className={`${layoutStyles['main__content']} max-w-[100vw]`}>
                 <Outlet />
             </main>
