@@ -11,7 +11,9 @@ import { useTranslation } from 'react-i18next';
 import Error from '../componets/common/Error';
 import { FaLightbulb, FaRegLightbulb } from "react-icons/fa";
 
-const GROK_URL = 'http://15.164.237.192/v1/chat/completions'
+// const GROK_URL = 'http://15.164.237.192/v1/chat/completions'
+
+const GROK_URL = 'https://hyperpg.site/forward/15.164.237.192/80/v1/chat/completions'
 const ELASTICSEARCH_URL = 'http://18.219.124.9:8888/stream_chat';
 
 const grokPrompt = `
