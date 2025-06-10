@@ -366,7 +366,11 @@ const Chat = () => {
 		setQuery('');
 		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
-		await makeLocalAskRequest(question);
+		if (on) {
+			await makeElasticSearchRequest(question);
+		} else {
+			await makeLocalAskRequest(question);
+		}
 		// Si quieres seguir usando makeGrokRequest o makeElasticSearchRequest, puedes agregarlos aquí
 	}
 
@@ -452,9 +456,6 @@ const Chat = () => {
 							</div>
 						</div>
 					))}
-					{selected.model && (
-						<div className="text-xs text-center text-primary font-semibold mt-2">Modelo seleccionado: {selected.model}</div>
-					)}
 				</div>
 			</section >
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
