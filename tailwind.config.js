@@ -1,38 +1,40 @@
 /** @type {import('tailwindcss').Config} */
-import daisyui from 'daisyui';
+import daisyui from "daisyui";
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       screens: {
-        lg: { max: '930px' },
-        md: { max: '645px' },
-        sm: { max: '490px' },
+        lg: { max: "930px" },
+        md: { max: "645px" },
+        sm: { max: "490px" },
       },
       colors: {
-        primary: '#FF0000',
-        'primary-soft': '#E94235',
-        dark: '#cc0000',
-        light: '#ffd9d9',
-        secondary: '#747775',
-        'blue-facebook': '#1A77F2',
-      }, 
+        primary: "#005500",
+        "primary-soft": "#E9cc35",
+        dark: "#cc0000",
+        light: "#B3D09A",
+        secondary: "#747775",
+        "blue-facebook": "#1A77F2",
+      },
       fontFamily: {
-        poppins: ['Poppins', 'sans-serif'],
+        poppins: ["Poppins", "sans-serif"],
       },
     },
   },
   // eslint-disable-next-line no-undef
-  plugins: [daisyui,
-  ({ addBase, theme }) => {
-    addBase({
-      ':root': {
-        '--screen-lg-max': theme('screens.lg.max'),
-        '--screen-md-max': theme('screens.md.max'),
-        '--screen-sm-max': theme('screens.sm.max'),
-      },
-    });
-  }],
+  plugins: [
+    daisyui,
+    ({ addBase, theme }) => {
+      addBase({
+        ":root": {
+          "--screen-lg-max": theme("screens.lg.max"),
+          "--screen-md-max": theme("screens.md.max"),
+          "--screen-sm-max": theme("screens.sm.max"),
+        },
+      });
+    },
+  ],
   daisyui: {
     themes: [
       {

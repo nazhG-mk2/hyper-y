@@ -10,7 +10,7 @@ import StartScreen from './pages/StartScreen';
 import Login from './pages/Login';
 import SingUp from './pages/SingUp';
 import StartScreenLayout from './layouts/StartScreenLayout';
-const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
+import ChatBasic from './pages/ChatBasic';
 
 function App() {
   return (
@@ -26,6 +26,7 @@ function App() {
               </Route>
               <Route path="/" element={<MainLayout />}>
                 <Route path="/chat" element={<Chat />} />
+                <Route path="/chat-basic" element={<ChatBasic />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/dashboard" element={<Dashboard />} />
               </Route>
