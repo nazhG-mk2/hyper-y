@@ -11,8 +11,11 @@ import { useTranslation } from 'react-i18next';
 import Error from '../componets/common/Error';
 import { FaLightbulb, FaRegLightbulb } from "react-icons/fa";
 
-const GROK_URL = 'https://appdemos.hyperpg.site/grok-demo';
+const GROK_URL = 'http://15.164.237.192/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:8888/stream_chat';
+const HOST = import.meta.env.VITE_HOST;
+const AUTH = import.meta.env.VITE_AUTH;
+const MODEL = import.meta.env.VITE_MODEL;
 
 const grokPrompt = `
 You are an expert on the YMCA globally at all scales of the organization.
@@ -314,15 +317,70 @@ const Chat = () => {
 		// this is the prompt use in "Do a database search"
 		await makeRequest(query, ELASTICSEARCH_URL);
 	}
+	const makeLocalAskRequest = async (query) => {
+		setLoading("Consultando OpenAI...");
+		try {
+			const response = await axios.post(HOST, {
+				messages: [
+					{
+						"role": "user",
+						"content": query
+					}
+				],
+				model: MODEL
+			}, {
+				headers: {
+					Authorization: `Bearer ${AUTH}`
+				}
+			});
+			let answer = "...";
+			switch (MODEL) {
+				case "xai-grok-3-mini":
+					answer = response.choices[0].message.content;
+					break;
+				case "openai-gpt-4.1-nano":
+					answer = response.data.choices?.[0]?.message?.content || response.data.response;
+					break;
+				case "openai-gpt-4.1":
+					answer = response.data.choices?.[0]?.message?.content || response.data.response;
+					break;
+				case "openai-o3-mini":
+					answer = response.data.choices?.[0]?.message?.content || response.data.response;
+					break;
+				case "anthropic-claude-3.7":
+					answer = response.data.choices?.[0]?.message?.content || response.data.response;
+					break;
+				case "google-gemini-2.0":
+					answer = response.data.choices?.[0]?.message?.content || response.data.response;
+					break;
+				case "google-gemini-pro":
+					answer = response.data.choices?.[0]?.message?.content || response.data.response;
+					break;
+				case "xai-grok2":
+					answer = response.data.choices?.[0]?.message?.content || response.data.response;
+					break;
+				default:
+					answer = response.data.response;
+					break;
+			}
+			setToWrite({ text: answer, documents: [] });
+			setWriting(true);
+			addToChatHistory(answer, 'assistant');
+		} catch (error) {
+			console.error('Error al consultar OpenAI:', error);
+			errorRef.current.showError();
+			setLoading(false);
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const handleAddQuestion = async (question) => {
 		setQuery('');
 		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
-		await makeGrokRequest(question);
-		// if (on) {
-		// 	await makeElasticSearchRequest(question);
-		// }
+		await makeLocalAskRequest(question);
+		// Si quieres seguir usando makeGrokRequest o makeElasticSearchRequest, puedes agregarlos aquí
 	}
 
 	return (
