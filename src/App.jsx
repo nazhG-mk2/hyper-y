@@ -17,7 +17,7 @@ function App() {
     <GlobalProvider>
       <ChatProvider>
         <CurrentChatProvider>
-          <Router basename={VITE_BASE_ROUTE}>
+          <Router>
             <Routes>
               <Route path="/" element={<StartScreenLayout />}>
                 <Route index element={<StartScreen />} />

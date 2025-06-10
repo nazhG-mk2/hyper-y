@@ -20,8 +20,8 @@ const Header = ({
             <img src={menuIcon} alt="" />
           </label>
         </div>
-        <img className='h-6 hidden lg:block' src="/hyperY/logo.png" alt="" />
-        <img className='h-6 block lg:hidden' src="/hyperY/logo2.png" alt="" />
+        <img className='h-6 hidden lg:block' src="/logo.png" alt="" />
+        <img className='h-6 block lg:hidden' src="/logo2.png" alt="" />
         <LanguageSwitcher />
       </div>
     </header>
