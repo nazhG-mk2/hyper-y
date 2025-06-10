@@ -17,7 +17,7 @@ function App() {
     <GlobalProvider>
       <ChatProvider>
         <CurrentChatProvider>
-          <Router basename="/hyperY/">
+          <Router>
             <Routes>
               <Route path="/" element={<StartScreenLayout />}>
                 <Route index element={<StartScreen />} />
