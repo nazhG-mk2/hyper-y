@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import gearIcon from "../../assets/gear.svg"
+import { FaGlobe } from "react-icons/fa";
 import { useEffect } from 'react';
 
 const LanguageSwitcher = () => {
@@ -22,7 +22,7 @@ const LanguageSwitcher = () => {
     return (
         <div className="dropdown dropdown-bottom dropdown-end">
             <div tabIndex={0} role="button" className="m-1 border-none filter brightness-100">
-                <img src={gearIcon} className={`sm:w-6 sm:h-6 my-auto`} alt=""/>
+                <FaGlobe className="w-7 sm:w-6 h-7 sm:h-6 my-auto text-white" />
             </div>
             <ul tabIndex={0} className="dropdown-content menu mt-6 bg-light opacity-100 rounded-box z-[1] w-52 p-2 shadow">
                 <li>

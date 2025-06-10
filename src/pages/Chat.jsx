@@ -9,29 +9,14 @@ import Responding from '../componets/chat/Responding';
 import { useChatContext } from '../contexts/Chat';
 import { useTranslation } from 'react-i18next';
 import Error from '../componets/common/Error';
-import { FaLightbulb, FaRegLightbulb } from "react-icons/fa";
+import { GlobalContext } from '../contexts/Global';
+import { defaultPrompt } from '../contexts/Chat';
 
 const GROK_URL = 'http://15.164.237.192/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:8888/stream_chat';
 const HOST = import.meta.env.VITE_HOST;
 const AUTH = import.meta.env.VITE_AUTH;
 const MODEL = import.meta.env.VITE_MODEL;
-
-const grokPrompt = `
-You are an expert on the YMCA globally at all scales of the organization.
-You provide concise and clear answers.
-If you do not have a clear answer to what is being asked, you should guide the user to provide more information so that you can eventually provide either a very clear answer to the user's query, or direct them to a definite resource where they are likely to find what they need.
-In this initial response, you are to just provide a short response, in 5 lines or less, unless you are certain that you have the precise answer that the user is looking for, in which case a longer response is allowed.
-You will have the opportunity to perform a database search later in the process, so all the more reason to be brief here.
-You always respond in the language of the initial prompt from the user.
-You do not need to ask the user whether to perform a database search related to the query because it is going to be performed anyway.
-If you cannot provide useful general information indicate that you do not know and that you will look more into it for the user.
-If you can provide useful general information, just state it and indicate that you will look for more details.
-`;
-
-const basicPrompt = `
-You are a helpful and friendly assistant. Answer user questions clearly and concisely. If you are unsure about something, politely let the user know or suggest where they might find more information. Always respond in the same language as the user's question. Keep your answers brief unless a detailed explanation is necessary.
-`;
 
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
@@ -104,6 +89,8 @@ const validateChatHistory = (chatHistory) => {
 const Chat = () => {
 	const { t } = useTranslation();
 	const { AddToCurrentChat, currentChat } = useChatContext();
+	const { state } = GlobalContext();
+	const systemPrompt = state.prompt || defaultPrompt;
 
 	const [query, setQuery] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -123,7 +110,7 @@ const Chat = () => {
 
 	const chatref = useRef(null);
 	const inputRef = useRef(null);
-	const errorRef = useRef(null);
+		const errorRef = useRef(null);
 
 	const suggestions = [
 		t('suggestion_1'),
@@ -320,42 +307,42 @@ const Chat = () => {
 	const makeLocalAskRequest = async (query) => {
 		setLoading("Consultando OpenAI...");
 		try {
+			const modelToUse = selected.model || MODEL;
+			// Construir el historial de chat para el mensaje
+			const messages = [];
+			// Incluir el prompt del sistema
+			if (systemPrompt) {
+				messages.push({ role: 'system', content: systemPrompt });
+			}
+			// Incluir el historial de chat
+			chatHistory.forEach(entry => {
+				messages.push({
+					role: entry.sender === 'user' ? 'user' : 'assistant',
+					content: entry.message
+				});
+			});
+			// Agregar el mensaje actual del usuario
+			messages.push({ role: 'user', content: query });
+
 			const response = await axios.post(HOST, {
-				messages: [
-					{
-						"role": "user",
-						"content": query
-					}
-				],
-				model: MODEL
+				messages,
+				model: modelToUse
 			}, {
 				headers: {
 					Authorization: `Bearer ${AUTH}`
 				}
 			});
 			let answer = "...";
-			switch (MODEL) {
+			switch (modelToUse) {
 				case "xai-grok-3-mini":
 					answer = response.choices[0].message.content;
 					break;
 				case "openai-gpt-4.1-nano":
-					answer = response.data.choices?.[0]?.message?.content || response.data.response;
-					break;
 				case "openai-gpt-4.1":
-					answer = response.data.choices?.[0]?.message?.content || response.data.response;
-					break;
 				case "openai-o3-mini":
-					answer = response.data.choices?.[0]?.message?.content || response.data.response;
-					break;
 				case "anthropic-claude-3.7":
-					answer = response.data.choices?.[0]?.message?.content || response.data.response;
-					break;
 				case "google-gemini-2.0":
-					answer = response.data.choices?.[0]?.message?.content || response.data.response;
-					break;
 				case "google-gemini-pro":
-					answer = response.data.choices?.[0]?.message?.content || response.data.response;
-					break;
 				case "xai-grok2":
 					answer = response.data.choices?.[0]?.message?.content || response.data.response;
 					break;
@@ -431,44 +418,31 @@ const Chat = () => {
 						)
 					}
 				</div>
-				{/* <div className="flex flex-col-reverse z-20 gap-2 max-h-12 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-5 right-5">
+				<div className="flex flex-col-reverse z-20 gap-2 max-h-14 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-5 right-5">
 					{[
-						{ src: "https://flagcdn.com/ca.svg", label: "YMCA - Canada", model: 1 },
-						{ src: "https://flagcdn.com/us.svg", label: "YMCA - US", model: 2 },
-						{ src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg", label: "YMCA - Europe", model: 3 },
-						// { src: "https://flagcdn.com/fr.svg", label: "YMCA - France" },
-						// { src: "https://flagcdn.com/de.svg", label: "YMCA - Germany" },
-						// { src: "https://flagcdn.com/es.svg", label: "YMCA - Spain" },
-						// { src: "https://flagcdn.com/it.svg", label: "YMCA - Italy" },
-						// { src: "https://flagcdn.com/gb.svg", label: "YMCA - United Kingdom" },
-						// { src: "https://flagcdn.com/ng.svg", label: "YMCA - Nigeria" },
-						// { src: "https://flagcdn.com/za.svg", label: "YMCA - South Africa" },
-						// { src: "https://flagcdn.com/ke.svg", label: "YMCA - Kenya" },
-						// { src: "https://flagcdn.com/eg.svg", label: "YMCA - Egypt" },
-						// { src: "https://flagcdn.com/gh.svg", label: "YMCA - Ghana" },
-						// { src: "https://flagcdn.com/ug.svg", label: "YMCA - Uganda" },
-						// { src: "https://flagcdn.com/tn.svg", label: "YMCA - Tunisia" },
-						// { src: "https://flagcdn.com/ma.svg", label: "YMCA - Morocco" },
-						// { src: "https://flagcdn.com/dz.svg", label: "YMCA - Algeria" },
-						// { src: "https://flagcdn.com/et.svg", label: "YMCA - Ethiopia" },
-						// { src: "https://flagcdn.com/sn.svg", label: "YMCA - Senegal" },
-						// { src: "https://flagcdn.com/cm.svg", label: "YMCA - Cameroon" },
+						{ src: "https://flagcdn.com/ca.svg", label: "YMCA - Canada", model: "openai-gpt-4.1-nano" },
+						{ src: "https://flagcdn.com/us.svg", label: "YMCA - US", model: "openai-gpt-4.1" },
+						{ src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg", label: "YMCA - Europe", model: "openai-o3-mini" },
+						{ src: "https://flagcdn.com/fr.svg", label: "YMCA - France", model: "anthropic-claude-3.7" },
+						{ src: "https://flagcdn.com/de.svg", label: "YMCA - Germany", model: "google-gemini-2.0" },
+						{ src: "https://flagcdn.com/es.svg", label: "YMCA - Spain", model: "google-gemini-pro" },
+						{ src: "https://flagcdn.com/it.svg", label: "YMCA - Italy", model: "xai-grok-3-mini" },
+						{ src: "https://flagcdn.com/gb.svg", label: "YMCA - United Kingdom", model: "xai-grok2" },
 					].map((flag, index, arr) => (
 						<div
 							key={index}
-							className={`group transition-all duration-400 item flex gap-2 justify-end items-center ${selected.label === flag.label ? 'order-first ' : ''}
-								}`}
+							className={`group transition-all duration-400 item flex gap-2 justify-end items-center ${selected.model === flag.model ? 'order-first ' : ''}`}
 							onClick={() => setSelected(flag)}
 						>
-							<span className="max-w-0 p-2 bg-white rounded-full bg-opacity-60 group-hover:max-w-[150px] opacity-0 group-hover:opacity-100 transition-all duration-300 text-gray-700 font-semibold whitespace-nowrap overflow-hidden">
-								{flag.label}
+							<span className="max-w-0 p-2 bg-white rounded-lg bg-opacity-90 group-hover:max-w-[150px] opacity-0 group-hover:opacity-100 transition-all duration-300 text-gray-700 font-semibold whitespace-nowrap overflow-hidden">
+								{flag.label} <br /> <span className="text-xs text-gray-500">{flag.model}</span>
 							</span>
 							<div
-								className={`
-							w-10 h-10 rounded-full overflow-hidden border border-gray-400 transition-transform duration-300
-							${index === 0 ? "group-hover:-translate-x-1" : ""}
-							${index === 1 || index === arr.length - 1 ? "group-hover:-translate-x-0.5" : ""}
-						  `}
+								className={`w-10 h-10 rounded-full overflow-hidden border border-gray-400 transition-transform duration-300
+								${index === 0 ? "group-hover:-translate-x-1" : ""}
+								${index === 1 || index === arr.length - 1 ? "group-hover:-translate-x-0.5" : ""}
+								${selected.model === flag.model ? "ring-2 ring-primary" : ""}
+								`}
 							>
 								<img
 									src={flag.src}
@@ -478,7 +452,10 @@ const Chat = () => {
 							</div>
 						</div>
 					))}
-				</div> */}
+					{selected.model && (
+						<div className="text-xs text-center text-primary font-semibold mt-2">Modelo seleccionado: {selected.model}</div>
+					)}
+				</div>
 			</section >
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">

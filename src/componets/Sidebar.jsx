@@ -3,13 +3,15 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import sideBarStyle from './Sidebar.module.css';
 import { useChatContext } from '../contexts/Chat';
+import { useNavigate } from 'react-router-dom';
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
 const Sidebar = ({ className = '' }) => {
     const { t } = useTranslation();
     const { chats, deleteChat, currentChat, setCurrentChat } = useChatContext();
     const modalRef = useRef(null);
-
+    const navigate = useNavigate();
+    
     const formatDate = (dateString) => {
         const inputDate = new Date(dateString);
         const now = new Date();
@@ -97,7 +99,7 @@ const Sidebar = ({ className = '' }) => {
             </div>
             <button
                 className={`${sideBarStyle['new-chat']} btn rounded-md max-w-[320px] min-w-[210] bg-primary hover:bg-dark border-0 text-white`}
-                onClick={() => window.location.reload()}
+                onClick={() => navigate('/chat')}
             >
                 {t('createNewChat')}
             </button>

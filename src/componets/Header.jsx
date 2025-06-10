@@ -1,13 +1,24 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import PropTypes from 'prop-types';
 import menuIcon from '../assets/menu.svg';
 import LanguageSwitcher from './common/LanguageSwitcher';
+import { FaUserCircle, FaArrowLeft, FaEdit } from "react-icons/fa";
+import { useNavigate, useLocation } from "react-router-dom";
+import PromptModal from './common/PromptModal';
+import { GlobalContext } from '../contexts/Global';
+import { defaultPrompt } from '../contexts/Chat';
 
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
 const Header = ({
   className = '',
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isSettings = location.pathname === '/settings';
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const { state, setPrompt } = GlobalContext();
+  const prompt = state.prompt || defaultPrompt;
   return (
     <header className={`${className} content-center items-center p-4 pb-2 border-b-2 lg:border-b lg:bg-transparent bg-primary border-primary lg:mx-3`}>
       <div className="flex transition-all justify-between w-full items-center">
@@ -18,7 +29,20 @@ const Header = ({
         </div>
         <img className='h-6 hidden lg:block' src={`${VITE_BASE_ROUTE}/logo.png`} alt="" />
         <img className='h-6 block lg:hidden' src={`${VITE_BASE_ROUTE}/logo2.png`} alt="" />
-        <LanguageSwitcher />
+        <div className="flex gap-2">
+          {isSettings ? (
+            <FaArrowLeft className="w-7 sm:w-6 h-7 sm:h-6 my-auto cursor-pointer text-white" onClick={() => navigate('/chat')} />
+          ) : (
+            <FaUserCircle className="w-7 sm:w-6 h-7 sm:h-6 my-auto cursor-pointer text-white" onClick={() => navigate('/settings')} />
+          )}
+          <FaEdit
+            className="w-7 sm:w-6 h-7 sm:h-6 my-auto cursor-pointer text-white -mr-2"
+            title="Editar prompt"
+            onClick={() => setShowPromptModal(true)}
+          />
+          <LanguageSwitcher />
+        </div>
+        <PromptModal open={showPromptModal} setOpen={setShowPromptModal} prompt={prompt} setPrompt={setPrompt} />
       </div>
     </header>
 

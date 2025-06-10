@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 
 const context = createContext();
@@ -17,6 +17,7 @@ const initialState = {
     user: JSON.parse(localStorage.getItem('user')) || null, // User name displayed
     token: localStorage.getItem('token') || generateMockToken(), // User token for chat API
     activeChat: null, // Active chat
+    prompt: localStorage.getItem('prompt') || '', // System prompt editable
 };
 
 // Set the local storage if it doesn't exist
@@ -25,12 +26,18 @@ if (!localStorage.getItem('token')) {
 }
 
 export const GlobalProvider = ({ children }) => {
-    const state = {
+    const [state, setState] = useState({
         ...initialState,
+    });
+
+    // Función para actualizar el prompt y guardarlo en localStorage
+    const setPrompt = (newPrompt) => {
+        setState((prev) => ({ ...prev, prompt: newPrompt }));
+        localStorage.setItem('prompt', newPrompt);
     };
 
     return (
-        <context.Provider value={{ state }}>
+        <context.Provider value={{ state, setPrompt }}>
             {children}
         </context.Provider>
     );
