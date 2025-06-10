@@ -41,10 +41,7 @@ Use the full HTML structure for any code example.
 If you need to use the <img> tag for something and no image url is specified use src="https://picsum.photos/200"
 `;
 
-<<<<<<< HEAD
-=======
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
->>>>>>> 837491eaa3886fcabcab0233a8e55237f9846178
 
 const Chat = () => {
 	const { t } = useTranslation();
