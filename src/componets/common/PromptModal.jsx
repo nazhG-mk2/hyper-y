@@ -3,18 +3,18 @@ import PropTypes from "prop-types";
 import { GlobalContext } from "../../contexts/Global";
 
 const PromptModal = ({ open, setOpen }) => {
-    const [tempPrompt, setTempPrompt] = useState(prompt);
     const modalRef = useRef(null);
     const { state, setPrompt } = GlobalContext();
+    const [tempPrompt, setTempPrompt] = useState(state.prompt || "");
+
+    useEffect(() => {
+        setTempPrompt(state.prompt || "");
+    }, [state.prompt]);
 
     const handleSave = () => {
         setPrompt(tempPrompt);
         setOpen(false);
     };
-
-    useEffect(() => {
-        setTempPrompt(state.prompt);
-    }, [state.prompt]);
 
     if (!open) return null;
 
