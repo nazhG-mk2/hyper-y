@@ -424,14 +424,14 @@ const Chat = () => {
 				</div>
 				<div className="flex flex-col-reverse z-20 gap-2 max-h-14 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-5 right-5">
 					{[
-						{ src: "https://flagcdn.com/ca.svg", label: "YMCA - Canada", model: "openai-gpt-4.1-nano" },
-						{ src: "https://flagcdn.com/us.svg", label: "YMCA - US", model: "openai-gpt-4.1" },
-						{ src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg", label: "YMCA - Europe", model: "openai-o3-mini" },
+						{ src: "https://flagcdn.com/gb.svg", label: "YMCA - United Kingdom", model: "xai-grok2" },
 						{ src: "https://flagcdn.com/fr.svg", label: "YMCA - France", model: "anthropic-claude-3.7" },
 						{ src: "https://flagcdn.com/de.svg", label: "YMCA - Germany", model: "google-gemini-2.0" },
 						{ src: "https://flagcdn.com/es.svg", label: "YMCA - Spain", model: "google-gemini-pro" },
+						{ src: "https://flagcdn.com/ca.svg", label: "YMCA - Canada", model: "openai-gpt-4.1-nano" },
+						{ src: "https://flagcdn.com/us.svg", label: "YMCA - US", model: "openai-gpt-4.1" },
+						{ src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg", label: "YMCA - Europe", model: "openai-o3-mini" },
 						{ src: "https://flagcdn.com/it.svg", label: "YMCA - Italy", model: "xai-grok-3-mini" },
-						{ src: "https://flagcdn.com/gb.svg", label: "YMCA - United Kingdom", model: "xai-grok2" },
 					].map((flag, index, arr) => (
 						<div
 							key={index}
