@@ -48,7 +48,8 @@ const Sidebar = ({ className = '' }) => {
 
     const handleDeleteChat = (chatId) => {
         deleteChat(chatId);
-        window.location.pathname = `${VITE_BASE_ROUTE}/chat/`;
+        // window reload to update the chat list
+        window.location.reload();
     };
 
     const handleSelectChat = (chatId) => {
@@ -99,7 +100,7 @@ const Sidebar = ({ className = '' }) => {
             </div>
             <button
                 className={`${sideBarStyle['new-chat']} btn !rounded-full max-w-[320px] min-w-[210] bg-primary hover:bg-dark border-0 text-white`}
-                onClick={() => navigate('/chat')}
+                onClick={() => window.location.reload()}
             >
                 {t('createNewChat')}
             </button>
