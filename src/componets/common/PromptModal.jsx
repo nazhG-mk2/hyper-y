@@ -28,8 +28,8 @@ const PromptModal = ({ open, setOpen }) => {
                     onChange={e => setTempPrompt(e.target.value)}
                 />
                 <div className="modal-action">
-                    <button className="btn bg-secondary-content text-black" onClick={() => setOpen(false)}>Cancel</button>
-                    <button className="btn btn-primary text-white" onClick={handleSave}>Save</button>
+                    <button className="btn bg-secondary-content hover:bg-stone-300 !rounded-full text-black" onClick={() => setOpen(false)}>Cancel</button>
+                    <button className="btn btn-primary hover:bg-dark !rounded-full text-white" onClick={handleSave}>Save</button>
                 </div>
             </div>
         </dialog>

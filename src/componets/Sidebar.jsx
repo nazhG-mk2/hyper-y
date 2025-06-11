@@ -60,7 +60,7 @@ const Sidebar = ({ className = '' }) => {
 
 
     return (
-        <section className={`${className} ${sideBarStyle['sidebar-grid']} gap-2 font-poppins p-5 bg-[#F8F8F8]`}>
+        <section className={`${className} ${sideBarStyle['sidebar-grid']} gap-2 font-poppins p-5 bg-[#F8F8F8] bg-opacity-25`}>
             <div className={`${sideBarStyle['chat-list']} overflow-y-auto`}>
                 {chats.length === 0 ? <p className="text-center text-secondary hidden lg:block lg:mt-10">{t('noChats')}</p> : (
                     Object.entries(chatsList).map(([date, chats]) => (
@@ -98,7 +98,7 @@ const Sidebar = ({ className = '' }) => {
                     )))}
             </div>
             <button
-                className={`${sideBarStyle['new-chat']} btn rounded-md max-w-[320px] min-w-[210] bg-primary hover:bg-dark border-0 text-white`}
+                className={`${sideBarStyle['new-chat']} btn !rounded-full max-w-[320px] min-w-[210] bg-primary hover:bg-dark border-0 text-white`}
                 onClick={() => navigate('/chat')}
             >
                 {t('createNewChat')}
@@ -115,8 +115,8 @@ const Sidebar = ({ className = '' }) => {
                     <div className="modal-action">
                         <form method="dialog" className='flex gap-3'>
                             {/* if there is a button in form, it will close the modal */}
-                            <button className="btn border font-normal bg-white border-gray-950 text-gray-950 hover:bg-gray-100 hover:text-gray-950">Cancel</button>
-                            <button className="btn bg-primary border-0 hover:bg-dark transition-colors text-white" onClick={() => handleDeleteChat(chatToDelete.id)}>{t('confirm')}</button>
+                            <button className="btn border font-normal bg-white border-gray-950 text-gray-950 hover:bg-gray-100 !rounded-full hover:text-gray-950">Cancel</button>
+                            <button className="btn bg-primary border-0 hover:bg-dark transition-colors !rounded-full text-white" onClick={() => handleDeleteChat(chatToDelete.id)}>{t('confirm')}</button>
                         </form>
                     </div>
                 </div>

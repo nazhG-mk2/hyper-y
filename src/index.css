@@ -170,3 +170,21 @@ input[type="text"] {
 .item:has(+ .item:hover) {
   padding-right: 15px;
 }
+
+@layer utilities {
+  .animate-gradient {
+    animation: gradientShift 60s ease-in-out infinite;
+  }
+
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+}

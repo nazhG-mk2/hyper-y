@@ -1,3 +1,4 @@
+import GradientBackground from '../componets/GradientBackground';
 import Header from '../componets/Header';
 import Sidebar from '../componets/Sidebar';
 import SidebarMobile from '../componets/SidebarMobile';
@@ -14,6 +15,7 @@ const MainLayout = () => {
             <main className={`${layoutStyles['main__content']} max-w-[100vw]`}>
                 <Outlet />
             </main>
+            <GradientBackground />
         </div>
     )
 }

@@ -10,9 +10,9 @@ export default {
         sm: { max: '490px' },
       },
       colors: {
-        primary: '#FF0000',
-        'primary-soft': '#E94235',
-        dark: '#cc0000',
+        primary: '#ff4d4d',
+        'primary-soft': '#747775',
+        dark: '#334155',
         light: '#ffd9d9',
         secondary: '#747775',
         'blue-facebook': '#1A77F2',
