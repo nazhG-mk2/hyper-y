@@ -21,15 +21,15 @@ const AUTH = import.meta.env.VITE_AUTH;
 const MODEL = import.meta.env.VITE_MODEL;
 
 const aviableModels = [
-						{ src: "https://flagcdn.com/de.svg", label: "YMCA - Germany", model: "google-gemini-2.0" },
-						{ src: "https://flagcdn.com/es.svg", label: "YMCA - Spain", model: "google-gemini-pro" },
-						{ src: "https://flagcdn.com/gb.svg", label: "YMCA - United Kingdom", model: "xai-grok2" },
-						{ src: "https://flagcdn.com/fr.svg", label: "YMCA - France", model: "anthropic-claude-3.7" },
-						{ src: "https://flagcdn.com/ca.svg", label: "YMCA - Canada", model: "openai-gpt-4.1-nano" },
-						{ src: "https://flagcdn.com/us.svg", label: "YMCA - US", model: "openai-gpt-4.1" },
-						{ src: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg", label: "YMCA - Europe", model: "openai-o3-mini" },
-						{ src: "https://flagcdn.com/it.svg", label: "YMCA - Italy", model: "xai-grok-3-mini" },
-					]
+	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "OpenAI GPT-4.1 Nano", model: "openai-gpt-4.1-nano" },
+	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "OpenAI GPT-4.1", model: "openai-gpt-4.1" },
+	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "OpenAI O3 Mini", model: "openai-o3-mini" },
+	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "Anthropic Claude 3.7", model: "anthropic-claude-3.7" },
+	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "Google Gemini 2.0", model: "google-gemini-2.0" },
+	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "Google Gemini Pro", model: "google-gemini-pro" },
+	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "xAI Grok 2", model: "xai-grok2" },
+	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "xAI Grok 3 Mini", model: "xai-grok-3-mini" },
+];
 
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
@@ -226,16 +226,20 @@ const Chat = () => {
 		// this is the prompt use in "Do a database search"
 		await makeRequest(query, ELASTICSEARCH_URL);
 	}
+
+
 	const makeLocalAskRequest = async (query) => {
-		setLoading("Consultando OpenAI...");
+		const lang = localStorage.getItem('locale') || 'en';
+		setLoading("Consulting Agent...");
 		try {
 			const modelToUse = selected.model || aviableModels[0].model; // Default to the first model if none is selected
 			// Construir el historial de chat para el mensaje
 			const messages = [];
 			// Incluir el prompt del sistema
-			if (systemPrompt) {
-				messages.push({ role: 'system', content: systemPrompt });
-			}
+			messages.push({
+				role: 'system',
+				content: `You must answer strictly in ${lang.toUpperCase()} language. ${systemPrompt}`
+			});
 			// Incluir el historial de chat
 			chatHistory.forEach(entry => {
 				messages.push({
@@ -361,15 +365,15 @@ const Chat = () => {
 						)
 					}
 				</div>
-				<div className="flex flex-col-reverse z-20 gap-2 max-h-14 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-5 right-5">
+				<div className="flex flex-col-reverse z-20 gap-2 max-h-10 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-6 right-5">
 					{aviableModels.map((flag, index, arr) => (
 						<div
 							key={index}
 							className={`group transition-all duration-400 item flex gap-2 justify-end items-center ${selected.model === flag.model ? 'order-first ' : ''}`}
 							onClick={() => setSelected(flag)}
 						>
-							<span className="max-w-0 p-2 bg-white rounded-lg bg-opacity-90 group-hover:max-w-[150px] opacity-0 group-hover:opacity-100 transition-all duration-300 text-gray-700 font-semibold whitespace-nowrap overflow-hidden">
-								{flag.label} <br /> <span className="text-xs text-gray-500">{flag.model}</span>
+							<span className="max-w-0 p-2 bg-white rounded-lg bg-opacity-90 group-hover:max-w-[200px] opacity-0 group-hover:opacity-100 transition-all duration-300 text-gray-700 font-semibold whitespace-nowrap overflow-hidden">
+								{flag.label}
 							</span>
 							<div
 								className={`w-10 h-10 rounded-full overflow-hidden border border-gray-400 transition-transform duration-300
