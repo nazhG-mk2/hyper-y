@@ -56,7 +56,7 @@ const Login = () => {
                     Login with Email
                 </button> */}
             </div>
-            <hr className="mb-4" />
+            {/* <hr className="mb-4" />
             <div className="w-full max-w-xs mx-auto bg-white/80 rounded-lg shadow p-6 flex flex-col gap-3 border border-gray-200">
                 <h2 className="text-lg font-semibold mb-2">Login with Email</h2>
                 <form onSubmit={handleLogin} className="flex flex-col gap-3">
@@ -84,7 +84,7 @@ const Login = () => {
             </div>
             <p className="font-semibold mt-8 -mb-10">
                 Don’t have an account?   <Link to="/singup" className="text-primary">Signup</Link>
-            </p>
+            </p> */}
         </main>
     )
 }

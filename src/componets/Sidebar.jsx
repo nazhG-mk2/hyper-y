@@ -104,7 +104,7 @@ const Sidebar = ({ className = '' }) => {
             >
                 {t('createNewChat')}
             </button>
-            <p className={`${sideBarStyle['footer']} text-sm`}>{t('footer')}</p>
+            {/* <p className={`${sideBarStyle['footer']} text-sm`}>{t('footer')}</p> */}
             <dialog ref={modalRef} className="modal">
                 <div className="modal-box bg-white">
                     <h3 className="font-bold text-lg">

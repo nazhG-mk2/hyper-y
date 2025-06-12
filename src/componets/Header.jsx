@@ -30,11 +30,11 @@ const Header = ({
         <img className='h-6 hidden lg:block' src={`${VITE_BASE_ROUTE}/logo.png`} alt="" />
         <img className='h-6 block lg:hidden' src={`${VITE_BASE_ROUTE}/logo2.png`} alt="" />
         <div className="flex gap-2">
-          {isSettings ? (
+          {/* {isSettings ? (
             <FaArrowLeft className="w-7 sm:w-6 h-7 sm:h-6 my-auto cursor-pointer text-white" onClick={() => navigate('/chat')} />
           ) : (
             <FaUserCircle className="w-7 sm:w-6 h-7 sm:h-6 my-auto cursor-pointer text-white" onClick={() => navigate('/settings')} />
-          )}
+          )} */}
           <FaEdit
             className="w-7 sm:w-6 h-7 sm:h-6 my-auto cursor-pointer text-white -mr-2"
             title="Editar prompt"

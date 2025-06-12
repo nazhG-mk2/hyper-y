@@ -21,11 +21,11 @@ const StartScreen = () => {
                     <span className="md:hidden">Login to Coninue</span>
                     <span className="hidden md:block font-poppins text-white">I already have an account</span>
                 </button>
-                <button className="px-8 md:px-4 py-4 btn-secondary"
+                {/* <button className="px-8 md:px-4 py-4 btn-secondary"
                     onClick={() => navigate('/singup')}
                 >
                     <span className="md:hidden">Create new account</span>
-                    <span className="hidden md:block font-poppins">Register a new account</span></button>
+                    <span className="hidden md:block font-poppins">Register a new account</span></button> */}
             </div>
         </main>
     )

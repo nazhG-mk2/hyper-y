@@ -10,7 +10,7 @@ const StartScreenLayout = () => {
                 </div>
                 <Outlet />
                 <footer className="mb-8">
-                    <p className="text-xs md:text-center">Powered by HyperCycle Inc.</p>
+                    {/* <p className="text-xs md:text-center">Powered by HyperCycle Inc.</p> */}
                 </footer>
             </div>
             <div

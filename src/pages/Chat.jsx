@@ -4,13 +4,15 @@ import chatStyles from './Chat.module.css';
 import axios from 'axios';
 import Question from '../componets/chat/Question';
 import Response from '../componets/chat/Response';
-import Suggestion from '../componets/chat/Suggestion';
 import Responding from '../componets/chat/Responding';
 import { useChatContext } from '../contexts/Chat';
 import { useTranslation } from 'react-i18next';
 import Error from '../componets/common/Error';
 import { GlobalContext } from '../contexts/Global';
 import { defaultPrompt } from '../contexts/Chat';
+import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 const GROK_URL = 'http://15.164.237.192/v1/chat/completions';
 const ELASTICSEARCH_URL = 'http://18.219.124.9:8888/stream_chat';
@@ -19,72 +21,6 @@ const AUTH = import.meta.env.VITE_AUTH;
 const MODEL = import.meta.env.VITE_MODEL;
 
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
-
-const formatGrokResponse = (response) => {
-	const { data: { choices } } = response;
-	const assistantResponse = choices[0].message.content.trim();
-
-	// Now we parse the assistantResponse to extract ORIGINAL_ANSWER, SCORE, EXPLANATION, and REFINED_ANSWER.
-	// We expect the response in the format:
-	// ORIGINAL_ANSWER: ...
-	// SCORE: ...
-	// EXPLANATION: ...
-	// REFINED_ANSWER: ...
-
-	// A regex approach:
-	// We can use something like:
-	// ORIGINAL_ANSWER:\s*(.*)
-	// SCORE:\s*(\d+)
-	// EXPLANATION:\s*([\s\S]*?)\nREFINED_ANSWER:
-	// REFINED_ANSWER:\s*(.*)
-
-	const originalMatch = assistantResponse.match(/ORIGINAL_ANSWER:\s*(.*)/);
-	const scoreMatch = assistantResponse.match(/SCORE:\s*(\d+)/);
-	const explanationMatch = assistantResponse.match(/EXPLANATION:\s*([\s\S]*?)\nREFINED_ANSWER:/);
-	const refinedMatch = assistantResponse.match(/REFINED_ANSWER:\s*(.*)/);
-	const nextStepsMatch = assistantResponse.match(/NEXT_STEPS:\s*([\s\S]*?)$/);
-
-	const originalAnswer = originalMatch ? originalMatch[1].trim() : '';
-	const score = scoreMatch ? scoreMatch[1].trim() : '';
-	const explanation = explanationMatch ? explanationMatch[1].trim() : '';
-	const refinedAnswer = refinedMatch ? refinedMatch[1].trim() : '';
-	const nextSteps = nextStepsMatch ? nextStepsMatch[1].trim() : '';
-
-	return { originalAnswer, score, explanation, refinedAnswer, nextSteps };
-}
-
-const formatThinkingSteps = (steps) => {
-	// REFINING_SEARCH → "Making sure we find the right information..."
-	// FORMING_RESPONSE → "Preparing your answer..."
-	// FORMING_SEARCH_QUERY → "Forming the search query..."
-	// GETTING_RESPONSE → "Getting the response..."
-	if (steps == 'REFINING_SEARCH') {
-		return 'Making sure we find the right information...';
-	}
-	if (steps == 'FORMING_RESPONSE') {
-		return 'Preparing your answer...';
-	}
-	if (steps == 'FORMING_SEARCH_QUERY') {
-		return 'Forming the search query...';
-	}
-	if (steps == 'GETTING_RESPONSE') {
-		return 'Getting the response...';
-	}
-
-	return steps;
-}
-
-const isValidMessage = (message) => {
-	return (
-		typeof message.role === 'string' &&
-		typeof message.content === 'string' &&
-		message.content.trim().length > 0
-	);
-};
-
-const validateChatHistory = (chatHistory) => {
-	return chatHistory.every(isValidMessage);
-};
 
 const Chat = () => {
 	const { t } = useTranslation();
@@ -96,10 +32,6 @@ const Chat = () => {
 	const [loading, setLoading] = useState(false);
 	const [writing, setWriting] = useState(false);
 	const [toWrite, setToWrite] = useState({});
-	const [steps, setSteps] = useState([]);
-	const [currentStep, setCurrentStep] = useState([]);
-	const [writingLong, setWritingLong] = useState(false);
-	const [toWriteLong, setToWriteLong] = useState({});
 	const [on, setOn] = useState(false);
 
 	const [selected, setSelected] = useState('');
@@ -110,13 +42,7 @@ const Chat = () => {
 
 	const chatref = useRef(null);
 	const inputRef = useRef(null);
-		const errorRef = useRef(null);
-
-	const suggestions = [
-		t('suggestion_1'),
-		t('suggestion_2'),
-		t('suggestion_3'),
-	];
+	const errorRef = useRef(null);
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -232,7 +158,6 @@ const Chat = () => {
 				// get the text between FORMING_RESPONSE and END_RESPONSE in the response
 				const match = response.data.match(/FORMING_RESPONSE([\s\S]*?)END_RESPONSE/);
 				// set the current step to 0 to start from the beginning
-				setCurrentStep(() => 0);
 
 				// we spect to find FORMING_RESPONSE warpping the text to write
 				// if we don't find it, log an error and return
@@ -267,13 +192,6 @@ const Chat = () => {
 				setToWrite({ text: match[1].trim(), documents, additionalResponse, accuracy });
 				setWriting(true);
 
-				// find the position of FORMING_RESPONSE
-				const formingResponseIndex = parts.indexOf('FORMING_RESPONSE');
-				const _steps = parts.slice(0, formingResponseIndex);
-				// get only the _steps that are uppercase string no whitespaces
-				const _stepsFiltered = _steps.filter(step => step.trim() === step.toUpperCase() && step.indexOf(' ') === -1);
-				setSteps(_stepsFiltered);
-
 				// Update chat history with the response
 				addToChatHistory(match[1].trim(), 'assistant');
 			}
@@ -293,13 +211,6 @@ const Chat = () => {
 		setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
 	};
 
-	const makeGrokRequest = async (query) => {
-		if (on) {
-			await makeRequest(query, GROK_URL, grokPrompt);
-		} else {
-			await makeRequest(query, GROK_URL, basicPrompt);
-		}
-	};
 	const makeElasticSearchRequest = async (query) => {
 		// this is the prompt use in "Do a database search"
 		await makeRequest(query, ELASTICSEARCH_URL);
@@ -373,6 +284,23 @@ const Chat = () => {
 		}
 		// Si quieres seguir usando makeGrokRequest o makeElasticSearchRequest, puedes agregarlos aquí
 	}
+
+	const location = useLocation();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		const params = new URLSearchParams(location.search);
+		const token = params.get('token');
+
+		if (token) {
+			Cookies.set('token', token, { expires: 1 / 24 }); // 1 hour
+		} else {
+			const cookieToken = Cookies.get('token');
+			if (!cookieToken) {
+				navigate('/login');
+			}
+		}
+	}, [location, navigate]);
 
 	return (
 		<div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
@@ -483,19 +411,6 @@ const Chat = () => {
 						type="text" placeholder={t("new_message")}
 						className={`w-full resize-none bg-transparent outline-none text-gray-950 placeholder:text-gray-400 p-2 transition-all ${isExpanded ? "h-20" : "h-10"}`} />
 					<div className="flex items-center gap-1">
-						<div className="tooltip tooltip-primary flex items-center" data-tip={t("deep_search")}>
-							{on ? (
-								<img src={`${VITE_BASE_ROUTE}/logo_ymca.png`} alt=""
-									className='w-14 cursor-pointer'
-									onClick={() => setOn(!on)}
-								/>
-							) : (
-								<img src={`${VITE_BASE_ROUTE}/logo_ymca.png`} alt=""
-									className='w-14 cursor-pointer filter grayscale'
-									onClick={() => setOn(!on)}
-								/>
-							)}
-						</div>
 						<img
 							src={playIcon}
 							alt=""
