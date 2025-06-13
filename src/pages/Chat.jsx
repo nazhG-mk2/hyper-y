@@ -9,29 +9,25 @@ import { useChatContext } from '../contexts/Chat';
 import { useTranslation } from 'react-i18next';
 import Error from '../componets/common/Error';
 import { GlobalContext } from '../contexts/Global';
-import { defaultPrompt } from '../contexts/Chat';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
-const GROK_URL = 'http://15.164.237.192/v1/chat/completions';
-const ELASTICSEARCH_URL = 'http://18.219.124.9:8888/stream_chat';
 const HOST = import.meta.env.VITE_HOST;
 const AUTH = import.meta.env.VITE_AUTH;
-const MODEL = import.meta.env.VITE_MODEL;
 
 const aviableModels = [
-	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "OpenAI GPT-4.1 Nano", model: "openai-gpt-4.1-nano" },
-	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "OpenAI GPT-4.1", model: "openai-gpt-4.1" },
-	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "OpenAI O3 Mini", model: "openai-o3-mini" },
-	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "Anthropic Claude 3.7", model: "anthropic-claude-3.7" },
-	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "Google Gemini 2.0", model: "google-gemini-2.0" },
-	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "Google Gemini Pro", model: "google-gemini-pro" },
-	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "xAI Grok 2", model: "xai-grok2" },
-	{ src: "/hyper_y_fab_icon_circular_120x120.png", label: "xAI Grok 3 Mini", model: "xai-grok-3-mini" },
+	{ src: "/groq.png", label: "Groq Llama 3", model: "groq-llama3" },
+	{ src: "/openai.png", label: "OpenAI GPT-4.1 Nano", model: "openai-gpt-4.1-nano" },
+	{ src: "/openai.png", label: "OpenAI GPT-4.1", model: "openai-gpt-4.1" },
+	{ src: "/openai.png", label: "OpenAI O3 Mini", model: "openai-o3-mini" },
+	{ src: "/claude.png", label: "Anthropic Claude 3.7", model: "anthropic-claude-3.7" },
+	{ src: "/gemini.png", label: "Google Gemini 2.0", model: "google-gemini-2.0" },
+	{ src: "/gemini.png", label: "Google Gemini Pro", model: "google-gemini-pro" },
+	{ src: "/grok.png", label: "xAI Grok 2", model: "xai-grok2" },
+	{ src: "/grok.png", label: "xAI Grok 3 Mini", model: "xai-grok-3-mini" },
 ];
 
-const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
 const Chat = () => {
 	const { t } = useTranslation();
@@ -43,7 +39,6 @@ const Chat = () => {
 	const [loading, setLoading] = useState(false);
 	const [writing, setWriting] = useState(false);
 	const [toWrite, setToWrite] = useState({});
-	const [on, setOn] = useState(false);
 
 	const [selected, setSelected] = useState('');
 
@@ -67,165 +62,9 @@ const Chat = () => {
 		handleResize(); // Para validar inicialmente
 	}, [query]);
 
-	const buildRequestOptions = (url, messages, query) => {
-		let requestBody = {};
-		let requestHeaders = {};
-
-		if (url === GROK_URL) {
-			requestBody = {
-				"messages": messages,
-				"model": "llama3-70b-8192",
-				"stream": false,
-				"temperature": 0.5,
-			};
-			requestHeaders = {
-				'Content-Type': 'application/json',
-			};
-		} else if (url === ELASTICSEARCH_URL) {
-			requestBody = {
-				"user_query": query,
-				"searches": 2,
-			};
-			requestHeaders = {
-				'timeout': 10000,
-				'Content-Type': 'application/json',
-			};
-		}
-
-		return { requestBody, requestHeaders };
-	};
-
-	const makeRequest = async (query, url, prompt = false) => {
-		/// TODO: handle stop writing
-		// if (writing) {}
-
-		// check if there is a query
-		if (!query) {
-			// if there is no query, get the last question from the chat
-			// this can happen if the user presses the suggestion button without typing anything
-			const lastQuestion = [...currentChat.chat].reverse().find((msg) => msg.type === 'question');
-			// if there is no question in the chat, log an error and return
-			if (!lastQuestion) {
-				console.error('No question found in chat');
-				AddToCurrentChat({ type: 'response', error: true, txt: 'No question found in chat' });
-				return;
-			}
-			// set the query to the last question
-			query = lastQuestion.txt;
-		}
-
-		// Construct the messages array
-		let messages = [];
-
-		// Include the system prompt if it exists
-		if (prompt) {
-			messages.push({
-				"role": "system",
-				"content": prompt
-			});
-		}
-
-		// Include the previous chat history
-		chatHistory.forEach(entry => {
-			messages.push({
-				"role": entry.sender === 'user' ? 'user' : 'assistant',
-				"content": entry.message
-			});
-		});
-
-		// Add the current user query
-		messages.push({
-			"role": "user",
-			"content": query
-		});
-
-		// display a loading message
-		if (url === GROK_URL) setLoading("Generating a quick response for you...");
-		if (url === ELASTICSEARCH_URL) setLoading("Searching the database...");
-
-		const { requestBody, requestHeaders } = buildRequestOptions(url, messages, query);
-
-		try {
-			// fetch the data
-			console.log('Fetching data from:', url);
-
-			const response = await axios.post(url, requestBody, {
-				headers: requestHeaders
-			});
-
-
-			if (url === GROK_URL) {
-				const refinedAnswer = response.data.choices[0].message.content;
-
-				// Display anwser to the user
-				setToWrite({ text: refinedAnswer, documents: [] });
-				setWriting(true);
-
-				// Update chat history with the response
-				addToChatHistory(refinedAnswer, 'assistant');
-			}
-			if (url === ELASTICSEARCH_URL) {
-				const parts = response.data.split('\n');
-				// get the text between FORMING_RESPONSE and END_RESPONSE in the response
-				const match = response.data.match(/FORMING_RESPONSE([\s\S]*?)END_RESPONSE/);
-				// set the current step to 0 to start from the beginning
-
-				// we spect to find FORMING_RESPONSE warpping the text to write
-				// if we don't find it, log an error and return
-				if (!match) return console.error("No match found");
-
-				// Get the documents from the response
-				const docLabel = 'REFERENCES';
-				const docIndex = parts.indexOf(docLabel);
-				let documents = [];
-				let additionalResponse = '';
-				try { // try to parse the documents
-					documents = JSON.parse(parts.slice(docIndex + 1, docIndex + 2)).map(doc => doc[4] == "" ? doc[2].slice(0, doc[2].indexOf('_') > -1 ? doc[2].indexOf('_') : doc[2].length) : doc[4]);
-					// remove suplicate documents
-					documents = [...new Set(documents)];
-					additionalResponse = t('database_search');
-				} catch (error) {
-					console.error('Error while parsing documents:', error);
-				}
-
-				// Get the accuracy score from the response
-				let accuracy = 0;
-				const accuracyLabel = 'RATING_ACCURACY';
-				try {
-					const accuracyIndex = parts.indexOf(accuracyLabel);
-					accuracy = JSON.parse(parts.slice(accuracyIndex + 1, accuracyIndex + 2)).accuracy;
-					console.info('Accuracy:', accuracy);
-				} catch (error) {
-					console.error('Error while parsing accuracy:', error);
-				}
-
-				// set the text to write
-				setToWrite({ text: match[1].trim(), documents, additionalResponse, accuracy });
-				setWriting(true);
-
-				// Update chat history with the response
-				addToChatHistory(match[1].trim(), 'assistant');
-			}
-		} catch (error) {
-			console.error('Error while fetching data:', error);
-			console.warn('Datos parciales:', error.response.data);
-			errorRef.current.showError();
-			// AddToCurrentChat({ type: 'response', error: true, txt: 'Service Unavailable' });
-			setLoading(false);
-		} finally {
-			// clear the loading message
-			setLoading(false);
-		}
-	}
-
 	const addToChatHistory = (message, sender) => {
 		setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
 	};
-
-	const makeElasticSearchRequest = async (query) => {
-		// this is the prompt use in "Do a database search"
-		await makeRequest(query, ELASTICSEARCH_URL);
-	}
 
 
 	const makeLocalAskRequest = async (query) => {
@@ -270,6 +109,7 @@ const Chat = () => {
 				case "google-gemini-2.0":
 				case "google-gemini-pro":
 				case "xai-grok2":
+				case "groq-llama3":
 					answer = response.data.choices?.[0]?.message?.content || response.data.response;
 					break;
 				default:
@@ -292,12 +132,7 @@ const Chat = () => {
 		setQuery('');
 		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
-		if (on) {
-			await makeElasticSearchRequest(question);
-		} else {
-			await makeLocalAskRequest(question);
-		}
-		// Si quieres seguir usando makeGrokRequest o makeElasticSearchRequest, puedes agregarlos aquí
+		await makeLocalAskRequest(question);
 	}
 
 	const location = useLocation();
@@ -365,7 +200,7 @@ const Chat = () => {
 						)
 					}
 				</div>
-				<div className="flex flex-col-reverse z-20 gap-2 max-h-10 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-6 right-5">
+				<div className="flex flex-col-reverse z-20 gap-2 max-h-12 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-6 right-5">
 					{aviableModels.map((flag, index, arr) => (
 						<div
 							key={index}
@@ -376,15 +211,15 @@ const Chat = () => {
 								{flag.label}
 							</span>
 							<div
-								className={`w-10 h-10 rounded-full overflow-hidden border border-gray-400 transition-transform duration-300
+								className={`w-9 h-9 rounded-full overflow-hidden transition-transform duration-300
 								${index === 0 ? "group-hover:-translate-x-1" : ""}
 								${index === 1 || index === arr.length - 1 ? "group-hover:-translate-x-0.5" : ""}
-								${selected.model === flag.model ? "ring-2 ring-primary" : ""}
+								${selected.model === flag.model ? "ring-2 ring-primary mr-1" : ""}
 								`}
 							>
 								<img
 									src={flag.src}
-									className="w-full h-full object-cover"
+									className="w-full h-full object-cover scale-[1.2]"
 									alt={flag.label}
 								/>
 							</div>
