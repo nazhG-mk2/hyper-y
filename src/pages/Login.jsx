@@ -29,7 +29,7 @@ const Login = () => {
     return (
         <main className="flex flex-col gap-4 justify-start sm:items-center sm:text-center">
             <h1 className="text-6xl font-bold sm:hidden">Hyper-Y Chatbot</h1>
-            <p className="text-xl sm:text-sm sm:font-semibold">Select a service to Login</p>
+            <p className="text-xl text-center sm:text-sm sm:font-semibold">Select a service to Login</p>
             <div className="w-fit flex flex-col mx-auto mb-4 mt-8 gap-4 text-lg">
                 {/* <button className="btn bg-blue-facebook hover:text-white text-white border-none"
                     onClick={handleLogin}
