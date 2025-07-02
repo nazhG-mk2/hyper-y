@@ -13,8 +13,7 @@ import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
-const HOST = import.meta.env.VITE_HOST;
-const AUTH = import.meta.env.VITE_AUTH;
+
 
 const aviableModels = [
 	{ src: "/groq.png", label: "Groq Llama 3", model: "groq-llama3" },
@@ -71,7 +70,6 @@ const Chat = () => {
 		const lang = localStorage.getItem('locale') || 'en';
 		setLoading("Consulting Agent...");
 		try {
-			const modelToUse = selected.model || aviableModels[0].model; // Default to the first model if none is selected
 			// Construir el historial de chat para el mensaje
 			const messages = [];
 			// Incluir el prompt del sistema
@@ -89,38 +87,42 @@ const Chat = () => {
 			// Agregar el mensaje actual del usuario
 			messages.push({ role: 'user', content: query });
 
-			const response = await axios.post(HOST, {
-				messages,
-				model: modelToUse
+			// Paso 1: Obtener el token del endpoint request
+			setLoading("Obtaining token...");
+			const requestResponse = await axios.post('https://llmdemos.hyperpg.site/demo-backend/request', {
+				model: "qwen3:8b",
+				messages: messages,
+				think: false
 			}, {
 				headers: {
-					Authorization: `Bearer ${AUTH}`
+					'Content-Type': 'application/json'
 				}
 			});
-			let answer = "...";
-			switch (modelToUse) {
-				case "xai-grok-3-mini":
-					answer = response.choices[0].message.content;
-					break;
-				case "openai-gpt-4.1-nano":
-				case "openai-gpt-4.1":
-				case "openai-o3-mini":
-				case "anthropic-claude-3.7":
-				case "google-gemini-2.0":
-				case "google-gemini-pro":
-				case "xai-grok2":
-				case "groq-llama3":
-					answer = response.data.choices?.[0]?.message?.content || response.data.response;
-					break;
-				default:
-					answer = response.data.response;
-					break;
+
+			// Extraer el token de la respuesta
+			const token = requestResponse.data.token;
+			if (!token) {
+				throw new Error('No token received from request endpoint');
 			}
+
+			// Paso 2: Usar el token para obtener la respuesta del chat
+			setLoading("Getting response...");
+			const chatResponse = await axios.post('https://llmdemos.hyperpg.site/demo-backend/chat', {
+				token: token
+			}, {
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+
+			// Extraer la respuesta del chat
+			const answer = chatResponse.data.response || chatResponse.data.message || "No response received";
+			
 			setToWrite({ text: answer, documents: [] });
 			setWriting(true);
 			addToChatHistory(answer, 'assistant');
 		} catch (error) {
-			console.error('Error al consultar OpenAI:', error);
+			console.error('Error al consultar el servicio:', error);
 			errorRef.current.showError();
 			setLoading(false);
 		} finally {
