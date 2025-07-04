@@ -38,6 +38,16 @@ const Response = ({
     }
   })
 
+  const extractThinkBlock = (text) => {
+    const match = text.match(/<think>([\s\S]*?)<\/think>/);
+    if (!match) return { think: null, rest: text };
+    const think = match[1].trim();
+    const rest = text.replace(match[0], '').trim();
+    return { think, rest };
+  };
+
+  const { think, rest } = extractThinkBlock(response || '');
+
   return (
     <div className="flex gap-3 md:gap-1 response md:mr-5" ref={responseRef}>
       <div className="w-10 min-w-10 md:w-8 h-10 min-h-10 md:hidden md:h-8 p-[2px] antialiased rounded-full flex">
@@ -55,44 +65,34 @@ const Response = ({
           {response ?
             (
               <>
+                {think && (
+                  <div className="collapse collapse-arrow mb-1">
+                    <input type="checkbox" />
+                    <div className="collapse-title font-medium">
+                      <pre className="text-gray-600">Thought Process</pre>
+                    </div>
+                    <div className="collapse-content">
+                      <pre className="whitespace-pre-wrap text-sm">{think}</pre>
+                    </div>
+                  </div>
+                )}
+
                 <span className='whitespace-pre-line'>
                   <ReactMarkdown
                     components={{
+                      pre: (props) => (
+                        <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap" {...props} />
+                      ),
                       ul: ({ ...props }) => <ul className="list-disc pl-5 flex flex-col" {...props} />,
                       ol: ({ ...props }) => <ol className="list-decimal pl-5 flex flex-col" {...props} />,
-                      li: ({ ...props }) => <li className="my-1 flex flex-col list-item" {...props} />,
+                      li: ({ ...props }) => <li className="my-1 list-item" {...props} />,
                       strong: ({ ...props }) => <strong className="text-lg contents" {...props} />,
                       a: ({ ...props }) => <a className="text-blue-400 font-medium underline" {...props} />,
-                    }}>
-                    {response}
+                    }}
+                  >
+                    {rest}
                   </ReactMarkdown>
                 </span>
-
-                {
-                  documents && documents.length > 0 && !error && (
-                    <>
-                      <div className='mb-2 relative'>
-                        <div className="divider divider-start font-medium after:bg-[#ddd]">References</div>
-                        <ul className="flex flex-col list-disc marker:text-lightYellow pl-5">
-                          {
-                            documents.map((doc, index) => {
-                              // const type = doc..replace("websites/", "").replace("pdfs/", "").replace("pdf/", "").replace("images/", "").replace("videos/", "").replace("audios/", "").replace("files/", "")
-                              return (
-                                <li key={index} className='text-sm'>
-                                  <a href={formatLink(doc)} target="_blank" rel="noreferrer" className="">{doc}</a>
-                                </li>)
-                            })
-                          }
-                        </ul>
-                        {/* {
-                          accuracy && accuracy > 0 && (
-                          )
-                        } */}
-                        <span title="Confidence score based on document analysis accuracy" className="badge absolute right-0 bottom-0 bg-[#eee] text-secondary border-[#ddd] text-xs px-2 py-1">Accuracy: {accuracy}%</span>
-                      </div>
-                    </>
-                  )
-                }
               </>
             ) : 'No response yet'
           }</div>

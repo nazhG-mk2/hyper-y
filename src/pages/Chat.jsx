@@ -13,7 +13,7 @@ import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperpg.site/demo-backend';
 
 const aviableModels = [
 	{ src: "/groq.png", label: "Groq Llama 3", model: "groq-llama3" },
@@ -89,7 +89,7 @@ const Chat = () => {
 
 			// Paso 1: Obtener el token del endpoint request
 			setLoading("Obtaining token...");
-			const requestResponse = await axios.post('https://llmdemos.hyperpg.site/demo-backend/request', {
+			const requestResponse = await axios.post(BACKEND_URL+'/request', {
 				model: "qwen3:8b",
 				messages: messages,
 				think: false
@@ -105,28 +105,74 @@ const Chat = () => {
 				throw new Error('No token received from request endpoint');
 			}
 
-			// Paso 2: Usar el token para obtener la respuesta del chat
+			// Paso 2: Usar el token para obtener la respuesta del chat via streaming
 			setLoading("Getting response...");
-			const chatResponse = await axios.post('https://llmdemos.hyperpg.site/demo-backend/chat', {
-				token: token
-			}, {
+
+			// Usar fetch para manejar el streaming
+			const response = await fetch(BACKEND_URL+'/chat', {
+				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
-				}
+				},
+				body: JSON.stringify({
+					token: token
+				})
 			});
 
-			// Extraer la respuesta del chat
-			const answer = chatResponse.data.response || chatResponse.data.message || "No response received";
+			console.log('Response received from chat endpoint:', response);
+
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			// Preparar para recibir el streaming
 			
-			setToWrite({ text: answer, documents: [] });
-			setWriting(true);
-			addToChatHistory(answer, 'assistant');
+			let fullAnswer = '';
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+			
+			try {
+				setLoading(false);
+				let isDone = false;
+				while (!isDone) {
+					const { done, value } = await reader.read();
+
+					if (done) {
+						isDone = true;
+						break;
+					}
+
+					const chunk = decoder.decode(value, { stream: true });
+
+					// Divide por líneas y filtra las que inician con "data:"
+					const lines = chunk.split('\n').filter(line => line.startsWith('data:'));
+
+					for (const line of lines) {
+						const jsonString = line.replace('data: ', '').trim();
+						try {
+							const parsed = JSON.parse(jsonString);
+							fullAnswer += parsed.token;
+						} catch (e) {
+							console.warn('Error al parsear chunk JSON:', jsonString);
+						}
+					}
+				}
+
+				// Ahora sí, setear todo al final
+				setToWrite({ text: fullAnswer, documents: [] });
+				setWriting(true);
+
+			} finally {
+				console.log('Finalizando lectura del stream');
+				reader.releaseLock();
+				setLoading(false);
+			}
+
+			// addToChatHistory(fullAnswer, 'assistant');
 		} catch (error) {
 			console.error('Error al consultar el servicio:', error);
 			errorRef.current.showError();
-			setLoading(false);
-		} finally {
-			setLoading(false);
 		}
 	};
 

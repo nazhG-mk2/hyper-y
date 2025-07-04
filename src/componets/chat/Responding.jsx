@@ -45,7 +45,7 @@ const Responding = ({ data, time = 4000,
       }}
       className='pb-8'
     >
-      <Response response={text.slice(0, textIndex)} open={true}
+      <Response response={(text || '').slice(0, textIndex)} open={true}
       noImg={data.noImg} additionalResponse={data.additional || ''}
       />
     </div>
