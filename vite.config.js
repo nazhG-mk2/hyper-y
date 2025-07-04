@@ -7,4 +7,7 @@ const env = loadEnv(".env", process.cwd(), "");
 export default defineConfig({
   plugins: [react()],
   base: env.VITE_BASE_ROUTE,
+  server: {
+    port: 3000
+  }
 })

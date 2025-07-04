@@ -65,7 +65,6 @@ const Chat = () => {
 		setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
 	};
 
-
 	const makeLocalAskRequest = async (query) => {
 		const lang = localStorage.getItem('locale') || 'en';
 		setLoading("Consulting Agent...");
@@ -249,7 +248,7 @@ const Chat = () => {
 					}
 				</div>
 				<div className="flex flex-col-reverse z-20 gap-2 max-h-12 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-6 right-5">
-					{aviableModels.map((flag, index, arr) => (
+					{/* {aviableModels.map((flag, index, arr) => (
 						<div
 							key={index}
 							className={`group transition-all duration-400 item flex gap-2 justify-end items-center ${selected.model === flag.model ? 'order-first ' : ''}`}
@@ -272,7 +271,7 @@ const Chat = () => {
 								/>
 							</div>
 						</div>
-					))}
+					))} */}
 				</div>
 			</section >
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>

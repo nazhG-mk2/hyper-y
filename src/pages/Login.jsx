@@ -28,7 +28,9 @@ const Login = () => {
         const data = await response.json();
         // Handle the response from your backend (e.g., store your app's JWT)
         console.log(data);
-            // navigate('/chat');
+
+        // Pasar el access_token como parámetro en la URL
+        navigate(`/chat?token=${data.access_token}`);
     };
 
     return (
