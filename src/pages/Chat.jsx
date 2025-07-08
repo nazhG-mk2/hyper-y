@@ -151,7 +151,9 @@ const Chat = () => {
 						const jsonString = line.replace('data: ', '').trim();
 						try {
 							const parsed = JSON.parse(jsonString);
-							fullAnswer += parsed.token;
+							if (parsed != undefined && parsed != 'undefined') {
+								fullAnswer += parsed.token;
+							}
 						} catch (e) {
 							console.warn('Error al parsear chunk JSON:', jsonString);
 						}
