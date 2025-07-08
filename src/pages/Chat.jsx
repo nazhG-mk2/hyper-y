@@ -132,7 +132,6 @@ const Chat = () => {
 			const decoder = new TextDecoder();
 			
 			try {
-				setLoading(false);
 				let isDone = false;
 				while (!isDone) {
 					const { done, value } = await reader.read();
