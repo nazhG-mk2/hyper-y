@@ -77,12 +77,15 @@ const Chat = () => {
 				content: `You must answer strictly in ${lang.toUpperCase()} language. ${systemPrompt}`
 			});
 			// Incluir el historial de chat
-			chatHistory.forEach(entry => {
-				messages.push({
-					role: entry.sender === 'user' ? 'user' : 'assistant',
-					content: entry.message
+			console.log('Chat history:', currentChat);
+			if (currentChat && currentChat.chat && currentChat.chat.length > 0) {
+				currentChat.chat.forEach(entry => {
+					messages.push({
+						role: entry.type === 'question' ? 'user' : 'assistant',
+						content: entry.txt
+					});
 				});
-			});
+			}
 			// Agregar el mensaje actual del usuario
 			messages.push({ role: 'user', content: query });
 
@@ -126,7 +129,6 @@ const Chat = () => {
 			}
 
 			// Preparar para recibir el streaming
-			
 			let fullAnswer = '';
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
@@ -150,7 +152,7 @@ const Chat = () => {
 						const jsonString = line.replace('data: ', '').trim();
 						try {
 							const parsed = JSON.parse(jsonString);
-							if (parsed != undefined && parsed != 'undefined') {
+							if (parsed.token != undefined && parsed.token != 'undefined') {
 								fullAnswer += parsed.token;
 							}
 						} catch (e) {
@@ -166,13 +168,14 @@ const Chat = () => {
 			} finally {
 				console.log('Finalizando lectura del stream');
 				reader.releaseLock();
-				setLoading(false);
 			}
 
 			// addToChatHistory(fullAnswer, 'assistant');
 		} catch (error) {
 			console.error('Error al consultar el servicio:', error);
 			errorRef.current.showError();
+		} finally {
+			setLoading(false);
 		}
 	};
 

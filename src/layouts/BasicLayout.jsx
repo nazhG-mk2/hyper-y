@@ -1,18 +1,14 @@
 import GradientBackground from '../componets/GradientBackground';
 import Header from '../componets/Header';
-import Sidebar from '../componets/Sidebar';
-import SidebarMobile from '../componets/SidebarMobile';
 import layoutStyles from './Layout.module.css'
 import { Outlet } from 'react-router-dom';
 
-const MainLayout = () => {
+const BasicLayout = () => {
     return (
         <div className={`${layoutStyles['main-layout']} drawer`}>
             <input id="mobile-drawer" type="checkbox" className="drawer-toggle" />
             <Header className={layoutStyles['main__header']} />
-            <SidebarMobile />
-            <Sidebar className='lg:hidden' />
-            <main className={`${layoutStyles['main__content']} !w-full max-w-[100vw]`}>
+            <main className={`col-start-1 col-end-3 max-w-[100vw]`}>
                 <Outlet />
             </main>
             <GradientBackground />
@@ -20,4 +16,4 @@ const MainLayout = () => {
     )
 }
 
-export default MainLayout
+export default BasicLayout
