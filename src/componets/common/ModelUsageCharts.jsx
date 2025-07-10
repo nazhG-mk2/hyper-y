@@ -377,7 +377,16 @@ export default function ModelUsageCharts() {
                   height={50}
                 />
                 <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
-                <Tooltip />
+                <Tooltip content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-white border rounded shadow px-2 py-1 text-xs">
+                        <span className="font-semibold">{label}:</span> {payload[0].value} requests
+                      </div>
+                    );
+                  }
+                  return null;
+                }} />
                 <Bar dataKey="value" fill="#2563eb">
                   {filteredData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

@@ -91,7 +91,7 @@ const Chat = () => {
 
 			// Paso 1: Obtener el token del endpoint request
 			setLoading("Obtaining token...");
-			const requestResponse = await axios.post(BACKEND_URL+'/request', {
+			const requestResponse = await axios.post(BACKEND_URL + '/request', {
 				model: "qwen3:8b",
 				messages: messages,
 				think: false
@@ -111,7 +111,7 @@ const Chat = () => {
 			setLoading("Getting response...");
 
 			// Usar fetch para manejar el streaming
-			const response = await fetch(BACKEND_URL+'/chat', {
+			const response = await fetch(BACKEND_URL + '/chat', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -123,7 +123,6 @@ const Chat = () => {
 
 			console.log('Response received from chat endpoint:', response);
 
-
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
@@ -132,7 +131,7 @@ const Chat = () => {
 			let fullAnswer = '';
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
-			
+
 			try {
 				let isDone = false;
 				while (!isDone) {
@@ -147,6 +146,8 @@ const Chat = () => {
 
 					// Divide por líneas y filtra las que inician con "data:"
 					const lines = chunk.split('\n').filter(line => line.startsWith('data:'));
+					setLoading(false);
+					setWriting(true);
 
 					for (const line of lines) {
 						const jsonString = line.replace('data: ', '').trim();
@@ -154,6 +155,7 @@ const Chat = () => {
 							const parsed = JSON.parse(jsonString);
 							if (parsed.token != undefined && parsed.token != 'undefined') {
 								fullAnswer += parsed.token;
+								setToWrite({ text: fullAnswer, documents: [] });
 							}
 						} catch (e) {
 							console.warn('Error al parsear chunk JSON:', jsonString);
@@ -161,13 +163,14 @@ const Chat = () => {
 					}
 				}
 
-				// Ahora sí, setear todo al final
-				setToWrite({ text: fullAnswer, documents: [] });
-				setWriting(true);
 
 			} finally {
 				console.log('Finalizando lectura del stream');
 				reader.releaseLock();
+
+				setWriting(false);
+				AddToCurrentChat({ type: 'response', txt: fullAnswer, documents: null, additionalResponse: null, accuracy: null });
+				setToWrite({});
 			}
 
 			// addToChatHistory(fullAnswer, 'assistant');
@@ -234,13 +237,13 @@ const Chat = () => {
 							)))
 					}
 					{
-						writing && <Responding data={toWrite} end={
-							() => {
-								setWriting(false);
-								// change the msg to generate the complex response
-								AddToCurrentChat({ type: 'response', txt: toWrite.text, documents: toWrite.documents, additionalResponse: toWrite.additionalResponse, accuracy: toWrite.accuracy });
-								setToWrite({});
-							}}
+						writing &&
+						<Response
+							response={toWrite.text}
+							noImg={true}
+							documents={null}
+							additionalResponse={null}
+							accuracy={null}
 						/>
 					}
 					{
@@ -251,32 +254,7 @@ const Chat = () => {
 						)
 					}
 				</div>
-				<div className="flex flex-col-reverse z-20 gap-2 max-h-12 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-6 right-5">
-					{/* {aviableModels.map((flag, index, arr) => (
-						<div
-							key={index}
-							className={`group transition-all duration-400 item flex gap-2 justify-end items-center ${selected.model === flag.model ? 'order-first ' : ''}`}
-							onClick={() => setSelected(flag)}
-						>
-							<span className="max-w-0 p-2 bg-white rounded-lg bg-opacity-90 group-hover:max-w-[200px] opacity-0 group-hover:opacity-100 transition-all duration-300 text-gray-700 font-semibold whitespace-nowrap overflow-hidden">
-								{flag.label}
-							</span>
-							<div
-								className={`w-9 h-9 rounded-full overflow-hidden transition-transform duration-300
-								${index === 0 ? "group-hover:-translate-x-1" : ""}
-								${index === 1 || index === arr.length - 1 ? "group-hover:-translate-x-0.5" : ""}
-								${selected.model === flag.model ? "ring-2 ring-primary mr-1" : ""}
-								`}
-							>
-								<img
-									src={flag.src}
-									className="w-full h-full object-cover scale-[1.2]"
-									alt={flag.label}
-								/>
-							</div>
-						</div>
-					))} */}
-				</div>
+				<div></div>
 			</section >
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
