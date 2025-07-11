@@ -383,10 +383,10 @@ export default function ModelUsageCharts() {
       </div>
 
       {/* Contenedor para PDF */}
-      <div ref={chartRef} className="bg-white w-full max-w-3xl" style={{ padding: '10px' }}>
+      <div ref={chartRef} className="bg-white w-full max-w-4xl p-4 rounded-lg shadow">
         {/* Header para PDF */}
         <div className="mb-3 text-center">
-          <h1 className="text-lg font-bold text-gray-800 mb-1">
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">
             Hyper-Y Request Analytics Report
           </h1>
           <p className="text-sm text-gray-600">
@@ -433,14 +433,24 @@ export default function ModelUsageCharts() {
                   {royalties.hypercycle && (
                     <div className="bg-white p-1.5 rounded text-xs">
                       <p className="font-medium text-gray-700">Hypercycle</p>
-                      <p className="text-blue-600 font-bold">${royalties.hypercycle.usdc.toFixed(2)}</p>
+                      <p 
+                        className="text-blue-600 font-bold cursor-help" 
+                        title={`Exact value: $${royalties.hypercycle.usdc}`}
+                      >
+                        ${royalties.hypercycle.usdc.toFixed(2)}
+                      </p>
                       <p className="text-gray-500">{royalties.hypercycle.calls} calls</p>
                     </div>
                   )}
                   {royalties.nodeOperator && (
                     <div className="bg-white p-1.5 rounded text-xs">
                       <p className="font-medium text-gray-700">Node Operator</p>
-                      <p className="text-green-600 font-bold">${royalties.nodeOperator.usdc.toFixed(2)}</p>
+                      <p 
+                        className="text-green-600 font-bold cursor-help" 
+                        title={`Exact value: $${royalties.nodeOperator.usdc}`}
+                      >
+                        ${royalties.nodeOperator.usdc.toFixed(2)}
+                      </p>
                       <p className="text-gray-500">{royalties.nodeOperator.calls} calls</p>
                     </div>
                   )}
@@ -449,13 +459,23 @@ export default function ModelUsageCharts() {
                   {royalties.licenseOwner && (
                     <div className="bg-white p-1.5 rounded text-xs">
                       <p className="font-medium text-gray-700">License Owner</p>
-                      <p className="text-purple-600 font-bold">${royalties.licenseOwner.usdc.toFixed(2)}</p>
+                      <p 
+                        className="text-purple-600 font-bold cursor-help" 
+                        title={`Exact value: $${royalties.licenseOwner.usdc}`}
+                      >
+                        ${royalties.licenseOwner.usdc.toFixed(2)}
+                      </p>
                       <p className="text-gray-500">{royalties.licenseOwner.calls} calls</p>
                     </div>
                   )}
                   <div className="bg-white p-1.5 rounded text-xs border-2 border-gray-300">
                     <p className="font-medium text-gray-700">Total Revenue</p>
-                    <p className="text-lg font-bold text-gray-800">${royalties.total.toFixed(2)}</p>
+                    <p 
+                      className="text-lg font-bold text-gray-800 cursor-help" 
+                      title={`Exact value: $${royalties.total}`}
+                    >
+                      ${royalties.total.toFixed(2)}
+                    </p>
                   </div>
                 </div>
               </div>
