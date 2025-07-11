@@ -4,7 +4,6 @@ import chatStyles from './Chat.module.css';
 import axios from 'axios';
 import Question from '../componets/chat/Question';
 import Response from '../componets/chat/Response';
-import Responding from '../componets/chat/Responding';
 import { useChatContext } from '../contexts/Chat';
 import { useTranslation } from 'react-i18next';
 import Error from '../componets/common/Error';
@@ -14,19 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperpg.site/demo-backend';
-
-const aviableModels = [
-	{ src: "/groq.png", label: "Groq Llama 3", model: "groq-llama3" },
-	{ src: "/openai.png", label: "OpenAI GPT-4.1 Nano", model: "openai-gpt-4.1-nano" },
-	{ src: "/openai.png", label: "OpenAI GPT-4.1", model: "openai-gpt-4.1" },
-	{ src: "/openai.png", label: "OpenAI O3 Mini", model: "openai-o3-mini" },
-	{ src: "/claude.png", label: "Anthropic Claude 3.7", model: "anthropic-claude-3.7" },
-	{ src: "/gemini.png", label: "Google Gemini 2.0", model: "google-gemini-2.0" },
-	{ src: "/gemini.png", label: "Google Gemini Pro", model: "google-gemini-pro" },
-	{ src: "/grok.png", label: "xAI Grok 2", model: "xai-grok2" },
-	{ src: "/grok.png", label: "xAI Grok 3 Mini", model: "xai-grok-3-mini" },
-];
-
+const MODEL = import.meta.env.VITE_MODEL || 'qwen3:8b';
 
 const Chat = () => {
 	const { t } = useTranslation();
@@ -38,10 +25,6 @@ const Chat = () => {
 	const [loading, setLoading] = useState(false);
 	const [writing, setWriting] = useState(false);
 	const [toWrite, setToWrite] = useState({});
-
-	const [selected, setSelected] = useState('');
-
-	const [chatHistory, setChatHistory] = useState([]);
 
 	const [isExpanded, setIsExpanded] = useState(false);
 
@@ -60,10 +43,6 @@ const Chat = () => {
 
 		handleResize(); // Para validar inicialmente
 	}, [query]);
-
-	const addToChatHistory = (message, sender) => {
-		setChatHistory(prevHistory => [...prevHistory, { message, sender }]);
-	};
 
 	const makeLocalAskRequest = async (query) => {
 		const lang = localStorage.getItem('locale') || 'en';
@@ -89,10 +68,9 @@ const Chat = () => {
 			// Agregar el mensaje actual del usuario
 			messages.push({ role: 'user', content: query });
 
-			// Paso 1: Obtener el token del endpoint request
 			setLoading("Obtaining token...");
 			const requestResponse = await axios.post(BACKEND_URL + '/request', {
-				model: "qwen3:8b",
+				model: MODEL,
 				messages: messages,
 				think: false
 			}, {
@@ -169,16 +147,21 @@ const Chat = () => {
 				reader.releaseLock();
 
 				setWriting(false);
-				AddToCurrentChat({ type: 'response', txt: fullAnswer, documents: null, additionalResponse: null, accuracy: null });
+				AddToCurrentChat(
+					[
+						{ type: 'question', txt: query },
+						{ type: 'response', txt: fullAnswer, documents: null, additionalResponse: null, accuracy: null }
+					])
 				setToWrite({});
 			}
 
-			// addToChatHistory(fullAnswer, 'assistant');
 		} catch (error) {
 			console.error('Error al consultar el servicio:', error);
 			errorRef.current.showError();
 		} finally {
 			setLoading(false);
+			console.log({ currentChat });
+
 		}
 	};
 
@@ -241,9 +224,7 @@ const Chat = () => {
 						<Response
 							response={toWrite.text}
 							noImg={true}
-							documents={null}
-							additionalResponse={null}
-							accuracy={null}
+							shouldType={true}
 						/>
 					}
 					{

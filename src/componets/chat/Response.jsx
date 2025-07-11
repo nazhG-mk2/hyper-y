@@ -1,25 +1,64 @@
 import PropTypes from 'prop-types';
-import { memo, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-const formatLink = (url) => url.startsWith("https://") ? url : `https://${url}`;
+const speed = 20; 
 
 const Response = ({
   response,
   error = false,
-  end = () => { },
   open = false,
   noImg = false,
-  additionalResponse = '',
-  documents = [],
-  accuracy = 0,
+  shouldType = false,
 }) => {
-  useEffect(() => {
-    end();
-  }, [response, end]);
-
+  const indexRef = useRef(0);
+  const [displayedText, setDisplayedText] = useState('');
+  const [forceComplete, setForceComplete] = useState(false);
   const responseRef = useRef(null);
   const [isReferencesOpened, setReferencesOpened] = useState(open);
+
+  // Función para completar el texto inmediatamente
+  const completeText = () => {
+    if (shouldType && !forceComplete) {
+      setForceComplete(true);
+      indexRef.current = (response || '').length;
+      setDisplayedText(response || '');
+    }
+  };
+
+  // Efecto para escribir letra por letra
+  useEffect(() => {
+    if (!shouldType || forceComplete) {
+      // Si no debe escribir o se forzó a completar, mostrar todo el texto
+      setDisplayedText(response || '');
+      indexRef.current = (response || '').length;
+      return;
+    }
+
+    // Reset del índice cuando llega un nuevo response
+    if (indexRef.current > (response || '').length) {
+      indexRef.current = 0;
+    }
+
+    // Efecto de escritura
+    if (indexRef.current < (response || '').length) {
+      const timer = setTimeout(() => {
+        indexRef.current += 1;
+        setDisplayedText((response || '').slice(0, indexRef.current));
+      }, speed);
+
+      return () => clearTimeout(timer);
+    }
+  }, [response, shouldType, displayedText, forceComplete]);
+
+  // Reset cuando cambia shouldType
+  useEffect(() => {
+    if (shouldType) {
+      indexRef.current = 0;
+      setDisplayedText('');
+      setForceComplete(false);
+    }
+  }, [shouldType]);
 
   useEffect(() => {
     // if is open see is click is outside
@@ -46,7 +85,9 @@ const Response = ({
     return { think, rest };
   };
 
-  const { think, rest } = extractThinkBlock(response || '');
+  // Usar displayedText en lugar de response
+  const { think, rest } = extractThinkBlock(displayedText || '');
+  const isTyping = shouldType && indexRef.current < (response || '').length;
 
   return (
     <div className="flex gap-3 md:gap-1 response md:mr-5" ref={responseRef}>
@@ -54,15 +95,13 @@ const Response = ({
         <img className={`rounded-full h-8 w-8 object-cover invisible self-center ${!noImg && 'invisible'}`} src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg" />
       </div>
       <div className="flex flex-col">
-        {
-          additionalResponse && (
-            <span className='text-secondary text-sm mb-5'>{additionalResponse}</span>
-          )
-        }
-        <div className={`rounded-md px-4 py-3 mr-[64px] max-w-full md:mr-0 flex-1 transition-all duration-500 ${error ? 'bg-red-200 text-gray-950' : 'bg-[#F5F5F5]'}`}>
+        <div 
+          className={`rounded-md px-4 py-3 mr-[64px] max-w-full md:mr-0 flex-1 transition-all duration-300 min-w-0 w-full ${error ? 'bg-red-200 text-gray-950' : 'bg-[#F5F5F5]'} ${isTyping ? 'cursor-pointer' : ''}`}
+          onClick={completeText}
+          title={isTyping ? "Click para mostrar texto completo" : ""}
+        >
 
-
-          {response ?
+          {displayedText ?
             (
               <>
                 {think && (
@@ -77,7 +116,7 @@ const Response = ({
                   </div>
                 )}
 
-                <span className='whitespace-pre-line'>
+                <div className={`whitespace-pre-line ${isTyping ? 'animate-typing' : ''}`}>
                   <ReactMarkdown
                     components={{
                       pre: (props) => (
@@ -92,9 +131,12 @@ const Response = ({
                   >
                     {rest}
                   </ReactMarkdown>
-                </span>
+                </div>
               </>
-            ) : 'No response yet'
+            ) : (shouldType ? 
+              <div className="animate-typing text-gray-400">Escribiendo...</div> : 
+              'No response yet'
+            )
           }</div>
       </div>
     </div>
@@ -102,14 +144,11 @@ const Response = ({
 }
 
 Response.propTypes = {
-  accuracy: PropTypes.number,
-  documents: PropTypes.array,
   response: PropTypes.string,
   error: PropTypes.bool,
-  end: PropTypes.func,
   open: PropTypes.bool,
   noImg: PropTypes.bool,
-  additionalResponse: PropTypes.string,
+  shouldType: PropTypes.bool,
 };
 
-export default memo(Response)
+export default Response

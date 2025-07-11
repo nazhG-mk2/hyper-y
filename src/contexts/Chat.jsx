@@ -44,28 +44,27 @@ export const ChatProvider = ({ children }) => {
 
     const AddToCurrentChat = (newMsg) => {
         const date = new Date().toISOString();
+        const msgs = Array.isArray(newMsg) ? newMsg : [newMsg];
+
         setChats((prevChats) => {
-            console.log({ prevChats, newMsg, currentChat });
-            
             if (!currentChat) {
                 const id = `id-${Math.random().toString(36).slice(2, 9)}`;
-                const _newChat = { id, date, chat: [newMsg] };
+                const _newChat = { id, date, chat: [...msgs] };
                 setCurrentChat(_newChat);
                 return [...prevChats, _newChat];
             }
 
-            const _currentChat = [...currentChat.chat];
-            _currentChat.push(newMsg);
+            const _currentChat = [...currentChat.chat, ...msgs];
             const _newChat = { ...currentChat, date, chat: _currentChat };
-            
+
             setCurrentChat(_newChat);
 
-            const newChats = prevChats.map(chat => chat.id === _newChat.id ? _newChat : chat).sort((a, b) => {
-                return new Date(b.date) - new Date(a.date);
-            });
-            
+            const newChats = prevChats
+                .map(chat => chat.id === _newChat.id ? _newChat : chat)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+
             saveChats(newChats);
-            return newChats
+            return newChats;
         });
     };
 
