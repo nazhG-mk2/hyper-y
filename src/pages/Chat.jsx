@@ -169,6 +169,8 @@ const Chat = () => {
 		setQuery('');
 		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
+		console.log('CURRENT CHAT:', currentChat);
+		
 		await makeLocalAskRequest(question);
 	}
 

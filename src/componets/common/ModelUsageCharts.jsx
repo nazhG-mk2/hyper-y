@@ -8,6 +8,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperp
 export default function ModelUsageCharts() {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  const [royaltiesData, setRoyaltiesData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterType, setFilterType] = useState('day'); // 'hour' or 'day' - cambiado a 'day' por defecto
@@ -27,16 +28,19 @@ export default function ModelUsageCharts() {
       setStartDate(weekAgo.toISOString().split('T')[0]);
       setEndDate(today.toISOString().split('T')[0]);
     } else {
-      // Usar la primera fecha del array
-      const firstLog = logs[0];
-      const firstDate = new Date(firstLog.timestamp);
-      firstDate.setDate(firstDate.getDate() - 1); // Restar un día
+      // Encontrar la fecha más antigua en los logs
+      const dates = logs.map(log => new Date(log.timestamp));
+      const earliestDate = new Date(Math.min(...dates));
+      
+      // Usar la fecha más antigua como fecha de inicio (restar un día para ajuste)
+      const startDateForRange = new Date(earliestDate);
+      startDateForRange.setDate(startDateForRange.getDate() - 1);
+      
+      const endDateForRange = new Date(startDateForRange);
+      endDateForRange.setDate(startDateForRange.getDate() + 6); // 7 días en total
 
-      const weekAfter = new Date(firstDate);
-      weekAfter.setDate(firstDate.getDate() + 6);
-
-      setStartDate(firstDate.toISOString().split('T')[0]);
-      setEndDate(weekAfter.toISOString().split('T')[0]);
+      setStartDate(startDateForRange.toISOString().split('T')[0]);
+      setEndDate(endDateForRange.toISOString().split('T')[0]);
     }
   };
 
@@ -44,6 +48,8 @@ export default function ModelUsageCharts() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      
+      // Obtener datos de request logs
       const response = await fetch(`${BACKEND_URL}/request-logs/`);
       if (!response.ok) {
         throw new Error('Failed to fetch data');
@@ -52,6 +58,19 @@ export default function ModelUsageCharts() {
       console.log('Fetched logs:', logs); // Debugging line
 
       setData(logs);
+
+      // Obtener datos de royalties
+      try {
+        const royaltiesResponse = await fetch(`${BACKEND_URL}/royalties`);
+        if (royaltiesResponse.ok) {
+          const royalties = await royaltiesResponse.json();
+          console.log('Fetched royalties:', royalties); // Debugging line
+          setRoyaltiesData(royalties);
+        }
+      } catch (royaltiesError) {
+        console.warn('Error fetching royalties:', royaltiesError);
+        // No fallar si no se pueden obtener las royalties
+      }
 
       // Establecer rango por defecto solo si no se ha establecido antes
       if (!startDate && !endDate) {
@@ -64,6 +83,50 @@ export default function ModelUsageCharts() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para procesar datos de royalties
+  const getRoyaltiesData = () => {
+    if (!royaltiesData) return null;
+
+    const processedData = {
+      hypercycle: null,
+      nodeOperator: null,
+      licenseOwner: null,
+      total: 0
+    };
+
+    Object.values(royaltiesData).forEach(item => {
+      const usdcAmount = item.currencies_total?.USDC || 0;
+      
+      switch (item.type) {
+        case 'hypercycle':
+          processedData.hypercycle = {
+            calls: item.calls,
+            usdc: usdcAmount,
+            address: item.address
+          };
+          break;
+        case 'NODE_OPERATOR':
+          processedData.nodeOperator = {
+            calls: item.calls,
+            usdc: usdcAmount,
+            address: item.address
+          };
+          break;
+        case 'license_owner':
+          processedData.licenseOwner = {
+            calls: item.calls,
+            usdc: usdcAmount,
+            address: item.address
+          };
+          break;
+      }
+      
+      processedData.total += usdcAmount;
+    });
+
+    return processedData;
   };
 
   // Función para procesar y filtrar datos
@@ -198,13 +261,13 @@ export default function ModelUsageCharts() {
   const exportToPDF = () => {
     const element = chartRef.current;
     const opt = {
-      margin: [0.3, 0.3, 0.3, 0.3],
+      margin: [0.5, 0.5, 0.5, 0.5],
       filename: filterType === 'hour'
         ? `request-logs-${selectedDate}-hourly.pdf`
         : `request-logs-${startDate}-to-${endDate}-daily.pdf`,
-      image: { type: 'jpeg', quality: 0.95 },
+      image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
-        scale: 1.5,
+        scale: 1,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
@@ -215,7 +278,7 @@ export default function ModelUsageCharts() {
       jsPDF: {
         unit: 'mm',
         format: 'a4',
-        orientation: 'landscape',
+        orientation: 'portrait',
         compress: true
       },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -302,7 +365,7 @@ export default function ModelUsageCharts() {
             </>
           )}
 
-          <div className="flex ml-auto gap-2">
+          <div className="flex ml-auto gap-2 items-end">
             <button
               onClick={downloadData}
               className="bg-blue-500 text-white h-8 px-4 py-1 rounded hover:bg-blue-600"
@@ -320,16 +383,16 @@ export default function ModelUsageCharts() {
       </div>
 
       {/* Contenedor para PDF */}
-      <div ref={chartRef} className="bg-white w-full max-w-4xl" style={{ padding: '15px' }}>
+      <div ref={chartRef} className="bg-white w-full max-w-3xl" style={{ padding: '10px' }}>
         {/* Header para PDF */}
-        <div className="mb-4 text-center">
-          <h1 className="text-xl font-bold text-gray-800 mb-1">
+        <div className="mb-3 text-center">
+          <h1 className="text-lg font-bold text-gray-800 mb-1">
             Hyper-Y Request Analytics Report
           </h1>
-          <p className="text-base text-gray-600">
+          <p className="text-sm text-gray-600">
             {filterType === 'hour'
-              ? `Hourly Distribution - ${new Date(selectedDate).toLocaleDateString()}`
-              : `Daily Distribution - ${startDate ? new Date(startDate).toLocaleDateString() : ''} to ${endDate ? new Date(endDate).toLocaleDateString() : ''}`
+              ? `Hourly Distribution - ${new Date(selectedDate + 'T12:00:00').toLocaleDateString()}`
+              : `Daily Distribution - ${startDate ? new Date(startDate + 'T12:00:00').toLocaleDateString() : ''} to ${endDate ? new Date(endDate + 'T12:00:00').toLocaleDateString() : ''}`
             }
           </p>
           <p className="text-xs text-gray-500 mt-1">
@@ -338,18 +401,18 @@ export default function ModelUsageCharts() {
         </div>
 
         {/* Estadísticas resumen */}
-        <div className="mb-4 bg-gray-50 p-3 rounded-lg">
+        <div className="mb-3 bg-gray-50 p-2 rounded-lg">
           <h3 className="font-semibold mb-2 text-gray-800 text-sm">Summary Statistics</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <p className="text-xs text-gray-600">Total Requests:</p>
-              <p className="text-lg font-bold text-blue-600">
+              <p className="text-base font-bold text-blue-600">
                 {filteredData.reduce((sum, item) => sum + item.value, 0)}
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-600">Average per {filterType === 'hour' ? 'Hour' : 'Day'}:</p>
-              <p className="text-lg font-bold text-green-600">
+              <p className="text-base font-bold text-green-600">
                 {filteredData.length > 0
                   ? Math.round(filteredData.reduce((sum, item) => sum + item.value, 0) / filteredData.length * 100) / 100
                   : 0
@@ -359,24 +422,65 @@ export default function ModelUsageCharts() {
           </div>
         </div>
 
+        {/* Royalties Data */}
+        {royaltiesData && (() => {
+          const royalties = getRoyaltiesData();
+          return royalties && (
+            <div className="mb-3 bg-blue-50 p-2 rounded-lg">
+              <h3 className="font-semibold mb-2 text-gray-800 text-sm">Royalties Distribution (USDC)</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  {royalties.hypercycle && (
+                    <div className="bg-white p-1.5 rounded text-xs">
+                      <p className="font-medium text-gray-700">Hypercycle</p>
+                      <p className="text-blue-600 font-bold">${royalties.hypercycle.usdc.toLocaleString()}</p>
+                      <p className="text-gray-500">{royalties.hypercycle.calls} calls</p>
+                    </div>
+                  )}
+                  {royalties.nodeOperator && (
+                    <div className="bg-white p-1.5 rounded text-xs">
+                      <p className="font-medium text-gray-700">Node Operator</p>
+                      <p className="text-green-600 font-bold">${royalties.nodeOperator.usdc.toLocaleString()}</p>
+                      <p className="text-gray-500">{royalties.nodeOperator.calls} calls</p>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  {royalties.licenseOwner && (
+                    <div className="bg-white p-1.5 rounded text-xs">
+                      <p className="font-medium text-gray-700">License Owner</p>
+                      <p className="text-purple-600 font-bold">${royalties.licenseOwner.usdc.toLocaleString()}</p>
+                      <p className="text-gray-500">{royalties.licenseOwner.calls} calls</p>
+                    </div>
+                  )}
+                  <div className="bg-white p-1.5 rounded text-xs border-2 border-gray-300">
+                    <p className="font-medium text-gray-700">Total Revenue</p>
+                    <p className="text-lg font-bold text-gray-800">${royalties.total.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Gráfica */}
-        <div className="bg-white rounded-lg shadow-sm border p-3">
-          <h3 className="font-semibold mb-3 text-gray-800 text-sm">
+        <div className="bg-white rounded-lg shadow-sm border p-2">
+          <h3 className="font-semibold mb-2 text-gray-800 text-sm">
             Request Logs - {filterType === 'hour' ? 'Hourly' : 'Daily'} Distribution
           </h3>
 
           {filteredData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart data={filteredData}>
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 9 }}
                   interval={0}
                   angle={-20}
                   textAnchor="end"
-                  height={50}
+                  height={40}
                 />
-                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 9 }} />
                 <Tooltip content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
                     return (
@@ -395,14 +499,14 @@ export default function ModelUsageCharts() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex justify-center items-center h-48">
+            <div className="flex justify-center items-center h-32">
               <div className="text-gray-500 text-sm">No data available for the selected filters</div>
             </div>
           )}
         </div>
 
         {/* Footer para PDF */}
-        <div className="mt-4 text-center text-xs text-gray-400 border-t pt-2">
+        <div className="mt-3 text-center text-xs text-gray-400 border-t pt-2">
           <p>Generated by Hyper-Y Analytics Dashboard | Visit us at hyperpg.site</p>
         </div>
       </div>
