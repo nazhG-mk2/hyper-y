@@ -97,7 +97,7 @@ export default function ModelUsageCharts() {
     };
 
     Object.values(royaltiesData).forEach(item => {
-      const usdcAmount = item.currencies_total?.USDC || 0;
+      const usdcAmount = (item.currencies_total?.USDC || 0) / 1000000; // Convertir de unidades pequeñas a USDC
       
       switch (item.type) {
         case 'hypercycle':
@@ -433,14 +433,14 @@ export default function ModelUsageCharts() {
                   {royalties.hypercycle && (
                     <div className="bg-white p-1.5 rounded text-xs">
                       <p className="font-medium text-gray-700">Hypercycle</p>
-                      <p className="text-blue-600 font-bold">${royalties.hypercycle.usdc.toLocaleString()}</p>
+                      <p className="text-blue-600 font-bold">${royalties.hypercycle.usdc.toFixed(2)}</p>
                       <p className="text-gray-500">{royalties.hypercycle.calls} calls</p>
                     </div>
                   )}
                   {royalties.nodeOperator && (
                     <div className="bg-white p-1.5 rounded text-xs">
                       <p className="font-medium text-gray-700">Node Operator</p>
-                      <p className="text-green-600 font-bold">${royalties.nodeOperator.usdc.toLocaleString()}</p>
+                      <p className="text-green-600 font-bold">${royalties.nodeOperator.usdc.toFixed(2)}</p>
                       <p className="text-gray-500">{royalties.nodeOperator.calls} calls</p>
                     </div>
                   )}
@@ -449,13 +449,13 @@ export default function ModelUsageCharts() {
                   {royalties.licenseOwner && (
                     <div className="bg-white p-1.5 rounded text-xs">
                       <p className="font-medium text-gray-700">License Owner</p>
-                      <p className="text-purple-600 font-bold">${royalties.licenseOwner.usdc.toLocaleString()}</p>
+                      <p className="text-purple-600 font-bold">${royalties.licenseOwner.usdc.toFixed(2)}</p>
                       <p className="text-gray-500">{royalties.licenseOwner.calls} calls</p>
                     </div>
                   )}
                   <div className="bg-white p-1.5 rounded text-xs border-2 border-gray-300">
                     <p className="font-medium text-gray-700">Total Revenue</p>
-                    <p className="text-lg font-bold text-gray-800">${royalties.total.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-gray-800">${royalties.total.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
