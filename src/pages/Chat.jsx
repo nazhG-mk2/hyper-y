@@ -160,8 +160,8 @@ const Chat = () => {
 			errorRef.current.showError();
 		} finally {
 			setLoading(false);
-			console.log({ currentChat });
-
+			console.log({currentChat});
+			
 		}
 	};
 
@@ -169,9 +169,11 @@ const Chat = () => {
 		setQuery('');
 		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
-		console.log('CURRENT CHAT:', currentChat);
-		
-		await makeLocalAskRequest(question);
+		// react magic ✨
+		(async ()=> {
+			console.log('CURRENT CHAT:', currentChat);
+			await makeLocalAskRequest(question);
+		})();
 	}
 
 	const location = useLocation();
