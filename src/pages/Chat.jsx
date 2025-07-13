@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import playIcon from '../assets/play.svg';
+import { IoSend } from 'react-icons/io5';
 import chatStyles from './Chat.module.css';
 import axios from 'axios';
 import Question from '../componets/chat/Question';
@@ -266,11 +266,17 @@ const Chat = () => {
 						type="text" placeholder={t("new_message")}
 						className={`w-full resize-none bg-transparent outline-none text-gray-950 placeholder:text-gray-400 p-2 transition-all ${isExpanded ? "h-20" : "h-10"}`} />
 					<div className="flex items-center gap-1">
-						<img
-							src={playIcon}
-							alt=""
-							className="w-8 h-8 cursor-pointer"
-							onClick={() => handleAddQuestion(query)}
+						<IoSend
+							className={`w-5 h-5 cursor-pointer transition-colors duration-200 ${
+								loading || !query.trim() 
+									? 'text-gray-400 cursor-not-allowed' 
+									: 'text-primary hover:text-primary-soft'
+							}`}
+							onClick={() => {
+								if (!loading && query.trim()) {
+									handleAddQuestion(query);
+								}
+							}}
 						/>
 					</div>
 				</div>

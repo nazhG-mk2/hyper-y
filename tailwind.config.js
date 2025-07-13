@@ -1,5 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 import daisyui from 'daisyui';
+import process from 'process';
+import 'dotenv/config'
+
+const getPrimaryColor = () => {
+  return process.env.PRIMARY_COLOR || 'ff4d4d';
+};
+
+const getPrimarySoftColor = () => {
+  return process.env.PRIMARY_SOFT_COLOR || '747775';
+};
+
+const getSecondaryColor = () => {
+  return process.env.SECONDARY_COLOR || '747775';
+};
+
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
@@ -10,12 +25,11 @@ export default {
         sm: { max: '490px' },
       },
       colors: {
-        primary: '#ff4d4d',
-        'primary-soft': '#747775',
+        primary: `#${getPrimaryColor()}`,
+        'primary-soft': `#${getPrimarySoftColor()}`,
+        secondary: `#${getSecondaryColor()}`,
         dark: '#334155',
         light: '#ffd9d9',
-        secondary: '#747775',
-        'blue-facebook': '#1A77F2',
       }, 
       fontFamily: {
         poppins: ['Poppins', 'sans-serif'],

@@ -18,7 +18,7 @@ function App() {
     <GlobalProvider>
       <ChatProvider>
         <CurrentChatProvider>
-          <Router basename={VITE_BASE_ROUTE}>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }} basename={VITE_BASE_ROUTE}>
             <Routes>
               <Route path="/" element={<StartScreenLayout />}>
                 <Route index element={<StartScreen />} />

@@ -2,20 +2,39 @@ import { memo, useState } from 'react';
 import PropTypes from 'prop-types';
 import menuIcon from '../assets/menu.svg';
 import LanguageSwitcher from './common/LanguageSwitcher';
-import { FaUserCircle, FaArrowLeft, FaEdit } from "react-icons/fa";
-import { useNavigate, useLocation } from "react-router-dom";
+import { FaEdit } from "react-icons/fa";
 import PromptModal from './common/PromptModal';
 import { GlobalContext } from '../contexts/Global';
 import { defaultPrompt } from '../contexts/Chat';
 
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
+// Componente para el logo dinámico con Tailwind
+const DynamicLogo = ({ className = "" }) => {
+  return (
+    <div 
+      className={`h-6 w-32 bg-primary transition-colors duration-300 ${className}`}
+      style={{
+        maskImage: `url(${VITE_BASE_ROUTE}/logo.png)`,
+        WebkitMaskImage: `url(${VITE_BASE_ROUTE}/logo.png)`,
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'left center',
+        WebkitMaskPosition: 'left center',
+      }}
+    />
+  );
+};
+
+DynamicLogo.propTypes = {
+  className: PropTypes.string,
+};
+
 const Header = ({
   className = '',
 }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isSettings = location.pathname === '/settings';
   const [showPromptModal, setShowPromptModal] = useState(false);
   const { state, setPrompt } = GlobalContext();
   const prompt = state.prompt || defaultPrompt;
@@ -27,8 +46,11 @@ const Header = ({
             <img src={menuIcon} alt="" />
           </label>
         </div>
-        <img className='h-6 hidden lg:block' src={`${VITE_BASE_ROUTE}/logo.png`} alt="" />
-        <img className='h-6 block lg:hidden' src={`${VITE_BASE_ROUTE}/logo2.png`} alt="" />
+
+        <div className="relative w-32 h-fit">
+          <DynamicLogo />
+        </div>
+        {/* <img className='h-6 block lg:hidden' src={`${VITE_BASE_ROUTE}/logo2.png`} alt="" /> */}
         <div className="flex gap-2">
           {/* {isSettings ? (
             <FaArrowLeft className="w-7 sm:w-6 h-7 sm:h-6 my-auto cursor-pointer text-white" onClick={() => navigate('/chat')} />
