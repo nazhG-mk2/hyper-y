@@ -7,7 +7,7 @@ import PromptModal from './common/PromptModal';
 import { GlobalContext } from '../contexts/Global';
 import { defaultPrompt } from '../contexts/Chat';
 
-const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
+const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE || '';
 
 // Componente para el logo dinámico con Tailwind
 const DynamicLogo = ({ className = "" }) => {
