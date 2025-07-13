@@ -13,7 +13,6 @@ import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperpg.site/demo-backend';
-const MODEL = import.meta.env.VITE_MODEL || 'qwen3:8b';
 
 const Chat = () => {
 	const { t } = useTranslation();
@@ -70,7 +69,6 @@ const Chat = () => {
 
 			setLoading("Obtaining token...");
 			const requestResponse = await axios.post(BACKEND_URL + '/request', {
-				model: MODEL,
 				messages: messages,
 				think: false
 			}, {
