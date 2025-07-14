@@ -15,6 +15,8 @@ import Cookies from 'js-cookie';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperpg.site/demo-backend';
 
 const Chat = () => {
+	// Estado para controlar si ya se procesó la pregunta
+	const [lastQuestionId, setLastQuestionId] = useState(null);
 	const { t } = useTranslation();
 	const { AddToCurrentChat, currentChat } = useChatContext();
 	const { state } = GlobalContext();
@@ -146,10 +148,8 @@ const Chat = () => {
 
 				setWriting(false);
 				AddToCurrentChat(
-					[
-						{ type: 'question', txt: query },
-						{ type: 'response', txt: fullAnswer, documents: null, additionalResponse: null, accuracy: null }
-					])
+					{ type: 'response', txt: fullAnswer, documents: null, additionalResponse: null, accuracy: null }
+				)
 				setToWrite({});
 			}
 
@@ -158,8 +158,6 @@ const Chat = () => {
 			errorRef.current.showError();
 		} finally {
 			setLoading(false);
-			console.log({currentChat});
-			
 		}
 	};
 
@@ -167,12 +165,19 @@ const Chat = () => {
 		setQuery('');
 		setIsExpanded(false);
 		AddToCurrentChat({ type: 'question', txt: question });
-		// react magic ✨
-		(async ()=> {
-			console.log('CURRENT CHAT:', currentChat);
-			await makeLocalAskRequest(question);
-		})();
 	}
+
+	useEffect(() => {
+		if (currentChat && currentChat.chat && currentChat.chat.length > 0) {
+			const lastMsg = currentChat.chat[currentChat.chat.length - 1];
+			// Solo si es pregunta y no se ha procesado
+			if (lastMsg.type === 'question' && lastMsg.txt && lastMsg.id !== lastQuestionId) {
+				makeLocalAskRequest(lastMsg.txt);
+				setLastQuestionId(lastMsg.id || lastMsg.txt); // Usa id si existe, si no usa el texto
+			}
+		}
+	}, [currentChat]);
+
 
 	const location = useLocation();
 	const navigate = useNavigate();
@@ -265,11 +270,10 @@ const Chat = () => {
 						className={`w-full resize-none bg-transparent outline-none text-gray-950 placeholder:text-gray-400 p-2 transition-all ${isExpanded ? "h-20" : "h-10"}`} />
 					<div className="flex items-center gap-1">
 						<IoSend
-							className={`w-5 h-5 cursor-pointer transition-colors duration-200 ${
-								loading || !query.trim() 
-									? 'text-gray-400 cursor-not-allowed' 
-									: 'text-primary hover:text-primary-soft'
-							}`}
+							className={`w-5 h-5 cursor-pointer transition-colors duration-200 ${loading || !query.trim()
+								? 'text-gray-400 cursor-not-allowed'
+								: 'text-primary hover:text-primary-soft'
+								}`}
 							onClick={() => {
 								if (!loading && query.trim()) {
 									handleAddQuestion(query);

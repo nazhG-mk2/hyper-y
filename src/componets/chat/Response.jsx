@@ -91,9 +91,6 @@ const Response = ({
 
   return (
     <div className="flex gap-3 md:gap-1 response md:mr-5" ref={responseRef}>
-      <div className="w-10 min-w-10 md:w-8 h-10 min-h-10 md:hidden md:h-8 p-[2px] antialiased rounded-full flex">
-        <img className={`rounded-full h-8 w-8 object-cover invisible self-center ${!noImg && 'invisible'}`} src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg" />
-      </div>
       <div className="flex flex-col">
         <div 
           className={`rounded-md px-4 py-3 mr-[64px] max-w-full md:mr-0 flex-1 transition-all duration-300 min-w-0 w-full ${error ? 'bg-red-200 text-gray-950' : 'bg-[#F5F5F5]'} ${isTyping ? 'cursor-pointer' : ''}`}
@@ -138,6 +135,9 @@ const Response = ({
               'No response yet'
             )
           }</div>
+      </div>
+      <div className="w-10 min-w-10 md:w-8 h-10 min-h-10 md:hidden md:h-8 p-[2px] antialiased rounded-full flex">
+        <img className={`rounded-full h-8 w-8 object-cover invisible self-center ${!noImg && 'invisible'}`} src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg" />
       </div>
     </div>
   )
