@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-const speed = 20; 
+const speed = 20;
 
 const Response = ({
   response,
@@ -42,10 +42,16 @@ const Response = ({
 
     // Efecto de escritura
     if (indexRef.current < (response || '').length) {
+      let dynamicSpeed = speed;
+      const remaining = (response || '').length - indexRef.current;
+      if (remaining > 100) dynamicSpeed = 5;      // Muy rápido si faltan muchas letras
+      else if (remaining > 50) dynamicSpeed = 10; // Rápido
+      else if (remaining > 20) dynamicSpeed = 15; // Medio
+      else dynamicSpeed = 20;
       const timer = setTimeout(() => {
         indexRef.current += 1;
         setDisplayedText((response || '').slice(0, indexRef.current));
-      }, speed);
+      }, dynamicSpeed);
 
       return () => clearTimeout(timer);
     }
@@ -92,7 +98,7 @@ const Response = ({
   return (
     <div className="flex gap-3 md:gap-1 response md:mr-5" ref={responseRef}>
       <div className="flex flex-col">
-        <div 
+        <div
           className={`rounded-md px-4 py-3 mr-[64px] max-w-full md:mr-0 flex-1 transition-all duration-300 min-w-0 w-full ${error ? 'bg-red-200 text-gray-950' : 'bg-[#F5F5F5]'} ${isTyping ? 'cursor-pointer' : ''}`}
           onClick={completeText}
           title={isTyping ? "Click para mostrar texto completo" : ""}
@@ -130,8 +136,8 @@ const Response = ({
                   </ReactMarkdown>
                 </div>
               </>
-            ) : (shouldType ? 
-              <div className="animate-typing text-gray-400">Escribiendo...</div> : 
+            ) : (shouldType ?
+              <div className="animate-typing text-gray-400">Escribiendo...</div> :
               'No response yet'
             )
           }</div>

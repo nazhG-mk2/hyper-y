@@ -141,7 +141,6 @@ const Chat = () => {
 					}
 				}
 
-
 			} finally {
 				console.log('Finalizando lectura del stream');
 				reader.releaseLock();

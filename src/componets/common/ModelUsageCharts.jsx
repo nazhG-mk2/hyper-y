@@ -260,31 +260,41 @@ export default function ModelUsageCharts() {
   // Función para exportar a PDF
   const exportToPDF = () => {
     const element = chartRef.current;
-    const opt = {
-      margin: [0.5, 0.5, 0.5, 0.5],
-      filename: filterType === 'hour'
-        ? `request-logs-${selectedDate}-hourly.pdf`
-        : `request-logs-${startDate}-to-${endDate}-daily.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 1,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: true,
-        width: element.scrollWidth,
-        height: element.scrollHeight
-      },
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'portrait',
-        compress: true
-      },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-    
-    html2pdf().set(opt).from(element).save();
+    // Guardar el ancho original
+    const originalWidth = element.style.width;
+    // Forzar ancho para PDF (por ejemplo, 900px)
+    element.style.width = '900px';
+
+    // Esperar 500ms para que la gráfica se renderice correctamente
+    setTimeout(() => {
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: filterType === 'hour'
+          ? `request-logs-${selectedDate}-hourly.pdf`
+          : `request-logs-${startDate}-to-${endDate}-daily.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 1,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          allowTaint: true,
+          width: element.scrollWidth,
+          height: element.scrollHeight
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait',
+          compress: true
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+      html2pdf().set(opt).from(element).save().then(() => {
+        // Restaurar el ancho original después de exportar
+        element.style.width = originalWidth;
+      });
+    }, 500);
   };
 
   useEffect(() => {
@@ -511,7 +521,7 @@ export default function ModelUsageCharts() {
                   }
                   return null;
                 }} />
-                <Bar dataKey="value" fill="#2563eb">
+                <Bar dataKey="value" fill="#2563eb" isAnimationActive={false}>
                   {filteredData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
