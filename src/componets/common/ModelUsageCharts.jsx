@@ -6,6 +6,9 @@ const COLORS = ['#2563eb', '#f59e42', '#10b981', '#f43f5e', '#6366f1', '#fbbf24'
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperpg.site/demo-backend';
 
 export default function ModelUsageCharts() {
+  const [dailyTokens, setDailyTokens] = useState([]);
+  const [dailyRevenue, setDailyRevenue] = useState([]);
+  const [tokenPrice, setTokenPrice] = useState(0);
   const [data, setData] = useState([]);
   const [totalRequests, setTotalRequests] = useState(0);
   const [filteredData, setFilteredData] = useState([]);
@@ -32,11 +35,11 @@ export default function ModelUsageCharts() {
       // Encontrar la fecha más antigua en los logs
       const dates = logs.map(log => new Date(log.timestamp));
       const earliestDate = new Date(Math.min(...dates));
-      
+
       // Usar la fecha más antigua como fecha de inicio (restar un día para ajuste)
       const startDateForRange = new Date(earliestDate);
       startDateForRange.setDate(startDateForRange.getDate() - 1);
-      
+
       const endDateForRange = new Date(startDateForRange);
       endDateForRange.setDate(startDateForRange.getDate() + 6); // 7 días en total
 
@@ -49,7 +52,7 @@ export default function ModelUsageCharts() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Obtener datos de request logs
       const response = await fetch(`${BACKEND_URL}/logs?limit=1000`);
       if (!response.ok) {
@@ -101,7 +104,7 @@ export default function ModelUsageCharts() {
 
     Object.values(royaltiesData).forEach(item => {
       const usdcAmount = (item.currencies_total?.USDC || 0) / 1000000; // Convertir de unidades pequeñas a USDC
-      
+
       switch (item.type) {
         case 'hypercycle':
           processedData.hypercycle = {
@@ -125,7 +128,7 @@ export default function ModelUsageCharts() {
           };
           break;
       }
-      
+
       processedData.total += usdcAmount;
     });
 
@@ -135,7 +138,6 @@ export default function ModelUsageCharts() {
   // Función para procesar y filtrar datos
   const processData = (logs, type, singleDate, rangeStart, rangeEnd) => {
     let chartData = [];
-
     if (type === 'hour') {
       // Filtrar solo para el día seleccionado
       const filtered = logs.filter(log => {
@@ -174,42 +176,50 @@ export default function ModelUsageCharts() {
       // Filtrar logs dentro del rango
       const filtered = logs.filter(log => {
         const logDate = new Date(log.timestamp);
+        // Ignorar logs con output_tokens: 0
+        if (log.output_tokens === 0) return false;
         return logDate >= startDateObj && logDate <= endDateObj;
       });
 
       console.log('Filtered logs:', filtered.length); // Debugging line
-      
+
 
       // Agrupar por día
       const grouped = {};
+      const tokensByDay = {};
+      let totalTokens = 0;
       filtered.forEach(log => {
         const logDate = new Date(log.timestamp);
         const key = logDate.toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric'
         });
-
-        if (!grouped[key]) {
-          grouped[key] = 0;
-        }
+        if (!grouped[key]) grouped[key] = 0;
         grouped[key] += 1;
+        if (!tokensByDay[key]) tokensByDay[key] = 0;
+        tokensByDay[key] += (log.input_tokens || 0) + (log.output_tokens || 0);
+        totalTokens += (log.input_tokens || 0) + (log.output_tokens || 0);
       });
-
-      // Crear todos los días del rango
+      const days = [];
       const currentDate = new Date(startDateObj);
       while (currentDate <= endDateObj) {
         const key = currentDate.toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric'
         });
-
-        chartData.push({
-          label: key,
-          value: grouped[key] || 0
-        });
-
+        chartData.push({ label: key, value: grouped[key] || 0 });
+        days.push(key);
         currentDate.setDate(currentDate.getDate() + 1);
       }
+      let totalRevenue = royaltiesData ? Object.values(royaltiesData).reduce((sum, item) => sum + ((item.currencies_total?.USDC || 0) / 1000000), 0) : 0;
+      const revenueByDay = {};
+      days.forEach(day => {
+        revenueByDay[day] = totalRevenue / days.length;
+      });
+      // Calculate daily revenue by multiplying tokens per day by token price
+      setDailyTokens(days.map(day => ({ label: day, value: tokensByDay[day] || 0 })));
+      setDailyRevenue(days.map(day => ({ label: day, value: (tokensByDay[day] || 0) * (totalTokens > 0 ? totalRevenue / totalTokens : 0) })));
+      setTokenPrice(totalTokens > 0 ? totalRevenue / totalTokens : 0);
     }
 
     setFilteredData(chartData);
@@ -399,7 +409,7 @@ export default function ModelUsageCharts() {
       </div>
 
       {/* Contenedor para PDF */}
-      <div ref={chartRef} className="bg-white w-full max-w-4xl p-4 rounded-lg shadow">
+      <div ref={chartRef} className="bg-gray-50 w-full max-w-4xl p-4 rounded-lg shadow">
         {/* Header para PDF */}
         <div className="mb-3 text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-1">
@@ -418,18 +428,30 @@ export default function ModelUsageCharts() {
 
         {/* Estadísticas resumen */}
         <div className="mb-3 bg-gray-50 p-2 rounded-lg">
-          <h3 className="font-semibold mb-2 text-gray-800 text-sm">Summary Statistics</h3>
+          <h3 className="font-semibold mb-2 text-gray-800 text-sm">Summary of Analyzed Requests</h3>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-xs text-gray-600">Total Requests (from endpoint):</p>
-              <p className="text-base font-bold text-blue-600">
+              <p className="text-xs text-gray-600">Total requests received: </p>
+              <p className="text-base font-bold text-blue-600" title="This number represents the total requests the server has received in the queried period.">
                 {totalRequests}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Filtered Requests (shown in chart):</p>
-              <p className="text-base font-bold text-green-600">
-                {filteredData.reduce((sum, item) => sum + item.value, 0)}
+              <p className="text-xs text-gray-600">Average requests per day:</p>
+              <p className="text-base font-bold text-green-600" title="This number represents the sum of requests that match the selected filters and are visualized in the chart below.">
+                {filteredData.length > 0 ? (filteredData.reduce((sum, item) => sum + item.value, 0) / filteredData.length).toFixed(2) : 0}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600">Total tokens processed:</p>
+              <p className="text-base font-bold text-purple-600" title="Sum of input and output tokens for all filtered requests.">
+                {dailyTokens.reduce((sum, item) => sum + item.value, 0)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600">Token price (Total Revenue / Total Tokens):</p>
+              <p className="text-base font-bold text-orange-600" title="Calculated as total revenue divided by total tokens.">
+                ⁓${tokenPrice.toFixed(6)} USDC
               </p>
             </div>
           </div>
@@ -439,52 +461,49 @@ export default function ModelUsageCharts() {
         {royaltiesData && (() => {
           const royalties = getRoyaltiesData();
           return royalties && (
-            <div className="mb-3 bg-blue-50 p-2 rounded-lg">
+            <div className="mb-3 p-2 rounded-lg">
               <h3 className="font-semibold mb-2 text-gray-800 text-sm">Royalties Distribution (USDC)</h3>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   {royalties.hypercycle && (
-                    <div className="bg-white p-1.5 rounded text-xs">
+                    <div className="p-1.5 rounded text-xs">
                       <p className="font-medium text-gray-700">Hypercycle</p>
-                      <p 
-                        className="text-blue-600 font-bold cursor-help" 
+                      <p
+                        className="text-blue-600 font-bold cursor-help"
                         title={`Exact value: $${royalties.hypercycle.usdc}`}
                       >
                         ${royalties.hypercycle.usdc.toFixed(2)}
                       </p>
-                      <p className="text-gray-500">{royalties.hypercycle.calls} calls</p>
                     </div>
                   )}
                   {royalties.nodeOperator && (
-                    <div className="bg-white p-1.5 rounded text-xs">
+                    <div className="p-1.5 rounded text-xs">
                       <p className="font-medium text-gray-700">Node Operator</p>
-                      <p 
-                        className="text-green-600 font-bold cursor-help" 
+                      <p
+                        className="text-green-600 font-bold cursor-help"
                         title={`Exact value: $${royalties.nodeOperator.usdc}`}
                       >
                         ${royalties.nodeOperator.usdc.toFixed(2)}
                       </p>
-                      <p className="text-gray-500">{royalties.nodeOperator.calls} calls</p>
                     </div>
                   )}
                 </div>
                 <div className="space-y-1">
                   {royalties.licenseOwner && (
-                    <div className="bg-white p-1.5 rounded text-xs">
+                    <div className="p-1.5 rounded text-xs">
                       <p className="font-medium text-gray-700">License Owner</p>
-                      <p 
-                        className="text-purple-600 font-bold cursor-help" 
+                      <p
+                        className="text-purple-600 font-bold cursor-help"
                         title={`Exact value: $${royalties.licenseOwner.usdc}`}
                       >
                         ${royalties.licenseOwner.usdc.toFixed(2)}
                       </p>
-                      <p className="text-gray-500">{royalties.licenseOwner.calls} calls</p>
                     </div>
                   )}
-                  <div className="bg-white p-1.5 rounded text-xs border-2 border-gray-300">
+                  <div className="p-1.5 rounded text-xs">
                     <p className="font-medium text-gray-700">Total Revenue</p>
-                    <p 
-                      className="text-lg font-bold text-gray-800 cursor-help" 
+                    <p
+                      className="text-lg font-bold text-gray-800 cursor-help"
                       title={`Exact value: $${royalties.total}`}
                     >
                       ${royalties.total.toFixed(2)}
@@ -496,6 +515,38 @@ export default function ModelUsageCharts() {
           );
         })()}
 
+        {/* Daily Revenue Bar Chart */}
+        <div className="bg-white rounded-lg shadow-sm border p-2 mt-4">
+          <h3 className="font-semibold mb-2 text-gray-800 text-sm">Estimated Revenue per Day (USDC)</h3>
+          {dailyRevenue.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={dailyRevenue}>
+                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval={0} angle={-20} textAnchor="end" height={40} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 9 }} />
+                <Tooltip content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-white border rounded shadow px-2 py-1 text-xs">
+                        <span className="font-semibold">{label}:</span> ${payload[0].value.toFixed(2)} USDC
+                      </div>
+                    );
+                  }
+                  return null;
+                }} />
+                <Bar dataKey="value" fill="#f59e42" isAnimationActive={false}>
+                  {dailyRevenue.map((entry, index) => (
+                    <Cell key={`cell-revenue-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex justify-center items-center h-32">
+              <div className="text-gray-500 text-sm">No revenue data available for the selected filters</div>
+            </div>
+          )}
+        </div>
+        <br />
         {/* Gráfica */}
         <div className="bg-white rounded-lg shadow-sm border p-2">
           <h3 className="font-semibold mb-2 text-gray-800 text-sm">
