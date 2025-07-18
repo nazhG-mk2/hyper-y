@@ -7,6 +7,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperp
 
 export default function ModelUsageCharts() {
   const [data, setData] = useState([]);
+  const [totalRequests, setTotalRequests] = useState(0);
   const [filteredData, setFilteredData] = useState([]);
   const [royaltiesData, setRoyaltiesData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,14 +51,16 @@ export default function ModelUsageCharts() {
       setLoading(true);
       
       // Obtener datos de request logs
-      const response = await fetch(`${BACKEND_URL}/request-logs/`);
+      const response = await fetch(`${BACKEND_URL}/logs?limit=1000`);
       if (!response.ok) {
         throw new Error('Failed to fetch data');
       }
-      const logs = await response.json();
+      const logsData = await response.json();
+      const logs = logsData.logs || [];
       console.log('Fetched logs:', logs); // Debugging line
 
       setData(logs);
+      setTotalRequests(logsData.total || logs.length);
 
       // Obtener datos de royalties
       try {
@@ -173,6 +176,9 @@ export default function ModelUsageCharts() {
         const logDate = new Date(log.timestamp);
         return logDate >= startDateObj && logDate <= endDateObj;
       });
+
+      console.log('Filtered logs:', filtered.length); // Debugging line
+      
 
       // Agrupar por día
       const grouped = {};
@@ -415,18 +421,15 @@ export default function ModelUsageCharts() {
           <h3 className="font-semibold mb-2 text-gray-800 text-sm">Summary Statistics</h3>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-xs text-gray-600">Total Requests:</p>
+              <p className="text-xs text-gray-600">Total Requests (from endpoint):</p>
               <p className="text-base font-bold text-blue-600">
-                {filteredData.reduce((sum, item) => sum + item.value, 0)}
+                {totalRequests}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Average per {filterType === 'hour' ? 'Hour' : 'Day'}:</p>
+              <p className="text-xs text-gray-600">Filtered Requests (shown in chart):</p>
               <p className="text-base font-bold text-green-600">
-                {filteredData.length > 0
-                  ? Math.round(filteredData.reduce((sum, item) => sum + item.value, 0) / filteredData.length * 100) / 100
-                  : 0
-                }
+                {filteredData.reduce((sum, item) => sum + item.value, 0)}
               </p>
             </div>
           </div>
