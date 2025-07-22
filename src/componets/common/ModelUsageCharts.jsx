@@ -54,7 +54,7 @@ export default function ModelUsageCharts() {
       setLoading(true);
 
       // Obtener datos de request logs
-      const response = await fetch(`${BACKEND_URL}/logs?limit=1000`);
+      const response = await fetch(`${BACKEND_URL}/logs?limit=500`);
       if (!response.ok) {
         throw new Error('Failed to fetch data');
       }
