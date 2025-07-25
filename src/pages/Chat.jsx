@@ -15,7 +15,7 @@ import Cookies from 'js-cookie';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperpg.site/demo-backend';
 
 const Chat = () => {
-	// Estado para controlar si ya se procesó la pregunta
+	// State to control if the question has already been processed
 	const [lastQuestionId, setLastQuestionId] = useState(null);
 	const { t } = useTranslation();
 	const { AddToCurrentChat, currentChat } = useChatContext();
@@ -42,21 +42,21 @@ const Chat = () => {
 			}
 		};
 
-		handleResize(); // Para validar inicialmente
+		handleResize(); // To validate initially
 	}, [query]);
 
 	const makeLocalAskRequest = async (query) => {
 		const lang = localStorage.getItem('locale') || 'en';
 		setLoading("Consulting Agent...");
 		try {
-			// Construir el historial de chat para el mensaje
+			// Build chat history for the message
 			const messages = [];
-			// Incluir el prompt del sistema
+			// Include system prompt
 			messages.push({
 				role: 'system',
 				content: `You must answer strictly in ${lang.toUpperCase()} language. ${systemPrompt}`
 			});
-			// Incluir el historial de chat
+			// Include chat history
 			console.log('Chat history:', currentChat);
 			if (currentChat && currentChat.chat && currentChat.chat.length > 0) {
 				currentChat.chat.forEach(entry => {
@@ -66,7 +66,7 @@ const Chat = () => {
 					});
 				});
 			}
-			// Agregar el mensaje actual del usuario
+			// Add current user message
 			messages.push({ role: 'user', content: query });
 
 			setLoading("Obtaining token...");
@@ -79,16 +79,16 @@ const Chat = () => {
 				}
 			});
 
-			// Extraer el token de la respuesta
+			// Extract token from response
 			const token = requestResponse.data.token;
 			if (!token) {
 				throw new Error('No token received from request endpoint');
 			}
 
-			// Paso 2: Usar el token para obtener la respuesta del chat via streaming
+			// Step 2: Use the token to get the chat response via streaming
 			setLoading("Getting response...");
 
-			// Usar fetch para manejar el streaming
+			// Use fetch to handle streaming
 			const response = await fetch(BACKEND_URL + '/chat', {
 				method: 'POST',
 				headers: {
@@ -105,7 +105,7 @@ const Chat = () => {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
-			// Preparar para recibir el streaming
+			// Prepare to receive streaming
 			let fullAnswer = '';
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
@@ -122,7 +122,7 @@ const Chat = () => {
 
 					const chunk = decoder.decode(value, { stream: true });
 
-					// Divide por líneas y filtra las que inician con "data:"
+					// Split by lines and filter those starting with "data:"
 					const lines = chunk.split('\n').filter(line => line.startsWith('data:'));
 					setLoading(false);
 					setWriting(true);
@@ -142,7 +142,7 @@ const Chat = () => {
 				}
 
 			} finally {
-				console.log('Finalizando lectura del stream');
+				console.log('Finishing stream reading');
 				reader.releaseLock();
 
 				setWriting(false);
@@ -169,10 +169,10 @@ const Chat = () => {
 	useEffect(() => {
 		if (currentChat && currentChat.chat && currentChat.chat.length > 0) {
 			const lastMsg = currentChat.chat[currentChat.chat.length - 1];
-			// Solo si es pregunta y no se ha procesado
+			// Only if it's a question and hasn't been processed
 			if (lastMsg.type === 'question' && lastMsg.txt && lastMsg.id !== lastQuestionId) {
 				makeLocalAskRequest(lastMsg.txt);
-				setLastQuestionId(lastMsg.id || lastMsg.txt); // Usa id si existe, si no usa el texto
+				setLastQuestionId(lastMsg.id || lastMsg.txt); // Use id if exists, otherwise use text
 			}
 		}
 	}, [currentChat]);
