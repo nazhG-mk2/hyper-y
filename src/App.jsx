@@ -11,6 +11,23 @@ import Login from './pages/Login';
 import SingUp from './pages/SingUp';
 import StartScreenLayout from './layouts/StartScreenLayout';
 import BasicLayout from './layouts/BasicLayout';
+
+import * as Sentry from "@sentry/react";
+
+Sentry.init({
+  dsn: "https://e4902b89a1c9e5bcd733b2d9d50ed08e@o4509720395448320.ingest.us.sentry.io/4509720399773696",
+  // Setting this option to true will send default PII data to Sentry.
+  // For example, automatic IP address collection on events
+  sendDefaultPii: true,
+  integrations: [
+    Sentry.feedbackIntegration({
+      colorScheme: "system",
+      isNameRequired: true,
+      isEmailRequired: true,
+    })
+  ]
+});
+
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE;
 
 function App() {
