@@ -4,6 +4,7 @@ import html2pdf from 'html2pdf.js';
 
 const COLORS = ['#2563eb', '#f59e42', '#10b981', '#f43f5e', '#6366f1', '#fbbf24', '#14b8a6', '#a21caf'];
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperpg.site/demo-backend';
+const NODE_IDENTIFIER = import.meta.env.VITE_NODE_IDENTIFIER || '';
 
 export default function ModelUsageCharts() {
   const [dailyTokens, setDailyTokens] = useState([]);
@@ -19,7 +20,12 @@ export default function ModelUsageCharts() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreData, setHasMoreData] = useState(true);
+  const [currentSkip, setCurrentSkip] = useState(0);
   const chartRef = useRef(null);
+
+  const CHUNK_SIZE = 500; // Tamaño de cada lote de datos
 
   // Función para establecer el rango de fechas por defecto
   const setDefaultDateRange = (logs) => {
@@ -48,47 +54,138 @@ export default function ModelUsageCharts() {
     }
   };
 
-  // Función para obtener datos del endpoint
-  const fetchData = async () => {
+  // Función para obtener datos del endpoint con paginación
+  const fetchData = async (reset = true) => {
     try {
-      setLoading(true);
-
-      // Obtener datos de request logs
-      const response = await fetch(`${BACKEND_URL}/logs?limit=500`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
-      const logsData = await response.json();
-      const logs = logsData.logs || [];
-      console.log('Fetched logs:', logs); // Debugging line
-
-      setData(logs);
-      setTotalRequests(logsData.total || logs.length);
-
-      // Obtener datos de royalties
-      try {
-        const royaltiesResponse = await fetch(`${BACKEND_URL}/royalties`);
-        if (royaltiesResponse.ok) {
-          const royalties = await royaltiesResponse.json();
-          console.log('Fetched royalties:', royalties); // Debugging line
-          setRoyaltiesData(royalties);
+      if (reset) {
+        setLoading(true);
+        setCurrentSkip(0);
+        setData([]);
+        setHasMoreData(true);
+        
+        // Para reset=true, cargar todos los datos automáticamente
+        let allLogs = [];
+        let skip = 0;
+        let hasMore = true;
+        let totalFromServer = 0;
+        
+        while (hasMore) {
+          const response = await fetch(`${BACKEND_URL}/logs?limit=${CHUNK_SIZE}&skip=${skip}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch data');
+          }
+          const logsData = await response.json();
+          const newLogs = logsData.logs || [];
+          
+          // Guardar el total del servidor en la primera request
+          if (skip === 0) {
+            totalFromServer = logsData.total || 0;
+            setTotalRequests(totalFromServer);
+            console.log(`Total records available: ${totalFromServer}`);
+          }
+          
+          allLogs = [...allLogs, ...newLogs];
+          hasMore = newLogs.length === CHUNK_SIZE && allLogs.length < totalFromServer;
+          skip += CHUNK_SIZE;
+          
+          console.log(`Fetched ${newLogs.length} logs (skip: ${skip - CHUNK_SIZE}), total loaded: ${allLogs.length}/${totalFromServer}`);
         }
-      } catch (royaltiesError) {
-        console.warn('Error fetching royalties:', royaltiesError);
-        // No fallar si no se pueden obtener las royalties
-      }
+        
+        setData(allLogs);
+        setHasMoreData(false);
+        setCurrentSkip(skip);
+        
+        // Obtener datos de royalties
+        try {
+          const royaltiesResponse = await fetch(`${BACKEND_URL}/royalties`);
+          if (royaltiesResponse.ok) {
+            const royalties = await royaltiesResponse.json();
+            console.log('Fetched royalties:', royalties);
+            setRoyaltiesData(royalties);
+          }
+        } catch (royaltiesError) {
+          console.warn('Error fetching royalties:', royaltiesError);
+        }
 
-      // Establecer rango por defecto solo si no se ha establecido antes
-      if (!startDate && !endDate) {
-        setDefaultDateRange(logs);
-      }
+        // Establecer rango por defecto solo si no se ha establecido antes
+        if (!startDate && !endDate) {
+          setDefaultDateRange(allLogs);
+        }
+        
+        // Procesar todos los datos
+        processData(allLogs, filterType, selectedDate, startDate, endDate);
+        
+      } else {
+        // Para carga incremental (Load More)
+        setLoadingMore(true);
+        
+        const response = await fetch(`${BACKEND_URL}/logs?limit=${CHUNK_SIZE}&skip=${currentSkip}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+        const logsData = await response.json();
+        const newLogs = logsData.logs || [];
+        console.log(`Fetched ${newLogs.length} logs (skip: ${currentSkip})`);
 
-      processData(logs, filterType, selectedDate, startDate, endDate);
+        setData(prevData => [...prevData, ...newLogs]);
+        setHasMoreData(newLogs.length === CHUNK_SIZE);
+        setCurrentSkip(currentSkip + CHUNK_SIZE);
+
+        // Procesar datos con los logs actualizados
+        const allLogs = [...data, ...newLogs];
+        processData(allLogs, filterType, selectedDate, startDate, endDate);
+      }
+      
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  // Función para cargar todos los datos automáticamente
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      let allLogs = [];
+      let skip = 0;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const response = await fetch(`${BACKEND_URL}/logs?limit=${CHUNK_SIZE}&skip=${skip}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+        const logsData = await response.json();
+        const newLogs = logsData.logs || [];
+        
+        allLogs = [...allLogs, ...newLogs];
+        hasMore = newLogs.length === CHUNK_SIZE;
+        skip += CHUNK_SIZE;
+        
+        console.log(`Loaded ${allLogs.length} of ${logsData.total || 'unknown'} total logs`);
+      }
+      
+      setData(allLogs);
+      setTotalRequests(allLogs.length);
+      setHasMoreData(false);
+      setCurrentSkip(skip);
+      
+      // Procesar datos
+      processData(allLogs, filterType, selectedDate, startDate, endDate);
+      
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para cargar más datos
+  const loadMoreData = async () => {
+    if (!hasMoreData || loadingMore) return;
+    await fetchData(false);
   };
 
   // Función para procesar datos de royalties
@@ -328,18 +425,72 @@ export default function ModelUsageCharts() {
           .page-break-avoid {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            margin-top: 15px !important;
           }
           .recharts-responsive-container {
             width: 100% !important;
             height: 280px !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           .charts-grid {
             display: grid !important;
             grid-template-columns: 1fr !important;
-            gap: 15px !important;
+            gap: 10px !important;
           }
           .summary-section {
+            margin-bottom: 15px !important;
+          }
+          .chart-container {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-bottom: 15px !important;
+            margin-top: 10px !important;
+            padding: 10px !important;
+            min-height: 320px !important;
+          }
+          .chart-container:last-of-type {
+            margin-top: 20px !important;
             margin-bottom: 20px !important;
+          }
+          h1 {
+            font-size: 18px !important;
+            margin-bottom: 5px !important;
+          }
+          h2 {
+            font-size: 14px !important;
+            margin-bottom: 8px !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
+          h3 {
+            font-size: 12px !important;
+            margin-bottom: 5px !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
+          /* Evitar que las gráficas se rompan */
+          .recharts-wrapper {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            padding-top: 15px !important;
+          }
+          /* Espacio para las etiquetas superiores */
+          .recharts-cartesian-grid-horizontal line:first-child {
+            margin-top: 15px !important;
+          }
+          /* Reducir espaciado general */
+          .mb-3 {
+            margin-bottom: 8px !important;
+          }
+          .mt-3 {
+            margin-top: 8px !important;
+          }
+          .mt-4 {
+            margin-top: 10px !important;
+          }
+          .mt-8 {
+            margin-top: 15px !important;
           }
         }
       `;
@@ -353,8 +504,8 @@ export default function ModelUsageCharts() {
             : `${startDate ? new Date(startDate + 'T12:00:00').toLocaleDateString() : ''} to ${endDate ? new Date(endDate + 'T12:00:00').toLocaleDateString() : ''}`;
           
           const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `Hyper-Y-Node-Sample-Usage-Report-${dateRange.replace(/\//g, '-')}.pdf`,
+            margin: [8, 8, 8, 8], // Márgenes más pequeños para aprovechar el espacio
+            filename: `Hyper-Y${NODE_IDENTIFIER ? `-${NODE_IDENTIFIER}` : ''}-Sample-Usage-Report-${dateRange.replace(/\//g, '-')}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
               scale: 1.5,
@@ -367,11 +518,16 @@ export default function ModelUsageCharts() {
             },
             jsPDF: {
               unit: 'mm',
-              format: 'a4',
+              format: 'legal', // Cambio de 'a4' a 'legal' (216 x 356 mm / 8.5 x 14 pulgadas)
               orientation: 'portrait',
               compress: true
             },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            pagebreak: { 
+              mode: ['avoid-all', 'css', 'legacy'],
+              before: '.page-break-before',
+              after: '.page-break-after',
+              avoid: ['.page-break-avoid', '.chart-container', '.recharts-responsive-container']
+            }
           };
           
           html2pdf().set(opt).from(element).save().then(() => {
@@ -418,8 +574,13 @@ export default function ModelUsageCharts() {
     }
   };
 
+  // Función para recargar datos cuando cambian filtros
+  const refreshData = () => {
+    fetchData(true);
+  };
+
   useEffect(() => {
-    fetchData();
+    fetchData(true); // Reset = true para carga inicial
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -498,6 +659,13 @@ export default function ModelUsageCharts() {
 
           <div className="flex ml-auto gap-2 items-end">
             <button
+              onClick={refreshData}
+              disabled={loading}
+              className="bg-gray-500 text-white h-8 px-4 py-1 rounded hover:bg-gray-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Loading...' : 'Refresh'}
+            </button>
+            <button
               onClick={downloadData}
               className="bg-blue-500 text-white h-8 px-4 py-1 rounded hover:bg-blue-600"
             >
@@ -509,7 +677,46 @@ export default function ModelUsageCharts() {
             >
               Export PDF
             </button>
+            {hasMoreData && (
+              <>
+                <button
+                  onClick={loadMoreData}
+                  disabled={loadingMore}
+                  className="bg-green-500 text-white h-8 px-4 py-1 rounded hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {loadingMore ? 'Loading...' : 'Load More'}
+                </button>
+                <button
+                  onClick={loadAllData}
+                  disabled={loading}
+                  className="bg-purple-500 text-white h-8 px-4 py-1 rounded hover:bg-purple-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  Load All
+                </button>
+              </>
+            )}
           </div>
+        </div>
+        
+        {/* Indicador de datos cargados */}
+        <div className="text-center text-xs text-gray-500 mt-1">
+          {loading ? (
+            <span className="text-blue-500">Loading all data automatically...</span>
+          ) : (
+            <>
+              Loaded {data.length} of {totalRequests} total requests
+              {data.length >= totalRequests ? (
+                <span className="ml-2 text-green-500">✓ All data loaded</span>
+              ) : (
+                <>
+                  {loadingMore && <span className="ml-2 text-blue-500">Loading more...</span>}
+                  {hasMoreData && !loadingMore && (
+                    <span className="ml-2 text-orange-500">({totalRequests - data.length} remaining)</span>
+                  )}
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -518,7 +725,7 @@ export default function ModelUsageCharts() {
         {/* Header para PDF */}
         <div className="mb-3 text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-1">
-            Hyper-Y [Node] -- Sample Usage Report
+            Hyper-Y {NODE_IDENTIFIER && `[${NODE_IDENTIFIER}]`} -- Sample Usage Report
           </h1>
           <p className="text-sm text-gray-600">
             {filterType === 'hour'
@@ -566,7 +773,7 @@ export default function ModelUsageCharts() {
         </div>
 
         {/* PAGE 2: Revenue Analysis */}
-        <div className="page-break-before">
+        <div className="page-break-before" style={{ minHeight: '200px' }}>
           <h2 className="text-lg font-bold text-gray-800 mb-3">Revenue Analysis</h2>
           
           {/* Royalties Data */}
@@ -628,10 +835,10 @@ export default function ModelUsageCharts() {
           })()}
 
           {/* Daily Revenue Bar Chart */}
-          <div className="bg-white rounded-lg shadow-sm border p-2 mt-4 page-break-avoid">
+          <div className="bg-white rounded-lg shadow-sm border p-2 mt-4 page-break-avoid chart-container">
             <h3 className="font-semibold mb-2 text-gray-800 text-sm">Estimated Revenue per Day (USDC)</h3>
             {dailyRevenue.length > 0 && dailyRevenue.some(item => item.value > 0) ? (
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={dailyRevenue}>
                   <XAxis 
                     dataKey="label" 
@@ -674,17 +881,17 @@ export default function ModelUsageCharts() {
         </div>
 
         {/* PAGE 3: Request Statistics */}
-        <div className="page-break-before">
+        <div className="page-break-before" style={{ minHeight: '300px' }}>
           <h2 className="text-lg font-bold text-gray-800 mb-3">Request Statistics</h2>
           
           {/* Gráfica de Requests */}
-          <div className="bg-white rounded-lg shadow-sm border p-2 page-break-avoid">
+          <div className="bg-white rounded-lg shadow-sm border p-2 page-break-avoid chart-container">
             <h3 className="font-semibold mb-2 text-gray-800 text-sm">
               Request Logs - {filterType === 'hour' ? 'Hourly' : 'Daily'} Distribution
             </h3>
 
             {filteredData.length > 0 && filteredData.some(item => item.value > 0) ? (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={270}>
                 <BarChart data={filteredData}>
                 <XAxis
                   dataKey="label"
@@ -724,13 +931,13 @@ export default function ModelUsageCharts() {
           )}
           </div>
 
-          {/* Token Usage Chart */}
-          <div className="bg-white rounded-lg shadow-sm border p-2 mt-4 page-break-avoid">
+          {/* Token Usage Chart - Con espacio adicional antes */}
+          <div className="bg-white rounded-lg shadow-sm border p-2 mt-8 page-break-avoid chart-container" style={{ marginTop: '40px' }}>
             <h3 className="font-semibold mb-2 text-gray-800 text-sm">
               Token Usage - {filterType === 'hour' ? 'Hourly' : 'Daily'} Distribution
             </h3>
             {dailyTokens.length > 0 && dailyTokens.some(item => item.value > 0) ? (
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={dailyTokens}>
                   <XAxis
                     dataKey="label"
