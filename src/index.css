@@ -199,3 +199,15 @@ input[type="text"] {
   -webkit-mask-position: center;
   mask-position: center;
 }
+
+/* Hides the element by default */
+.hide-in-small-screens {
+  display: none;
+}
+
+/* Shows it as a block element on small screens and up (≥ 640px) */
+@media (min-width: 640px) {
+  .hide-in-small-screens {
+    display: block;
+  }
+}

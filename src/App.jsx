@@ -13,6 +13,7 @@ import StartScreenLayout from './layouts/StartScreenLayout';
 import BasicLayout from './layouts/BasicLayout';
 
 import * as Sentry from "@sentry/react";
+import SentryWidget from './componets/SentryWidget';
 
 Sentry.init({
   dsn: "https://e4902b89a1c9e5bcd733b2d9d50ed08e@o4509720395448320.ingest.us.sentry.io/4509720399773696",
@@ -24,6 +25,7 @@ Sentry.init({
       colorScheme: "system",
       isNameRequired: true,
       isEmailRequired: true,
+      autoInject: false,
     })
   ]
 });
@@ -53,6 +55,7 @@ function App() {
           </Router>
         </CurrentChatProvider>
       </ChatProvider>
+      <SentryWidget />
     </GlobalProvider>
   );
 }
