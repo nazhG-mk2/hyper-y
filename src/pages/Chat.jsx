@@ -19,7 +19,7 @@ const availableBackends = [
     { src: "/openai.png", label: "gpt-4o", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
     { src: "/openai.png", label: "gpt-3.5-turbo", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
     { src: "/openai.png", label: "gpt-4o-mini", url: "https://llmdemos.hyperpg.site/backend-hypery-6" },
-    { src: "/groq.png", label: "Groq", url: "https://llmdemos.hyperpg.site/backend-hypery-7" },
+    { src: "/groq.png", label: "llama-3.3-70b", url: "https://llmdemos.hyperpg.site/backend-hypery-7" },
 ];
 
 const Chat = () => {
