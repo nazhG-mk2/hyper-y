@@ -12,7 +12,15 @@ import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://llmdemos.hyperpg.site/demo-backend';
+const availableBackends = [
+    { src: "/groq.png", label: "qwen3:8b", url: "https://llmdemos.hyperpg.site/backend-hypery-1" },
+    { src: "/openai.png", label: "gemma3:4b", url: "https://llmdemos.hyperpg.site/backend-hypery-2" },
+    { src: "/claude.png", label: "mistral:7b", url: "https://llmdemos.hyperpg.site/backend-hypery-3" },
+    { src: "/gemini.png", label: "gpt-3.5-turbo", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
+    { src: "/grok.png", label: "gpt-4o", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
+    { src: "/openai.png", label: "gpt-4o-mini", url: "https://llmdemos.hyperpg.site/backend-hypery-6" },
+    { src: "/claude.png", label: "groq/llama-3.3-70b-versatile", url: "https://llmdemos.hyperpg.site/backend-hypery-7" },
+];
 
 const Chat = () => {
 	// State to control if the question has already been processed
@@ -26,6 +34,7 @@ const Chat = () => {
 	const [loading, setLoading] = useState(false);
 	const [writing, setWriting] = useState(false);
 	const [toWrite, setToWrite] = useState({});
+	const [selected, setSelected] = useState('');
 
 	const [isExpanded, setIsExpanded] = useState(false);
 
@@ -70,7 +79,8 @@ const Chat = () => {
 			messages.push({ role: 'user', content: query });
 
 			setLoading("Obtaining token...");
-			const requestResponse = await axios.post(BACKEND_URL + '/request', {
+			const backendToUse = selected.url || availableBackends[0].url; // Default to the first backend if none is selected
+			const requestResponse = await axios.post(backendToUse + '/request', {
 				messages: messages,
 				think: false
 			}, {
@@ -89,7 +99,7 @@ const Chat = () => {
 			setLoading("Getting response...");
 
 			// Use fetch to handle streaming
-			const response = await fetch(BACKEND_URL + '/chat', {
+			const response = await fetch(backendToUse + '/chat', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -241,7 +251,32 @@ const Chat = () => {
 						)
 					}
 				</div>
-				<div></div>
+				<div className="flex flex-col-reverse z-20 gap-2 max-h-12 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-56 right-5">
+					{availableBackends.map((backend, index, arr) => (
+						<div
+							key={index}
+							className={`group transition-all duration-400 item flex gap-2 justify-end items-center ${selected.url === backend.url ? 'order-first ' : ''}`}
+							onClick={() => setSelected(backend)}
+						>
+							<span className="max-w-0 p-2 bg-white rounded-lg bg-opacity-90 group-hover:max-w-[200px] opacity-0 group-hover:opacity-100 transition-all duration-300 text-gray-700 font-semibold whitespace-nowrap overflow-hidden">
+								{backend.label}
+							</span>
+							<div
+								className={`w-9 h-9 rounded-full overflow-hidden transition-transform duration-300
+								${index === 0 ? "group-hover:-translate-x-1" : ""}
+								${index === 1 || index === arr.length - 1 ? "group-hover:-translate-x-0.5" : ""}
+								${selected.url === backend.url ? "ring-2 ring-primary mr-1" : ""}
+								`}
+							>
+								<img
+									src={backend.src}
+									className="w-full h-full object-cover scale-[1.2]"
+									alt={backend.label}
+								/>
+							</div>
+						</div>
+					))}
+				</div>
 			</section >
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
@@ -256,6 +291,7 @@ const Chat = () => {
 						}}
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') {
+								e.preventDefault(); // Prevenir el salto de línea
 								if (!query || query.trim() === '') {
 									console.error('Cannot send an empty query');
 									return;
