@@ -209,7 +209,7 @@ const Chat = () => {
 		<div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
 			<section
 				ref={chatref}
-				className={`${chatStyles.chat} flex justify-end px-6 md:px-2`}>
+				className={`${chatStyles.chat} flex justify-end px-6 md:px-2 mr-20`}>
 				<div className="flex flex-1 flex-col gap-5 max-w-full overflow-visible">
 					{
 						currentChat?.chat.map((msg, index) => (
