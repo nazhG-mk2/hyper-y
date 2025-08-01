@@ -13,11 +13,11 @@ import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
 const availableBackends = [
-    { src: "/groq.png", label: "qwen3:8b", url: "https://llmdemos.hyperpg.site/backend-hypery-1" },
-    { src: "/gemini.png", label: "gemma3:4b", url: "https://llmdemos.hyperpg.site/backend-hypery-2" },
-    { src: "/grok.png", label: "mistral:7b", url: "https://llmdemos.hyperpg.site/backend-hypery-3" },
-    { src: "/openai.png", label: "OpenAI", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
-    { src: "/openai.png", label: "OpenAI", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
+    { src: "/qwen.png", label: "qwen3:8b", url: "https://llmdemos.hyperpg.site/backend-hypery-1" },
+    { src: "/gemma.png", label: "gemma3:4b", url: "https://llmdemos.hyperpg.site/backend-hypery-2" },
+    { src: "/mistral.png", label: "mistral:7b", url: "https://llmdemos.hyperpg.site/backend-hypery-3" },
+    { src: "/openai.png", label: "gpt-4o", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
+    { src: "/openai.png", label: "gpt-3.5-turbo", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
     { src: "/openai.png", label: "gpt-4o-mini", url: "https://llmdemos.hyperpg.site/backend-hypery-6" },
     { src: "/groq.png", label: "Groq", url: "https://llmdemos.hyperpg.site/backend-hypery-7" },
 ];
