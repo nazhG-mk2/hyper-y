@@ -14,12 +14,12 @@ import Cookies from 'js-cookie';
 
 const availableBackends = [
     { src: "/groq.png", label: "qwen3:8b", url: "https://llmdemos.hyperpg.site/backend-hypery-1" },
-    { src: "/openai.png", label: "gemma3:4b", url: "https://llmdemos.hyperpg.site/backend-hypery-2" },
-    { src: "/claude.png", label: "mistral:7b", url: "https://llmdemos.hyperpg.site/backend-hypery-3" },
-    { src: "/gemini.png", label: "gpt-3.5-turbo", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
-    { src: "/grok.png", label: "gpt-4o", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
+    { src: "/gemini.png", label: "gemma3:4b", url: "https://llmdemos.hyperpg.site/backend-hypery-2" },
+    { src: "/grok.png", label: "mistral:7b", url: "https://llmdemos.hyperpg.site/backend-hypery-3" },
+    { src: "/openai.png", label: "gpt-3.5-turbo", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
+    { src: "/openai.png", label: "gpt-4o", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
     { src: "/openai.png", label: "gpt-4o-mini", url: "https://llmdemos.hyperpg.site/backend-hypery-6" },
-    { src: "/claude.png", label: "groq/llama-3.3-70b-versatile", url: "https://llmdemos.hyperpg.site/backend-hypery-7" },
+    { src: "/groq.png", label: "groq/llama-3.3-70b-versatile", url: "https://llmdemos.hyperpg.site/backend-hypery-7" },
 ];
 
 const Chat = () => {
