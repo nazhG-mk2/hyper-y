@@ -8,7 +8,7 @@ const BasicLayout = () => {
         <div className={`${layoutStyles['main-layout']} drawer`}>
             <input id="mobile-drawer" type="checkbox" className="drawer-toggle" />
             <Header className={layoutStyles['main__header']} />
-            <main className={`col-start-1 col-end-3 max-w-[100vw]`}>
+            <main className={`col-start-1 col-end-3 max-w-[100dvw]`}>
                 <Outlet />
             </main>
             <GradientBackground />

@@ -12,7 +12,7 @@ const MainLayout = () => {
             <Header className={layoutStyles['main__header']} />
             <SidebarMobile />
             <Sidebar className='lg:hidden' />
-            <main className={`${layoutStyles['main__content']} !w-full max-w-[100vw]`}>
+            <main className={`${layoutStyles['main__content']} !w-full max-w-[100dvw]`}>
                 <Outlet />
             </main>
             <GradientBackground />
