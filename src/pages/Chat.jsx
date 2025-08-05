@@ -251,7 +251,7 @@ const Chat = () => {
 						)
 					}
 				</div>
-				<div className="flex flex-col-reverse z-20 gap-2 max-h-12 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] hover:pr-0 fixed bottom-56 right-5">
+				<div className="flex flex-col-reverse z-20 gap-2 max-h-12 md:max-h-10 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] md:hover:pr-2 hover:pr-0 fixed bottom-56 md:bottom-[125px] right-5 md:right-0	">
 					{availableBackends.map((backend, index, arr) => (
 						<div
 							key={index}
@@ -265,7 +265,7 @@ const Chat = () => {
 								className={`w-9 h-9 rounded-full overflow-hidden transition-transform duration-300
 								${index === 0 ? "group-hover:-translate-x-1" : ""}
 								${index === 1 || index === arr.length - 1 ? "group-hover:-translate-x-0.5" : ""}
-								${selected.url === backend.url ? "ring-2 ring-primary mr-1" : ""}
+								${selected.url === backend.url ? "ring-2 md:ring-1 ring-primary mr-1" : ""}
 								`}
 							>
 								<img
