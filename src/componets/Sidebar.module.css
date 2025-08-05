@@ -5,7 +5,7 @@
     "chat-list"
     "new-chat"
     "footer";
-    height: calc(100dvh - 82px);
+    height: calc(100dvh);
 }
 
 .chat-list {
