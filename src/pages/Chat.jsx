@@ -251,12 +251,15 @@ const Chat = () => {
 						)
 					}
 				</div>
-				<div className="flex flex-col-reverse z-20 gap-2 max-h-12 md:max-h-10 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] md:hover:pr-2 hover:pr-0 fixed bottom-56 md:bottom-[125px] right-5 md:right-0	">
+				{/* BUBBLES */}
+				<div className="flex flex-col-reverse z-20 gap-2 max-h-12 md:max-h-10 self-end transition-all duration-1000 hover:max-h-full overflow-y-hidden hover:overflow-y-auto pr-[15px] md:hover:pr-2 hover:pr-0 fixed bottom-56 md:bottom-[125px] right-5 md:right-0">
 					{availableBackends.map((backend, index, arr) => (
 						<div
 							key={index}
 							className={`group transition-all duration-400 item flex gap-2 justify-end items-center ${selected.url === backend.url ? 'order-first ' : ''}`}
-							onClick={() => setSelected(backend)}
+							onClick={() => {
+								setSelected(backend);
+							}}
 						>
 							<span className="max-w-0 p-2 bg-white rounded-lg bg-opacity-90 group-hover:max-w-[200px] opacity-0 group-hover:opacity-100 transition-all duration-300 text-gray-700 font-semibold whitespace-nowrap overflow-hidden">
 								{backend.label}
@@ -265,7 +268,7 @@ const Chat = () => {
 								className={`w-9 h-9 rounded-full overflow-hidden transition-transform duration-300
 								${index === 0 ? "group-hover:-translate-x-1" : ""}
 								${index === 1 || index === arr.length - 1 ? "group-hover:-translate-x-0.5" : ""}
-								${selected.url === backend.url ? "ring-2 md:ring-1 ring-primary mr-1" : ""}
+								${selected.url === backend.url ? "ring-2 md:ring-1 md:mb-1 ring-primary mr-1" : ""}
 								`}
 							>
 								<img
@@ -277,6 +280,7 @@ const Chat = () => {
 						</div>
 					))}
 				</div>
+				{/* END BUBBLES */}
 			</section >
 			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
