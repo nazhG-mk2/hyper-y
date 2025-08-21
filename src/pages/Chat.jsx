@@ -13,13 +13,13 @@ import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
 const availableBackends = [
-    { src: "/gpt.png", label: "gpt-4o", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
-    { src: "/groq.png", label: "llama-3.3-70b", url: "https://llmdemos.hyperpg.site/backend-hypery-7" },
-    { src: "/qwen.png", label: "qwen3:8b", url: "https://llmdemos.hyperpg.site/backend-hypery-1" },
-    { src: "/gemma.png", label: "gemma3:4b", url: "https://llmdemos.hyperpg.site/backend-hypery-2" },
-    { src: "/mistral.png", label: "mistral:7b", url: "https://llmdemos.hyperpg.site/backend-hypery-3" },
-    { src: "/gpt.png", label: "gpt-4o-mini", url: "https://llmdemos.hyperpg.site/backend-hypery-6" },
-    { src: "/gpt.png", label: "gpt-3.5-turbo", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
+	{ src: "/gpt.png", label: "gpt-4o", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
+	{ src: "/groq.png", label: "llama-3.3-70b", url: "https://llmdemos.hyperpg.site/backend-hypery-7" },
+	{ src: "/qwen.png", label: "qwen3:8b", url: "https://llmdemos.hyperpg.site/backend-hypery-1" },
+	{ src: "/gemma.png", label: "gemma3:4b", url: "https://llmdemos.hyperpg.site/backend-hypery-2" },
+	{ src: "/mistral.png", label: "mistral:7b", url: "https://llmdemos.hyperpg.site/backend-hypery-3" },
+	{ src: "/gpt.png", label: "gpt-4o-mini", url: "https://llmdemos.hyperpg.site/backend-hypery-6" },
+	{ src: "/gpt.png", label: "gpt-3.5-turbo", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
 ];
 
 const Chat = () => {
@@ -68,7 +68,9 @@ const Chat = () => {
 			// Include chat history
 			console.log('Chat history:', currentChat);
 			if (currentChat && currentChat.chat && currentChat.chat.length > 0) {
-				currentChat.chat.forEach(entry => {
+				const maxHistory = 10; // Limit to the last 10 entries
+				const truncatedHistory = currentChat.chat.slice(-maxHistory);
+				truncatedHistory.forEach(entry => {
 					messages.push({
 						role: entry.type === 'question' ? 'user' : 'assistant',
 						content: entry.txt
