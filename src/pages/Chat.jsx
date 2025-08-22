@@ -217,7 +217,7 @@ const Chat = () => {
 	}, [location, navigate]);
 
 	return (
-		<div className={`${chatStyles['chat-grid']} py-6 font-poppins md:text-sm`}>
+		<div className={`${chatStyles['chat-grid']} md:py-2 py-6 font-poppins md:text-sm`}>
 			<section
 				ref={chatref}
 				className={`${chatStyles.chat} flex justify-end px-6 md:px-2 mr-20`}>
@@ -293,7 +293,7 @@ const Chat = () => {
 				</div>
 				{/* END BUBBLES */}
 			</section >
-			< section className={`${chatStyles['new-message']} flex justify-center pt-6 gap-2 px-6`}>
+			< section className={`${chatStyles['new-message']} flex justify-center md:pt-2 pt-6 gap-2 px-6`}>
 				<div className="join gap-1 items-center bg-[#EBEBEB] text-[#747775] px-3 w-2/3 md:w-full disabled:bg-[#EBEBEB] disabled:text-[#747775] disabled:cursor-progress">
 					<textarea
 						value={query}
