@@ -68,18 +68,27 @@ const Chat = () => {
 			// Include chat history
 			console.log('Chat history:', currentChat);
 			if (currentChat && currentChat.chat && currentChat.chat.length > 0) {
-				const maxHistory = 10; // Limit to the last 10 entries
+				const maxHistory = 10;
 				const truncatedHistory = currentChat.chat.slice(-maxHistory);
+				const uniqueMessages = new Set();
+				const maxMessageLength = 150; // Define the maximum length for messages
 				truncatedHistory.forEach(entry => {
-					messages.push({
-						role: entry.type === 'question' ? 'user' : 'assistant',
-						content: entry.txt
-					});
+					let messageContent = entry.txt.trim();
+					// Ensure truncation for assistant messages
+					if (entry.type === "response" && messageContent.length > maxMessageLength) {
+						messageContent = messageContent.slice(0, maxMessageLength) + '...'; // Truncate and add ellipsis
+					}
+
+					if (messageContent !== '' && !uniqueMessages.has(messageContent)) {
+						console.log('Adding unique message:', messageContent.length);
+						uniqueMessages.add(messageContent);
+						messages.push({
+							role: entry.type === 'question' ? 'user' : 'assistant',
+							content: messageContent
+						});
+					}
 				});
 			}
-			// Add current user message
-			messages.push({ role: 'user', content: query });
-
 			setLoading("Obtaining token...");
 			const backendToUse = selected.url || availableBackends[0].url; // Default to the first backend if none is selected
 			const requestResponse = await axios.post(backendToUse + '/request', {
@@ -297,12 +306,12 @@ const Chat = () => {
 						}}
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') {
-								e.preventDefault(); // Prevenir el salto de línea
+								e.preventDefault(); // Prevent line breaks
 								if (!query || query.trim() === '') {
 									console.error('Cannot send an empty query');
 									return;
 								}
-								handleAddQuestion(query)
+								handleAddQuestion(query);
 							}
 						}}
 						disabled={loading}

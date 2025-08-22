@@ -5,7 +5,7 @@
     "chat"
     "suggestions"
     "new-message";
-  height: calc(100vh);
+  height: calc(90vh);
 }
 
 .chat {
