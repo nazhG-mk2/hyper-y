@@ -5,7 +5,13 @@
     "chat"
     "suggestions"
     "new-message";
-  height: calc(90vh);
+  height: 80vh;
+}
+
+@media (min-width: 900px) {
+  .chat-grid {
+    height: 90vh;
+  }
 }
 
 .chat {
