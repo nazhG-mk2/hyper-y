@@ -5,12 +5,12 @@
     "chat"
     "suggestions"
     "new-message";
-  height: 80vh;
+  height: 80dvh;
 }
 
 @media (min-width: 900px) {
   .chat-grid {
-    height: 90vh;
+    height: 90dvh;
   }
 }
 
