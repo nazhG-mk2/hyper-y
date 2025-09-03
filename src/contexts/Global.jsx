@@ -18,6 +18,7 @@ const initialState = {
     token: localStorage.getItem('token') || generateMockToken(), // User token for chat API
     activeChat: null, // Active chat
     prompt: localStorage.getItem('prompt') || '', // System prompt editable
+    showIframe: false,
 };
 
 // Set the local storage if it doesn't exist
@@ -36,8 +37,12 @@ export const GlobalProvider = ({ children }) => {
         localStorage.setItem('prompt', newPrompt);
     };
 
+    // Control del iframe de estudio
+    const showStudyIframe = () => setState(prev => ({ ...prev, showIframe: true }));
+    const hideStudyIframe = () => setState(prev => ({ ...prev, showIframe: false }));
+
     return (
-        <context.Provider value={{ state, setPrompt }}>
+        <context.Provider value={{ state, setPrompt, showStudyIframe, hideStudyIframe }}>
             {children}
         </context.Provider>
     );
