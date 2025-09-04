@@ -21,10 +21,10 @@ const LanguageSwitcher = () => {
 
     return (
         <div className="dropdown dropdown-bottom dropdown-end">
-            <div tabIndex={0} role="button" className="m-1 border-none filter brightness-100">
-                <FaGlobe className="w-7 sm:w-6 h-7 sm:h-6 my-auto text-white" />
+            <div tabIndex={0} role="button" className="m-1 hover:text-gray-400 border-none filter brightness-100">
+                <FaGlobe size={24} className="my-auto hover:text-gray-400 text-white" />
             </div>
-            <ul tabIndex={0} className="dropdown-content menu mt-6 bg-light opacity-100 rounded-box z-[1] w-52 p-2 shadow">
+            <ul tabIndex={0} className="dropdown-content text-white menu mt-6 bg-opacity-50 bg-slate-400 rounded-box z-[1] w-52 p-2 shadow">
                 <li>
                     <button className='focus:text-dark' onClick={() => changeLanguage('en')}>English</button>
                 </li>

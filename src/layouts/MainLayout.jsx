@@ -32,12 +32,13 @@ const MainLayout = () => {
                 <div className="w-screen row-start-2 row-end-3 relative">
                     <button
                         onClick={() => hideStudyIframe()}
-                        className="absolute top-4 right-4 z-50 bg-white text-black rounded px-3 py-1 shadow-md hover:bg-gray-100"
+                        className="absolute top-6 right-4 z-50 rounded-full bg-red-200 text-black h-6 w-6 shadow-md hover:bg-gray-100"
                         aria-label="Cerrar estudio"
                     >
-                        X
+                        {/* close icon */}
+                        ✕
                     </button>
-                    <iframe title="study-iframe" src="http://144.126.215.186/webchat" className="w-full h-full" frameBorder="0" />
+                    <iframe title="study-iframe" src="https://hyper-ystudygenie.academy" className="w-full h-full" frameBorder="0" />
                 </div>
             )}
 
