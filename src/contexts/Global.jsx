@@ -19,6 +19,7 @@ const initialState = {
     activeChat: null, // Active chat
     prompt: localStorage.getItem('prompt') || '', // System prompt editable
     showIframe: false,
+    iframeLoading: true,
 };
 
 // Set the local storage if it doesn't exist
@@ -38,11 +39,14 @@ export const GlobalProvider = ({ children }) => {
     };
 
     // Control del iframe de estudio
-    const showStudyIframe = () => setState(prev => ({ ...prev, showIframe: true }));
-    const hideStudyIframe = () => setState(prev => ({ ...prev, showIframe: false }));
+    const showStudyIframe = () => setState(prev => ({ ...prev, showIframe: true, iframeLoading: true }));
+    const hideStudyIframe = () => setState(prev => ({ ...prev, showIframe: false, iframeLoading: true }));
+
+    // Control del loader del iframe
+    const setIframeLoading = (loading) => setState(prev => ({ ...prev, iframeLoading: loading }));
 
     return (
-        <context.Provider value={{ state, setPrompt, showStudyIframe, hideStudyIframe }}>
+        <context.Provider value={{ state, setPrompt, showStudyIframe, hideStudyIframe, setIframeLoading }}>
             {children}
         </context.Provider>
     );

@@ -8,6 +8,7 @@ import { GlobalContext } from '../contexts/Global';
 import { defaultPrompt } from '../contexts/Chat';
 import { MdBuild } from 'react-icons/md';
 import { AiOutlineTool } from 'react-icons/ai';
+import { useRef } from 'react';
 
 const VITE_BASE_ROUTE = import.meta.env.VITE_BASE_ROUTE || '';
 
@@ -38,8 +39,9 @@ const Header = ({
   className = '',
 }) => {
   const [showPromptModal, setShowPromptModal] = useState(false);
-  const { state, setPrompt, showStudyIframe } = GlobalContext();
+  const { state, setPrompt, showStudyIframe, hideStudyIframe, setIframeLoading } = GlobalContext();
   const prompt = state.prompt || defaultPrompt;
+  const summaryRef = useRef(null);
   return (
     <header className={`${className} content-center items-center p-4 md:px-2 pb-2 border-b-2 lg:border-b lg:bg-transparent bg-primary border-primary`}>
       <div className="flex transition-all justify-between w-full items-center">
@@ -56,7 +58,7 @@ const Header = ({
         <img className='h-6 block lg:hidden' src={`${VITE_BASE_ROUTE}/logo2.png`} alt="" />
         <div className="flex gap-2">
           <FaEdit
-           size={24}
+            size={24}
             className=" my-auto cursor-pointer hover:text-gray-400 text-white"
             title="Editar prompt"
             onClick={() => setShowPromptModal(true)}
@@ -66,8 +68,14 @@ const Header = ({
             <div tabIndex={0} role="button" className="hover:text-gray-400 text-white m-1 bg-none border-none">
               <MdBuild size={24} title="Tools" />
             </div>
-            <ul tabIndex={0} className="dropdown-content menu mt-6 bg-opacity-50 bg-slate-400 rounded-box z-1 w-52 p-2 shadow-sm text-white">
-              <li><a>
+            <ul tabIndex={0} className="dropdown-content menu mt-6 bg-opacity-50 bg-slate-400 rounded-box w-52 z-50 p-2 shadow-sm text-white">
+              <li><a
+                onClick={() => {
+
+                  setIframeLoading(false);
+                  hideStudyIframe()
+                }}
+              >
                 <FaRobot size={20} title="HyperY Core (default)" />
                 <span>HyperY Core</span>
               </a></li>

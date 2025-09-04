@@ -6,12 +6,12 @@ import layoutStyles from './Layout.module.css'
 import { Outlet } from 'react-router-dom';
 import { GlobalContext } from '../contexts/Global';
 
-import { useState } from 'react';
 
 const MainLayout = () => {
     const { state, hideStudyIframe } = GlobalContext();
     const showIframe = state?.showIframe;
-    const [iframeLoading, setIframeLoading] = useState(true);
+    const iframeLoading = state?.iframeLoading;
+    const { setIframeLoading } = GlobalContext();
 
     return (
         <div className={`${showIframe ? "grid grid-rows-[auto_1fr] w-screen h-screen" : layoutStyles['main-layout']} drawer`}>
@@ -33,8 +33,11 @@ const MainLayout = () => {
             {showIframe && (
                 <div className="w-screen row-start-2 row-end-3 relative">
                     <button
-                        onClick={() => hideStudyIframe()}
-                        className="absolute top-6 right-4 z-50 rounded-full bg-red-200 text-black h-6 w-6 shadow-md hover:bg-gray-100"
+                        onClick={() => {
+                            setIframeLoading(true);
+                            hideStudyIframe();
+                        }}
+                        className="absolute top-6 right-5 z-50 rounded-full bg-red-200 text-black h-6 w-6 shadow-md hover:bg-gray-100"
                         aria-label="Cerrar estudio"
                     >
                         {/* close icon */}
