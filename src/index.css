@@ -189,18 +189,6 @@ input[type="text"] {
   }
 }
 
-.coloreada {
-  @apply bg-primary;
-  -webkit-mask-image: url('/ruta/imagen.png');
-  mask-image: url('/ruta/imagen.png');
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-position: center;
-  mask-position: center;
-}
-
 /* Hides the element by default */
 .hide-in-small-screens {
   display: none;
