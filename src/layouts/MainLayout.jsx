@@ -6,10 +6,12 @@ import layoutStyles from './Layout.module.css'
 import { Outlet } from 'react-router-dom';
 import { GlobalContext } from '../contexts/Global';
 
+import { useState } from 'react';
+
 const MainLayout = () => {
     const { state, hideStudyIframe } = GlobalContext();
-
     const showIframe = state?.showIframe;
+    const [iframeLoading, setIframeLoading] = useState(true);
 
     return (
         <div className={`${showIframe ? "grid grid-rows-[auto_1fr] w-screen h-screen" : layoutStyles['main-layout']} drawer`}>
@@ -38,7 +40,19 @@ const MainLayout = () => {
                         {/* close icon */}
                         ✕
                     </button>
-                    <iframe title="study-iframe" src="https://hyper-ystudygenie.academy" className="w-full h-full" frameBorder="0" />
+                    {iframeLoading && (
+                        // loader
+                        <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
+                            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                        </div>
+                    )}
+                    <iframe
+                        title="study-iframe"
+                        src="https://hyper-ystudygenie.academy"
+                        className="w-full h-full"
+                        frameBorder="0"
+                        onLoad={() => setIframeLoading(false)}
+                    />
                 </div>
             )}
 
