@@ -13,13 +13,13 @@ import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
 const availableBackends = [
-	{ src: "/gpt.png", label: "gpt-4o", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
+	{ src: "/gpt.png", label: "gpt-5-nano", url: "https://llmdemos.hyperpg.site/backend-hypery-6" },
+	{ src: "/gemini.png", label: "gemini-2.5-flash-lite", url: "https://llmdemos.hyperpg.site/backend-hypery-4" },
+	{ src: "/claude.png", label: "claude-3-haiku", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
 	{ src: "/groq.png", label: "llama-3.3-70b", url: "https://llmdemos.hyperpg.site/backend-hypery-7" },
 	{ src: "/qwen.png", label: "qwen3:8b", url: "https://llmdemos.hyperpg.site/backend-hypery-1" },
 	{ src: "/gemma.png", label: "gemma3:4b", url: "https://llmdemos.hyperpg.site/backend-hypery-2" },
 	{ src: "/mistral.png", label: "mistral:7b", url: "https://llmdemos.hyperpg.site/backend-hypery-3" },
-	{ src: "/gpt.png", label: "gpt-4o-mini", url: "https://llmdemos.hyperpg.site/backend-hypery-6" },
-	{ src: "/gpt.png", label: "gpt-3.5-turbo", url: "https://llmdemos.hyperpg.site/backend-hypery-5" },
 ];
 
 const Chat = () => {
